@@ -4,6 +4,7 @@ import { mergeProfiles, providerFromProfileId } from '../../../shared/profiles'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import { useAgentEventStore } from '../store/agentEventStore'
+import { MediaChips } from './MediaCards'
 
 const activityLabels = {
   running: 'Running',
@@ -74,6 +75,7 @@ export function AgentWorkPanel({ tabId, onChangeCwd }: Props): React.JSX.Element
       <span title="Session duration"><Clock3 size={12} />{formatDuration(now - tab.startedAt)}</span>
       {isAgent && <span className={permissionMode === 'full' ? 'agent-work-full' : ''} title="Permission mode"><ShieldCheck size={12} />{permissionMode === 'safe' ? 'Safe' : permissionMode === 'workspace' ? 'Workspace' : 'Full access'}</span>}
       {isAgent && latestEvent && <span className={`agent-work-event agent-work-event-${latestEvent.kind}`} title={latestEvent.detail}>{latestEvent.title}</span>}
+      <MediaChips tabId={tabId} />
       <button className="agent-work-cwd" type="button" title={`${cwd} - click to select a folder`} disabled={savingCwd} onClick={() => { void selectCwd() }}><Folder size={12} /><span>{cwd}</span></button>
     </section>
   )

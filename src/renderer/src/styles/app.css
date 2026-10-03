@@ -6,6 +6,7 @@
 @import './backdrop.css';
 @import './blocks.css';
 @import './wrapped.css';
+@import './media.css';
 
 * {
   box-sizing: border-box;

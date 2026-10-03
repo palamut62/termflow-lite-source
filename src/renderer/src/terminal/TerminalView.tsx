@@ -27,6 +27,8 @@ import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
 import { AgentWorkPanel } from '../components/AgentWorkPanel'
 import { AgentCompanion } from '../components/AgentCompanion'
+import { MediaCards } from '../components/MediaCards'
+import { reportMedia } from '../store/mediaStore'
 import { redactApiKeys } from '../../../shared/secretRedaction'
 import { agentKindForCommand, parseAgentOutput } from '../../../shared/agentEvents'
 import { mergeProfiles, providerFromProfileId } from '../../../shared/profiles'
@@ -81,9 +83,10 @@ function copySelection(term: Terminal): void {
 }
 
 /** Panoyu okuyup xterm'e yapıştır — tek yol preload IPC (sandbox uyumlu). */
-function pasteFromClipboard(term: Terminal): void {
+function pasteFromClipboard(term: Terminal, tabId: string): void {
   void window.termflow.clipboard.readPaste().then(({ kind, value }) => {
     if (!value) return
+    if (kind === 'file') reportMedia(tabId, value, 'paste', useSettingsStore.getState().settings.mediaPreviews)
     term.paste(kind === 'file' ? `"${value.replace(/"/g, '\\"')}"` : value)
   })
 }
@@ -514,7 +517,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
             return false
           }
         } else if (e.key === 'V' || e.key === 'v') {
-          pasteFromClipboard(term)
+          pasteFromClipboard(term, tabId)
           return false
         }
       }
@@ -560,7 +563,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       if (!current.pathContextMenu) {
         if (current.rightClickBehavior === 'paste') {
           if (hasSelection) copySelection(term)
-          else pasteFromClipboard(term)
+          else pasteFromClipboard(term, tabId)
           return
         }
         setMenu({ x: e.clientX, y: e.clientY, hasSelection, path: null, block })
@@ -576,7 +579,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
         }
         if (current.rightClickBehavior === 'paste') {
           if (hasSelection) copySelection(term)
-          else pasteFromClipboard(term)
+          else pasteFromClipboard(term, tabId)
           return
         }
         setMenu({ x: e.clientX, y: e.clientY, hasSelection, path: null, block })
@@ -749,7 +752,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     closeMenu()
   }
   const handlePaste = (): void => {
-    if (termRef.current) pasteFromClipboard(termRef.current)
+    if (termRef.current) pasteFromClipboard(termRef.current, tabId)
     closeMenu()
   }
   const handleSelectAll = (): void => {
@@ -846,14 +849,17 @@ ${block.output.slice(-8000)}
     if (!e.dataTransfer.types.includes('Files')) return
     e.preventDefault()
     e.stopPropagation()
-    const paths = formatDroppedPaths(
-      Array.from(e.dataTransfer.files),
-      window.termflow.system.getPathForFile
-    )
+    const files = Array.from(e.dataTransfer.files)
+    const paths = formatDroppedPaths(files, window.termflow.system.getPathForFile)
     if (!paths) return
     // Yazma yalnızca bu view'ın kendi tab id'sine gider.
     window.termflow.pty.write(tabId, paths)
     termRef.current?.focus()
+    const mode = useSettingsStore.getState().settings.mediaPreviews
+    for (const file of files) {
+      const path = window.termflow.system.getPathForFile(file)
+      if (path) reportMedia(tabId, path, 'drop', mode)
+    }
   }
 
   // --terminal-padding: bilgi şeridi terminal dolgusunun dışına taşıp status
@@ -876,7 +882,10 @@ ${block.output.slice(-8000)}
       {/* Terminal + optional agent animation side by side; the host keeps
           the remaining width and xterm refits through its ResizeObserver. */}
       <div className="terminal-body">
-        <div ref={hostRef} className="terminal-host" />
+        <div className="terminal-main">
+          <div ref={hostRef} className="terminal-host" />
+          <MediaCards tabId={tabId} />
+        </div>
         <AgentCompanion tabId={tabId} visible={visible} />
       </div>
       <AgentWorkPanel tabId={tabId} onChangeCwd={handleChangeCwd} />

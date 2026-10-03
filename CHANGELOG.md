@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Media previews: dropping or pasting an image or video, or a new one appearing in the tab's folder (screenshots, Playwright recordings, ffmpeg output), shows a preview card in the bottom-right corner of the terminal. After a few seconds it folds into a thumbnail in the info strip. Click to view it full size or play the video, open it, show it in its folder, copy its path or insert the path into the command line. Video thumbnails come from Windows itself, no ffmpeg needed. Settings > Terminal > Media Previews turns it off or limits it to drop and paste.
+
 ## 1.15.0 - 2026-10-03
 
 - A file panel on the right (Files in the status bar, or Ctrl+Shift+E) lists the active tab's folder and follows every cd. Click a folder to open it, double-click a file to open it: code and text in VS Code, Cursor or Windsurf, everything else in its default app (programs are never run, only shown in Explorer). Right-click to reveal a file in Explorer, copy its path or type it into the terminal or agent prompt.

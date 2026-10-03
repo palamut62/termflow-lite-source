@@ -55,6 +55,7 @@ TermFlow Lite opens straight into a terminal — no welcome screens, no setup wi
 - **Jump between commands** - `Ctrl+Up` / `Ctrl+Down` scrolls to the previous or next prompt; right-click a block to copy the command, copy its output, rerun it, or copy it formatted for an AI agent
 - **Inline suggestions** - grey fish-style suggestions from your history while you type; `→` or `End` accepts. Turned off automatically when PSReadLine already predicts.
 - **File panel** - `Ctrl+Shift+E` (or Files in the status bar) lists the active tab's folder and follows every `cd`; double-click a file to open it in your editor or default app, right-click to reveal, copy or insert its path
+- **Media previews** - drop or paste an image or video, or let a tool save one into the tab's folder (screenshots, Playwright recordings, ffmpeg output), and a preview card appears in the corner of the terminal. Cards fold into small thumbnails in the info strip; click one to view it full size or play the video, open it, show it in its folder, or insert its path
 - **Error locations** - `src/app.ts:42:7` and `app.ts(42,7)` in compiler and test output open the file at that line in VS Code, Cursor or Windsurf
 - **Finished-command notifications** - a command that ran longer than 10 seconds in a background tab sends a system notification; the tab flashes green or red when any command finishes
 - **Motion** - Off / Subtle / Full: tab, split, menu, dialog and theme crossfade animations; the system "reduce motion" preference always wins

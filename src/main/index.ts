@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, protocol, shell } from 'electron'
 import { dirname, isAbsolute, join } from 'path'
 import { DEFAULT_SETTINGS, type AppSettings } from '../shared/types'
 import { applyQuakeBounds, applyWindowAppearance, restoreNormalBounds, titleBarOptions } from './window'
@@ -10,6 +10,8 @@ import { registerSettingsIpc } from './ipc/settings'
 import { registerShellIpc } from './ipc/shell'
 import { registerClipboardIpc } from './ipc/clipboard'
 import { registerWindowIpc } from './ipc/window'
+import { registerMediaIpc } from './ipc/media'
+import { handleMediaRequest, MEDIA_SCHEME, unwatchAllMedia } from './media'
 import { WIDGET_ACTIONS, WidgetController } from './widget'
 import { registerDialogIpc } from './ipc/dialog'
 import { registerGitIpc } from './ipc/git'
@@ -42,6 +44,12 @@ import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
 const APP_ICON = app.isPackaged
   ? join(process.resourcesPath, 'resources', 'icon.ico')
   : join(__dirname, '../../resources/icon.ico')
+
+// Önizleme kartlarının tam görünümü/video oynatması: yalnızca izin verilen
+// medya dosyalarını sunan özel şema (src/main/media.ts). ready'den önce kayıt şart.
+protocol.registerSchemesAsPrivileged([
+  { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } }
+])
 
 // E2E isolation: Playwright launches (TERMFLOW_E2E=1, see e2e/app.spec.ts)
 // get a throwaway pid-scoped userData dir so they never touch the real
@@ -352,6 +360,8 @@ app.whenReady().then(() => {
   registerShellIpc()
   registerClipboardIpc()
   registerWindowIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
+  registerMediaIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
+  protocol.handle(MEDIA_SCHEME, handleMediaRequest)
   widget = new WidgetController(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null), settingsStore)
   ipcMain.handle(IPC.WINDOW_WIDGET, (_event, action: unknown) => {
     if (!widget) return { active: false, collapsed: false, pinned: true }
@@ -475,6 +485,7 @@ app.on('before-quit', () => {
   settingsStore?.flush() // write any debounced settings mutations
   sessionStore?.flush() // write the debounced tab/split layout
   manager?.shutdown() // kill every live PTY
+  unwatchAllMedia()
 })
 
 app.on('will-quit', () => {

@@ -30,6 +30,8 @@ import { HandoverDialog } from './components/HandoverDialog'
 import { Toasts } from './components/Toasts'
 import { Wrapped } from './components/Wrapped'
 import { TipCard } from './components/TipCard'
+import { MediaViewer } from './components/MediaViewer'
+import { useMediaStore } from './store/mediaStore'
 import { useStatsStore } from './store/statsStore'
 import { useToastStore } from './store/toastStore'
 import { listenForKonami } from './fun/konami'
@@ -93,6 +95,41 @@ export default function App(): React.JSX.Element {
     void useSettingsStore.getState().update({ retroUnlocked: true, themeId: 'retro-matrix', terminalEffect: 'crt' })
     useToastStore.getState().show('Retro mode unlocked: Matrix and Amber CRT themes are now in Settings > Appearance.', 'success')
   }), [])
+
+  // Önizleme kartları: izlenen klasörlerde yeni beliren medya, sekme kapanınca temizlik.
+  useEffect(() => window.termflow.media.onNew((tabIds, info) => {
+    if (useSettingsStore.getState().settings.mediaPreviews !== 'all') return
+    const open = new Set(useTerminalStore.getState().tabs.map((t) => t.id))
+    for (const tabId of tabIds) if (open.has(tabId)) useMediaStore.getState().add(tabId, info, 'new')
+  }), [])
+
+  // Her sekmenin klasörünü izle; klasör değişince ya da ayar kapanınca bırak.
+  useEffect(() => {
+    const watched = new Map<string, string | null>()
+    const sync = (): void => {
+      const all = useSettingsStore.getState().settings.mediaPreviews === 'all'
+      const tabs = useTerminalStore.getState().tabs
+      for (const tab of tabs) {
+        const dir = all ? tab.cwd || tab.launchCwd || null : null
+        if (watched.get(tab.id) === dir) continue
+        watched.set(tab.id, dir)
+        window.termflow.media.watch(tab.id, dir)
+      }
+      for (const id of [...watched.keys()]) {
+        if (tabs.some((t) => t.id === id)) continue
+        watched.delete(id)
+        window.termflow.media.watch(id, null)
+        useMediaStore.getState().clearTab(id)
+      }
+    }
+    sync()
+    const unsubTabs = useTerminalStore.subscribe(sync)
+    const unsubSettings = useSettingsStore.subscribe(sync)
+    return () => {
+      unsubTabs()
+      unsubSettings()
+    }
+  }, [])
 
   // Komut bildirimine tıklanınca ilgili sekmeyi öne al.
   useEffect(() => window.termflow.window.onFocusTab((tabId) => {
@@ -315,6 +352,7 @@ export default function App(): React.JSX.Element {
       {handover && <HandoverDialog />}
       {wrappedOpen && <Wrapped />}
       {loaded && <TipCard />}
+      <MediaViewer />
       <Toasts />
       <WorktreeCleanupDialog />
     </div>

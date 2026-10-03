@@ -31,6 +31,9 @@ export const IPC = {
   WINDOW_TITLEBAR_OVERLAY: 'window:titlebar-overlay', // (TitleBarOverlayPayload) — Windows only
   WINDOW_NOTIFY: 'window:notify', // (CommandNotification) — sistem bildirimi
   WINDOW_FOCUS_TAB: 'window:focus-tab', // main -> renderer (tabId) — bildirime tıklandı
+  MEDIA_INSPECT: 'media:inspect', // (path) -> MediaInfo | null — doğrular, izin verir, küçük resim üretir
+  MEDIA_WATCH: 'media:watch', // (tabId, dir | null) — sekmenin klasöründe yeni medyayı izle / bırak
+  MEDIA_NEW: 'media:new', // main -> renderer (tabIds, MediaInfo) — izlenen klasörde yeni medya
   WINDOW_SAVE_SNAPSHOT: 'window:save-snapshot', // (CaptureRect, defaultName) -> kaydedilen yol | null
   WINDOW_WIDGET: 'window:widget', // (WidgetAction) -> WidgetState — kompakt widget görünümü
   DIALOG_OPEN_DIR: 'dialog:open-dir',
@@ -252,6 +255,20 @@ export interface ProjectInfo {
   root: string
   technologies: string[]
   tasks: ProjectTask[]
+}
+
+export type MediaKind = 'image' | 'video'
+
+/** Terminal önizleme kartının bilgisi; `thumbnail` data URL (boş olabilir). */
+export interface MediaInfo {
+  path: string
+  name: string
+  kind: MediaKind
+  size: number
+  modifiedAt: number
+  thumbnail: string
+  width?: number
+  height?: number
 }
 
 /** Pencere içeriğinden PNG olarak kaydedilecek dikdörtgen (CSS px). */

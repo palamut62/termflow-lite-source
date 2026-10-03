@@ -1,6 +1,6 @@
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { Field, NumberInput, Select, TextInput, Toggle } from './Settings'
-import type { SoundTheme } from '../../../shared/types'
+import type { MediaPreviewMode, SoundTheme } from '../../../shared/types'
 
 const SCROLLBACK_OPTIONS = [
   { value: '1000', label: '1,000 lines' },
@@ -90,6 +90,17 @@ export function TerminalSettings(): React.JSX.Element {
             onChange={(v) => void update({ inlineSuggestions: v })}
             label="Inline suggestions"
             disabled={!settings.shellIntegration}
+          />
+        </Field>
+        <Field label="Media Previews" hint="Preview card for images and videos you drop or paste, and for new ones that appear in the tab's folder">
+          <Select
+            value={settings.mediaPreviews}
+            options={[
+              { value: 'all', label: 'Drop, paste and new files' },
+              { value: 'manual', label: 'Drop and paste only' },
+              { value: 'off', label: 'Off' }
+            ]}
+            onChange={(v) => void update({ mediaPreviews: v as MediaPreviewMode })}
           />
         </Field>
         <Field label="Command Notifications" hint="Notify when a command that ran longer than 10 seconds finishes in a background tab">

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
+import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
 import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
@@ -177,6 +177,18 @@ const api = {
       const handler = (_event: unknown, tabId: string): void => callback(tabId)
       ipcRenderer.on(IPC.WINDOW_FOCUS_TAB, handler)
       return () => ipcRenderer.removeListener(IPC.WINDOW_FOCUS_TAB, handler)
+    }
+  },
+  // ---- Media previews ----
+  media: {
+    inspect: (path: string): Promise<MediaInfo | null> => ipcRenderer.invoke(IPC.MEDIA_INSPECT, path),
+    watch: (tabId: string, dir: string | null): void => ipcRenderer.send(IPC.MEDIA_WATCH, tabId, dir),
+    /** Tam görünüm adresi; yalnızca inspect edilmiş dosyalar açılır. */
+    url: (path: string): string => `termflow-media://file/${encodeURIComponent(path)}`,
+    onNew: (callback: (tabIds: string[], info: MediaInfo) => void): (() => void) => {
+      const handler = (_event: unknown, tabIds: string[], info: MediaInfo): void => callback(tabIds, info)
+      ipcRenderer.on(IPC.MEDIA_NEW, handler)
+      return () => ipcRenderer.removeListener(IPC.MEDIA_NEW, handler)
     }
   },
   // ---- Clipboard ----

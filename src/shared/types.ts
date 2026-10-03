@@ -352,6 +352,11 @@ export interface AppSettings {
   shellIntegration: boolean
   /** Geçmişten gri satır içi komut önerisi (→ ile kabul); shell integration gerekir. */
   inlineSuggestions: boolean
+  /**
+   * Resim/video önizleme kartları: 'off' kapalı, 'manual' yalnızca sürükle-bırak
+   * ve yapıştırma, 'all' ayrıca aktif klasörde yeni beliren medya dosyaları.
+   */
+  mediaPreviews: MediaPreviewMode
   /** Arka planda uzun süren bir komut bitince sistem bildirimi göster. */
   commandNotifications: boolean
   /** Ajan sekmelerinin sağında, ajan durumuna göre değişen karakter animasyonu. */
@@ -372,6 +377,7 @@ export interface AppSettings {
 }
 
 export type MotionLevel = 'off' | 'subtle' | 'full'
+export type MediaPreviewMode = 'off' | 'manual' | 'all'
 export type BackdropMaterial = 'none' | 'mica' | 'acrylic' | 'tabbed'
 export type CursorEffect = 'none' | 'trail' | 'blaze'
 export type TerminalEffect = 'none' | 'scanlines' | 'crt'
@@ -518,6 +524,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showTips: true,
   shellIntegration: true,
   inlineSuggestions: true,
+  mediaPreviews: 'all',
   commandNotifications: true,
   agentCompanion: true,
   agentAnimationStyle: 'face',
