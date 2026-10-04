@@ -118,6 +118,7 @@
     'f6.text': "On beş tema ve özel palet düzenleyici, Windows 11'de Mica ve Acrylic arka planlar, imleç izleri ve isteğe bağlı retro CRT ekran. Hareket hafif, tam ya da kapalı olabilir; sistemin hareketi azaltma ayarı her zaman önce gelir.",
     'f6.li1': 'WebGL ile çizim, ligatürler ve satır içi görseller (Sixel ve iTerm2)',
     'f6.li2': 'İstersen mekanik ya da yumuşak tuş sesleri ve testlerin geçince konfeti',
+    'f6.li3': 'Bir profile resim ver; yazılarının arkasında noktalar, harfler ya da bloklarla, seçtiğin yoğunluk ve opaklıkta çizilsin',
     'f6.alt': 'Tarama çizgileri ve fosfor parıltısıyla yeşil Matrix temasında TermFlow Lite',
 
     'f7.title': 'Yılını terminalde gör',
