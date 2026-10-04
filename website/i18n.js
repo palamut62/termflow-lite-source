@@ -161,6 +161,8 @@
     'dl.debHint': '.deb paketi, x64',
     'dl.silent': 'Çok sayıda makineye mi kuruyorsun? Windows kurulum dosyası sessiz çalışır:',
     'dl.notes': 'Bu sürümde nelerin değiştiğini oku',
+    support: 'TermFlow Lite işine yarıyor mu? Ücretsiz; bir kahve devam etmesine yardım eder.',
+    coffee: 'Bana bir kahve ısmarla',
 
     owner: 'Ürün sahibi: Umut Çelik',
     'foot.source': 'Kaynak kodu',

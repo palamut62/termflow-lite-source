@@ -13,6 +13,11 @@
   --fail: #cf3d35;
   --wait: #c98a1c;
 
+  /* Buy Me a Coffee buttons (top menu + download box). */
+  --coffee: #ffdd00;
+  --coffee-hover: #ffe740;
+  --coffee-text: #232428;
+
   --display: 'Unbounded', 'Segoe UI', sans-serif;
   --body: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif;
   --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
@@ -73,6 +78,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--paper); pa
 .nav nav a { text-decoration: none; color: var(--slate); }
 .nav nav a:hover { color: var(--graphite); }
 .nav-gh .stars { margin-left: 6px; color: var(--graphite); font-weight: 700; }
+.nav nav a.nav-coffee { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: var(--coffee); color: var(--coffee-text); font-weight: 700; font-size: 14px; white-space: nowrap; transition: transform 140ms ease, background 140ms ease; }
+.nav nav a.nav-coffee:hover { background: var(--coffee-hover); transform: translateY(-1px); }
 .lang { display: inline-flex; padding: 2px; border: 1px solid var(--hair); border-radius: 999px; }
 .lang button { font: 600 12px/1 var(--mono); letter-spacing: 0.04em; color: var(--slate); background: none; border: 0; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
 .lang button:hover { color: var(--graphite); }
@@ -420,7 +427,13 @@ h2 {
 .silent p { margin: 0; }
 .silent pre { margin: 0; }
 .silent code { display: inline-block; padding: 6px 12px; color: var(--paper); background: #2f3136; border-radius: 8px; font-size: 13px; }
-.release-link { margin: 22px 0 0; }
+.release-link { margin: 0; }
+.dl-foot { margin-top: 28px; padding-top: 24px; border-top: 1px solid #3a3c42; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 28px; }
+.support { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; color: #b5bac3; font-size: 15px; }
+/* Buy Me a Coffee's own yellow, so the button is recognised at a glance. */
+.btn-coffee { gap: 8px; min-height: 44px; padding: 0 20px; background: var(--coffee); color: var(--coffee-text); font-size: 15px; }
+.btn-coffee:hover { transform: translateY(-1px); background: var(--coffee-hover); }
+.btn-coffee:focus-visible { outline-color: var(--coffee); }
 .release-link a { color: var(--paper); text-underline-offset: 3px; }
 
 /* ---------- Footer ---------- */
@@ -450,6 +463,11 @@ h2 {
   .dl-grid { grid-template-columns: 1fr 1fr; }
   .dl-main { grid-column: 1 / -1; }
   .foot-links { margin-left: 0; }
+}
+
+@media (max-width: 860px) {
+  .nav nav a.nav-coffee { padding: 8px; }
+  .nav-coffee span { display: none; }
 }
 
 @media (max-width: 600px) {
