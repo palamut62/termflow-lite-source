@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
-import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
+import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
 // option keys its reflow behaviour on this; fall back to a modern build when
@@ -97,7 +97,8 @@ const api = {
   },
   dialog: {
     openDir: (): Promise<string | null> => ipcRenderer.invoke(IPC.DIALOG_OPEN_DIR),
-    openFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.DIALOG_OPEN_FILE)
+    openFile: (): Promise<string | null> => ipcRenderer.invoke(IPC.DIALOG_OPEN_FILE),
+    pickBackground: (): Promise<BackgroundPick> => ipcRenderer.invoke(IPC.DIALOG_PICK_BACKGROUND)
   },
   // ---- Auto update ----
   updater: {

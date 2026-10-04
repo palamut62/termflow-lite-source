@@ -5,6 +5,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
 import type { AgentAnimationStyle, AgentCharacter, AgentWeather, BackdropMaterial, CursorEffect, MotionLevel, TerminalEffect, ThemeColors } from '../../../shared/types'
 import { ColorPicker, Field, NumberInput, Select, TextInput, Toggle } from './Settings'
+import { AsciiBackgroundSettings } from './AsciiBackgroundSettings'
 
 const FONT_SUGGESTIONS = [
   'Cascadia Mono',
@@ -444,6 +445,8 @@ export function AppearanceSettings(): React.JSX.Element {
           <NumberInput value={settings.tabHeight} min={28} max={48} onChange={(v) => void update({ tabHeight: v })} />
         </Field>
       </section>
+
+      <AsciiBackgroundSettings />
     </>
   )
 }

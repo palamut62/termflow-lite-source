@@ -67,6 +67,20 @@
   scrollbar-width: none;
 }
 
+/* ASCII background (AsciiBackdrop.tsx): the pane is its own stacking context so
+   the canvas sits above the .terminal-area colour and below the text, and the
+   xterm viewport lets it show through. */
+.terminal-view.has-ascii-bg { isolation: isolate; }
+.terminal-view.has-ascii-bg .terminal-host .xterm .xterm-viewport { background: transparent; }
+.ascii-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
 .terminal-view.split-pane { z-index: 1; }
 .terminal-view.split-vertical.split-pane-first { right: auto; width: var(--split-percent); }
 .terminal-view.split-vertical.split-pane-second { left: var(--split-percent); width: calc(100% - var(--split-percent)); }

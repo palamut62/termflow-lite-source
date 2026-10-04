@@ -16,9 +16,18 @@ export function backdropAlpha(settings: Pick<AppSettings, 'backdropTint'>): numb
  */
 export function terminalTheme(
   colors: ThemeColors,
-  settings: Pick<AppSettings, 'cursorColor' | 'backdrop'>
+  settings: Pick<AppSettings, 'cursorColor' | 'backdrop'>,
+  transparent = backdropActive(settings)
 ): ThemeColors {
   const theme = settings.cursorColor ? { ...colors, cursor: settings.cursorColor } : { ...colors }
-  if (backdropActive(settings) && /^#[0-9a-fA-F]{6}$/.test(theme.background)) theme.background = `${theme.background}00`
+  if (transparent && /^#[0-9a-fA-F]{6}$/.test(theme.background)) theme.background = `${theme.background}00`
   return theme
+}
+
+/** True for light theme backgrounds (#rrggbb); unknown formats count as dark. */
+export function isLightColor(hex: string): boolean {
+  const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/.exec(hex)
+  if (!m) return false
+  const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16) / 255)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5
 }

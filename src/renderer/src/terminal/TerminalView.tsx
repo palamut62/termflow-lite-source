@@ -11,7 +11,7 @@ import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStor
 import { broadcastTargetIds, dataHandlers, exitHandlers, searchAddons, useTerminalStore } from '../store/terminalStore'
 import { useCommandHistoryStore } from '../store/commandHistoryStore'
 import { resolveTheme } from '../themes/themes'
-import { backdropActive, terminalTheme } from '../backdrop'
+import { backdropActive, isLightColor, terminalTheme } from '../backdrop'
 import { CursorFx } from './cursorFx'
 import { recordInput, recordOutput } from '../fun/outputMeter'
 import { forgetActivity, noteAgentOutput } from '../fun/agentActivity'
@@ -25,6 +25,7 @@ import { formatDroppedPaths } from './dropPaths'
 import { getPathAtMouse, registerPathLinkProvider, type PathMenuInfo } from './pathLinks'
 import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
+import { AsciiBackdrop } from './AsciiBackdrop'
 import { AgentWorkPanel } from '../components/AgentWorkPanel'
 import { AgentCompanion } from '../components/AgentCompanion'
 import { MediaCards } from '../components/MediaCards'
@@ -127,6 +128,9 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   const settings = useSettingsStore((s) => s.settings)
   const permissionMode = useTerminalStore((s) => s.tabs.find((t) => t.id === tabId)?.permissionMode) ?? settings.defaultAgentPermissionMode
   const uiSearchTabId = useSettingsStore((s) => s.uiSearchTabId)
+  const asciiBackground = profileId ? settings.asciiBackgrounds?.[profileId] : undefined
+  // xterm's own background goes see-through when a backdrop or an ASCII picture sits behind it.
+  const transparent = backdropActive(settings) || !!asciiBackground
   const [menu, setMenu] = useState<ContextMenuState | null>(null)
 
   useEffect(() => {
@@ -203,8 +207,8 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       letterSpacing: settings.letterSpacing,
       scrollback: settings.scrollback,
       // cursorColor override: '' = tema default (PRD §32); backdrop'ta saydam zemin.
-      theme: terminalTheme(themeColors, settings),
-      allowTransparency: backdropActive(settings),
+      theme: terminalTheme(themeColors, settings, transparent),
+      allowTransparency: transparent,
       allowProposedApi: true,
       // Draw box-drawing / block glyphs procedurally instead of using the
       // font's own (often misaligned) glyphs — keeps TUI borders crisp.
@@ -654,7 +658,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     // değiştirdiği için aşağıdaki resize kanalı yeniden fit edecek.
     term.options.letterSpacing = settings.letterSpacing
     const themeColors = resolveTheme(settings).colors
-    term.options.theme = terminalTheme(themeColors, settings)
+    term.options.theme = terminalTheme(themeColors, settings, transparent)
     // A font/size change alters the cell metrics, so the fit result may change;
     // route it through the single atomic resize channel.
     scheduleResizeRef.current?.()
@@ -672,7 +676,8 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     settings.scrollback,
     settings.themeId,
     settings.customTheme,
-    settings.backdrop
+    settings.backdrop,
+    transparent
   ])
 
   // Saydamlık değişince WebGL atlası yeniden kurulmalı (glif kenar yumuşatması
@@ -680,7 +685,6 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   useEffect(() => {
     const term = termRef.current
     if (!term) return
-    const transparent = backdropActive(settings)
     if (term.options.allowTransparency === transparent) return
     term.options.allowTransparency = transparent
     webglRef.current?.dispose()
@@ -688,7 +692,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     syncWebgl(term, settings.gpuAcceleration)
     term.refresh(0, term.rows - 1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.backdrop])
+  }, [transparent])
 
   // GPU / inline image / ligature ayarları terminali yeniden yaratmadan,
   // yalnızca ilgili addon'ı yükleyip atarak uygulanır.
@@ -868,10 +872,11 @@ ${block.output.slice(-8000)}
     padding: settings.terminalPadding,
     '--terminal-padding': `${settings.terminalPadding}px`
   } as React.CSSProperties
+  const themeColors = resolveTheme(settings).colors
 
   return (
     <div
-      className={`terminal-view${visible ? '' : ' inactive'}${splitPane ? ` split-pane split-pane-${splitPane} split-${splitDirection}` : ''}${active ? ' split-pane-active' : ''}`}
+      className={`terminal-view${asciiBackground ? ' has-ascii-bg' : ''}${visible ? '' : ' inactive'}${splitPane ? ` split-pane split-pane-${splitPane} split-${splitDirection}` : ''}${active ? ' split-pane-active' : ''}`}
       style={paneStyle}
       onMouseDown={() => {
         if (visible && !active) useTerminalStore.getState().setActiveTab(tabId)
@@ -879,6 +884,14 @@ ${block.output.slice(-8000)}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {asciiBackground && (
+        <AsciiBackdrop
+          background={asciiBackground}
+          color={themeColors.foreground}
+          invert={isLightColor(themeColors.background)}
+          fontFamily={settings.fontFamily}
+        />
+      )}
       {/* Terminal + optional agent animation side by side; the host keeps
           the remaining width and xterm refits through its ResizeObserver. */}
       <div className="terminal-body">

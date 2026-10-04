@@ -38,6 +38,7 @@ export const IPC = {
   WINDOW_WIDGET: 'window:widget', // (WidgetAction) -> WidgetState — kompakt widget görünümü
   DIALOG_OPEN_DIR: 'dialog:open-dir',
   DIALOG_OPEN_FILE: 'dialog:open-file', // -> seçilen dosya yolu | null
+  DIALOG_PICK_BACKGROUND: 'dialog:pick-background', // -> BackgroundPick (küçültülmüş JPEG data URL)
   UPDATE_CHECK: 'update:check', // -> UpdateStatus
   UPDATE_DOWNLOAD: 'update:download', // () — ilerleme UPDATE_STATUS ile akar
   UPDATE_INSTALL: 'update:install', // () — uygulamayı kapatıp kurar

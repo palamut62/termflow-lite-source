@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.17.0 - 2026-10-04
+
+- ASCII backgrounds: give any profile a picture and it is drawn in characters behind the terminal text, a dotted photo behind PowerShell, a logo behind Claude Code. Settings > Appearance > ASCII Background picks the profile and the picture (PNG, JPG, WEBP, BMP or GIF), the characters (dots, ASCII or blocks), the density and the opacity, with a live preview. Shells, custom profiles, providers and SSH hosts can each have their own.
+- The picture is shrunk to a small copy kept in your settings; the original file is not used again. It is drawn once and only redrawn when the pane is resized, so it costs nothing while you work. Light themes flip it automatically, and it works over Mica and Acrylic.
+
 ## 1.16.0 - 2026-10-04
 
 - Media previews: dropping or pasting an image or video, or a new one appearing in the tab's folder (screenshots, Playwright recordings, ffmpeg output), shows a preview card in the bottom-right corner of the terminal. After a few seconds it folds into a thumbnail in the info strip. Click to view it full size or play the video, open it, show it in its folder, copy its path or insert the path into the command line. Video thumbnails come from Windows itself, no ffmpeg needed. Settings > Terminal > Media Previews turns it off or limits it to drop and paste.

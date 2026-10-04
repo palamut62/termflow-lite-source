@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
+import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
 import { DEFAULT_SETTINGS, type AppSettings } from '../../shared/types'
 
 const WRITE_DEBOUNCE_MS = 300
@@ -41,6 +42,7 @@ export class SettingsStore {
     // Eski "Blur" anahtarı: açıksa acrylic backdrop olarak devam eder.
     if ((settings as Partial<AppSettings>).backdrop === undefined && settings.blur) merged.backdrop = 'acrylic'
     if (!BACKDROPS.includes(merged.backdrop)) merged.backdrop = 'none'
+    merged.asciiBackgrounds = normalizeAsciiBackgrounds(settings.asciiBackgrounds)
     return merged
   }
 

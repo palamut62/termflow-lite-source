@@ -676,3 +676,20 @@
   font-size: 12px;
   opacity: 0.6;
 }
+
+/* ASCII background preview (AsciiBackgroundSettings.tsx). */
+.ascii-bg-preview {
+  position: relative;
+  isolation: isolate;
+  height: 150px;
+  margin: 4px 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ascii-bg-preview-text {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  font-size: 13px;
+}

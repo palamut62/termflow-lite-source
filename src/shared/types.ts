@@ -369,6 +369,8 @@ export interface AppSettings {
   agentWeather: AgentWeather
   /** City for live weather, resolved once to rounded coordinates. */
   weatherPlace: { name: string; latitude: number; longitude: number } | null
+  /** Per-profile picture drawn as ASCII behind the terminal text (key = profile id). */
+  asciiBackgrounds: Record<string, AsciiBackground>
   /** Widget görünümünün son konumu (null = sağ üst köşe), daraltılmış ve üstte tutma durumu. */
   widgetX: number | null
   widgetY: number | null
@@ -385,6 +387,22 @@ export type SoundTheme = 'off' | 'mechanical' | 'soft'
 export type AgentAnimationStyle = 'face' | 'scenes'
 export type AgentCharacter = 'auto' | 'ember' | 'miso' | 'piko'
 export type AgentWeather = 'off' | 'cycle' | 'live'
+export type AsciiCharset = 'dots' | 'ascii' | 'blocks'
+
+export interface AsciiBackground {
+  /** Downscaled JPEG data URL made by the main process; never a file path. */
+  image: string
+  /** Character cell width in px; smaller draws a finer picture. */
+  density: number
+  /** Glyph opacity in percent. */
+  opacity: number
+  charset: AsciiCharset
+}
+
+export type BackgroundPick =
+  | { status: 'ok'; image: string }
+  | { status: 'canceled' }
+  | { status: 'invalid'; reason: string }
 
 /**
  * Otomatik güncelleme durumu (electron-updater). Main tarafından üretilir,
@@ -531,6 +549,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentCharacter: 'auto',
   agentWeather: 'cycle',
   weatherPlace: null,
+  asciiBackgrounds: {},
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,

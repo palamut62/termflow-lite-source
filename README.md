@@ -60,6 +60,7 @@ TermFlow Lite opens straight into a terminal — no welcome screens, no setup wi
 - **Finished-command notifications** - a command that ran longer than 10 seconds in a background tab sends a system notification; the tab flashes green or red when any command finishes
 - **Motion** - Off / Subtle / Full: tab, split, menu, dialog and theme crossfade animations; the system "reduce motion" preference always wins
 - **Mica and Acrylic** - Windows 11 backdrop materials with an adjustable surface tint
+- **ASCII backgrounds** - a picture per profile, drawn in dots, ASCII or block characters behind the terminal text, with adjustable density and opacity. Only a small copy is kept in your settings, and it is drawn once, not animated
 - **Cursor effects** - optional trail or blaze when the cursor moves; pauses automatically during heavy output
 - **Retro overlay** - scanlines or a CRT look with vignette and phosphor glow
 - **Output pulse** - a live sparkline of the active tab's output rate in the status bar
