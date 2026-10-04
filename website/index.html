@@ -3,47 +3,54 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TermFlow Lite: a terminal that shows how every command went</title>
-  <meta name="description" content="TermFlow Lite is a fast, free terminal for Windows and Linux. Tabs, splits, PowerShell, Git Bash, WSL and coding agents like Claude Code and Codex, with every command marked passed, failed or running." />
+  <title data-i18n="meta.title">TermFlow Lite: a terminal that shows how every command went</title>
+  <meta name="description" data-i18n-attr="content:meta.desc" content="TermFlow Lite is a fast, free terminal for Windows and Linux. Tabs, splits, PowerShell, Git Bash, WSL and coding agents like Claude Code and Codex, with every command marked passed, failed or running." />
   <meta property="og:title" content="TermFlow Lite" />
   <meta property="og:description" content="A fast, free terminal for shells and coding agents. Every command shows how it went." />
   <meta property="og:image" content="/assets/blocks.webp" />
   <meta name="theme-color" content="#E9ECF0" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="alternate" hreflang="en" href="https://www.termflowlite.lol/" />
+  <link rel="alternate" hreflang="tr" href="https://www.termflowlite.lol/?lang=tr" />
+  <link rel="alternate" hreflang="x-default" href="https://www.termflowlite.lol/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
   <header class="nav">
-    <a class="brand" href="/" aria-label="TermFlow Lite home">
+    <a class="brand" href="/" aria-label="TermFlow Lite home" data-i18n-attr="aria-label:nav.home">
       <img src="/assets/icon-256.png" alt="" width="32" height="32" />
       <span>TermFlow Lite</span>
     </a>
-    <nav aria-label="Main">
-      <a href="#features">Features</a>
-      <a href="#download">Download</a>
+    <nav aria-label="Main" data-i18n-attr="aria-label:nav.main">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#download" data-i18n="nav.download">Download</a>
       <a class="nav-gh" href="https://github.com/palamut62/termflow-lite" target="_blank" rel="noopener noreferrer">
         GitHub<span class="stars" data-stars hidden></span>
       </a>
+      <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:nav.lang">
+        <button type="button" data-set-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-set-lang="tr" lang="tr" aria-pressed="false">TR</button>
+      </div>
     </nav>
   </header>
 
   <main id="main">
     <section class="hero">
       <div class="hero-text">
-        <h1>A terminal that shows how every command went.</h1>
+        <h1 data-i18n="hero.title">A terminal that shows how every command went.</h1>
         <div class="hero-side">
-          <p class="lede">TermFlow Lite runs PowerShell, Git Bash, WSL and coding agents like Claude&nbsp;Code and Codex in tabs and splits. Every command gets a mark: passed, failed or still running.</p>
+          <p class="lede" data-i18n="hero.lede">TermFlow Lite runs PowerShell, Git Bash, WSL and coding agents like Claude&nbsp;Code and Codex in tabs and splits. Every command gets a mark: passed, failed or still running.</p>
           <div class="hero-cta">
             <div class="cta-row">
-              <a class="btn btn-primary" data-dl="exe" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-x64.exe">Download for Windows</a>
-              <a class="btn btn-quiet" href="#download">Linux builds</a>
+              <a class="btn btn-primary" data-dl="exe" data-i18n="hero.dlWin" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-x64.exe">Download for Windows</a>
+              <a class="btn btn-quiet" href="#download" data-i18n="hero.linux">Linux builds</a>
             </div>
-            <p class="meta"><span data-version>Version 1.15.0</span>. Free and open source.</p>
+            <p class="meta"><span data-version>Version 1.15.0</span>. <span data-i18n="free">Free and open source.</span></p>
           </div>
         </div>
       </div>
@@ -59,7 +66,7 @@
           </svg>
         </div>
 
-        <div class="app" id="demo" role="img" aria-label="Animated preview of TermFlow Lite running npm test, a failing git push and an inline suggestion" data-theme="dark">
+        <div class="app" id="demo" role="img" data-i18n-attr="aria-label:demo.label" aria-label="Animated preview of TermFlow Lite running npm test, a failing git push and an inline suggestion" data-theme="dark">
           <div class="app-tabs">
             <button class="app-tab is-active" data-tab="pwsh" type="button"><i class="tab-ico ico-ps"></i>PowerShell<span class="tab-dot" data-dot="pwsh"></span><span class="tab-flash" data-flash></span></button>
             <button class="app-tab" data-tab="claude" type="button"><i class="tab-ico ico-ai"></i>Claude Code<span class="tab-dot dot-wait"></span></button>
@@ -74,7 +81,7 @@
                 <div class="ln"><span class="c-mag">✻</span> Welcome to <b>Claude Code</b></div>
                 <div class="ln dim">  cwd: C:\dev\acme-api</div>
                 <div class="ln"> </div>
-                <div class="ln"><span class="c-dim">&gt;</span> add a discount rule to src/price.js and cover it with a test</div>
+                <div class="ln"><span class="c-dim">&gt;</span> <span data-i18n="demo.prompt">add a discount rule to src/price.js and cover it with a test</span></div>
                 <div class="ln"> </div>
                 <div class="ln"><span class="c-grn">●</span> Update(src/price.js)</div>
                 <div class="ln dim">  ⎿  Updated src/price.js with 6 additions</div>
@@ -105,105 +112,105 @@
           </div>
         </div>
 
-        <div class="stage-controls" aria-label="Preview controls">
-          <div class="seg" role="group" aria-label="Theme">
-            <span class="seg-label">Theme</span>
-            <button type="button" data-set-theme="dark" aria-pressed="true">Dark</button>
-            <button type="button" data-set-theme="light" aria-pressed="false">Light</button>
+        <div class="stage-controls" aria-label="Preview controls" data-i18n-attr="aria-label:demo.controls">
+          <div class="seg" role="group" aria-label="Theme" data-i18n-attr="aria-label:demo.theme">
+            <span class="seg-label" data-i18n="demo.theme">Theme</span>
+            <button type="button" data-set-theme="dark" aria-pressed="true" data-i18n="demo.dark">Dark</button>
+            <button type="button" data-set-theme="light" aria-pressed="false" data-i18n="demo.light">Light</button>
             <button type="button" data-set-theme="matrix" aria-pressed="false">Matrix CRT</button>
             <button type="button" data-set-theme="amber" aria-pressed="false">Amber CRT</button>
           </div>
-          <div class="seg" role="group" aria-label="Cursor effect">
-            <span class="seg-label">Cursor</span>
-            <button type="button" data-set-cursor="none" aria-pressed="false">Plain</button>
-            <button type="button" data-set-cursor="trail" aria-pressed="false">Trail</button>
-            <button type="button" data-set-cursor="blaze" aria-pressed="true">Blaze</button>
+          <div class="seg" role="group" aria-label="Cursor effect" data-i18n-attr="aria-label:demo.cursor">
+            <span class="seg-label" data-i18n="demo.cursor">Cursor</span>
+            <button type="button" data-set-cursor="none" aria-pressed="false" data-i18n="demo.plain">Plain</button>
+            <button type="button" data-set-cursor="trail" aria-pressed="false" data-i18n="demo.trail">Trail</button>
+            <button type="button" data-set-cursor="blaze" aria-pressed="true" data-i18n="demo.blaze">Blaze</button>
           </div>
-          <button class="replay" type="button" data-replay>Replay</button>
+          <button class="replay" type="button" data-replay data-i18n="demo.replay">Replay</button>
         </div>
       </div>
     </section>
 
-    <section class="proof" aria-label="Project facts">
-      <div><strong data-stars-big>Open source</strong><span>on GitHub, MIT licensed</span></div>
+    <section class="proof" aria-label="Project facts" data-i18n-attr="aria-label:proof.label">
+      <div><strong data-stars-big>Open source</strong><span data-i18n="proof.license">on GitHub, MIT licensed</span></div>
       <div><strong data-version-short>1.15.0</strong><span data-release-date>latest release</span></div>
-      <div><strong>15 themes</strong><span>plus your own palette</span></div>
-      <div><strong>0 accounts</strong><span>no sign-in, settings stay local</span></div>
+      <div><strong data-i18n="proof.themes">15 themes</strong><span data-i18n="proof.palette">plus your own palette</span></div>
+      <div><strong data-i18n="proof.accounts">0 accounts</strong><span data-i18n="proof.local">no sign-in, settings stay local</span></div>
     </section>
 
     <section class="features" id="features">
       <article class="feature">
         <div class="feature-copy">
-          <h2>Read a long session at a glance</h2>
-          <p>Shell integration marks every command in PowerShell, Git Bash, bash and zsh. A green line means it passed, red means it failed, and slow commands show how long they took.</p>
+          <h2 data-i18n="f1.title">Read a long session at a glance</h2>
+          <p data-i18n="f1.text">Shell integration marks every command in PowerShell, Git Bash, bash and zsh. A green line means it passed, red means it failed, and slow commands show how long they took.</p>
           <ul>
-            <li><kbd>Ctrl</kbd> <kbd>↑</kbd> and <kbd>Ctrl</kbd> <kbd>↓</kbd> jump between commands in a long scrollback</li>
-            <li>Right-click a command to copy its output, rerun it or copy it ready for an AI agent</li>
-            <li>A command that runs for more than 10 seconds in a background tab sends a notification when it ends</li>
+            <li data-i18n="f1.li1"><kbd>Ctrl</kbd> <kbd>↑</kbd> and <kbd>Ctrl</kbd> <kbd>↓</kbd> jump between commands in a long scrollback</li>
+            <li data-i18n="f1.li2">Right-click a command to copy its output, rerun it or copy it ready for an AI agent</li>
+            <li data-i18n="f1.li3">A command that runs for more than 10 seconds in a background tab sends a notification when it ends</li>
           </ul>
         </div>
-        <figure class="shot"><img src="/assets/blocks.webp" alt="TermFlow Lite showing npm test marked passed in 4.1 seconds and git push marked failed with exit code 128" width="1375" height="875" loading="lazy" /></figure>
+        <figure class="shot"><img src="/assets/blocks.webp" data-i18n-attr="alt:f1.alt" alt="TermFlow Lite showing npm test marked passed in 4.1 seconds and git push marked failed with exit code 128" width="1375" height="875" loading="lazy" /></figure>
       </article>
 
       <article class="feature">
         <div class="feature-copy">
-          <h2>Run agents and shells side by side</h2>
-          <p>Split the window, drag panes to re-tile them and keep Claude Code, Codex or OpenCode next to the shell that runs your tests.</p>
+          <h2 data-i18n="f2.title">Run agents and shells side by side</h2>
+          <p data-i18n="f2.text">Split the window, drag panes to re-tile them and keep Claude Code, Codex or OpenCode next to the shell that runs your tests.</p>
           <ul>
-            <li>Give each agent its own git worktree so parallel sessions never overwrite each other</li>
-            <li>Hand work from one agent or provider to another without losing the context</li>
-            <li>Tabs show live state: running, waiting for input, new output, done or failed</li>
+            <li data-i18n="f2.li1">Give each agent its own git worktree so parallel sessions never overwrite each other</li>
+            <li data-i18n="f2.li2">Hand work from one agent or provider to another without losing the context</li>
+            <li data-i18n="f2.li3">Tabs show live state: running, waiting for input, new output, done or failed</li>
           </ul>
         </div>
-        <figure class="shot"><img src="/assets/split.webp" alt="Two panes side by side: PowerShell running npm test and Git Bash showing git diff and git log" width="1375" height="875" loading="lazy" /></figure>
+        <figure class="shot"><img src="/assets/split.webp" data-i18n-attr="alt:f2.alt" alt="Two panes side by side: PowerShell running npm test and Git Bash showing git diff and git log" width="1375" height="875" loading="lazy" /></figure>
       </article>
 
       <article class="feature feature-companion" id="companion">
         <div class="feature-copy">
-          <h2>See what your agent is up to</h2>
-          <p>Ember, Miso or Piko sits beside each agent terminal and acts out the real session: typing while it edits, thinking, waiting for your approval, cheering when it is done.</p>
+          <h2 data-i18n="f3.title">See what your agent is up to</h2>
+          <p data-i18n="f3.text">Ember, Miso or Piko sits beside each agent terminal and acts out the real session: typing while it edits, thinking, waiting for your approval, cheering when it is done.</p>
           <ul>
-            <li>Its expression follows the session itself, never a guess from the output, and the caption names the work, like "Editing upload.ts"</li>
-            <li>After a long streak it keeps going with a tired face and the odd yawn. Leave it idle and it falls asleep</li>
-            <li>Drawn as ASCII or as pixel art, with a character per agent or the one you pick</li>
-            <li>Point at it and it follows your cursor with its eyes, and smiles when you get close. Try it here</li>
-            <li>It lives in the weather, a changing sky or the live weather of your city: an umbrella in the rain, a scarf in the snow, sweat in the heat</li>
+            <li data-i18n="f3.li1">Its expression follows the session itself, never a guess from the output, and the caption names the work, like "Editing upload.ts"</li>
+            <li data-i18n="f3.li2">After a long streak it keeps going with a tired face and the odd yawn. Leave it idle and it falls asleep</li>
+            <li data-i18n="f3.li3">Drawn as ASCII or as pixel art, with a character per agent or the one you pick</li>
+            <li data-i18n="f3.li4">Point at it and it follows your cursor with its eyes, and smiles when you get close. Try it here</li>
+            <li data-i18n="f3.li5">It lives in the weather, a changing sky or the live weather of your city: an umbrella in the rain, a scarf in the snow, sweat in the heat</li>
           </ul>
         </div>
         <figure class="shot companion-demo" data-companion-demo>
           <div class="cd-window">
             <div class="cd-terminal" data-demo-terminal aria-hidden="true"></div>
-            <canvas class="cd-canvas" role="img" aria-label="Agent character"></canvas>
+            <canvas class="cd-canvas" role="img" aria-label="Agent character" data-i18n-attr="aria-label:cd.canvas"></canvas>
           </div>
           <figcaption class="cd-controls">
             <span class="sr-only" aria-live="polite" data-demo-status></span>
-            <div class="seg seg-dark" role="group" aria-label="Agent state">
-              <button type="button" data-demo-state="working" aria-pressed="true">Working</button>
-              <button type="button" data-demo-state="thinking" aria-pressed="false">Thinking</button>
-              <button type="button" data-demo-state="waiting" aria-pressed="false">Needs you</button>
-              <button type="button" data-demo-state="done" aria-pressed="false">Done</button>
-              <button type="button" data-demo-state="tired" aria-pressed="false">Tired</button>
-              <button type="button" data-demo-state="error" aria-pressed="false">Error</button>
-              <button type="button" data-demo-state="angry" aria-pressed="false">Grumpy</button>
-              <button type="button" data-demo-state="sleeping" aria-pressed="false">Asleep</button>
+            <div class="seg seg-dark" role="group" aria-label="Agent state" data-i18n-attr="aria-label:cd.state">
+              <button type="button" data-demo-state="working" aria-pressed="true" data-i18n="cd.working">Working</button>
+              <button type="button" data-demo-state="thinking" aria-pressed="false" data-i18n="cd.thinking">Thinking</button>
+              <button type="button" data-demo-state="waiting" aria-pressed="false" data-i18n="cd.waiting">Needs you</button>
+              <button type="button" data-demo-state="done" aria-pressed="false" data-i18n="cd.done">Done</button>
+              <button type="button" data-demo-state="tired" aria-pressed="false" data-i18n="cd.tired">Tired</button>
+              <button type="button" data-demo-state="error" aria-pressed="false" data-i18n="cd.error">Error</button>
+              <button type="button" data-demo-state="angry" aria-pressed="false" data-i18n="cd.angry">Grumpy</button>
+              <button type="button" data-demo-state="sleeping" aria-pressed="false" data-i18n="cd.sleeping">Asleep</button>
             </div>
             <div class="cd-row">
-              <div class="seg seg-dark" role="group" aria-label="Character">
+              <div class="seg seg-dark" role="group" aria-label="Character" data-i18n-attr="aria-label:cd.kind">
                 <button type="button" data-demo-kind="ember" aria-pressed="true">Ember</button>
                 <button type="button" data-demo-kind="miso" aria-pressed="false">Miso</button>
                 <button type="button" data-demo-kind="piko" aria-pressed="false">Piko</button>
               </div>
-              <div class="seg seg-dark" role="group" aria-label="Weather">
-                <button type="button" data-demo-weather="auto" aria-pressed="true">Auto sky</button>
-                <button type="button" data-demo-weather="sunny" aria-pressed="false">Sunny</button>
-                <button type="button" data-demo-weather="hot" aria-pressed="false">Hot</button>
-                <button type="button" data-demo-weather="windy" aria-pressed="false">Windy</button>
-                <button type="button" data-demo-weather="rain" aria-pressed="false">Rain</button>
-                <button type="button" data-demo-weather="snow" aria-pressed="false">Snow</button>
+              <div class="seg seg-dark" role="group" aria-label="Weather" data-i18n-attr="aria-label:cd.weather">
+                <button type="button" data-demo-weather="auto" aria-pressed="true" data-i18n="cd.auto">Auto sky</button>
+                <button type="button" data-demo-weather="sunny" aria-pressed="false" data-i18n="cd.sunny">Sunny</button>
+                <button type="button" data-demo-weather="hot" aria-pressed="false" data-i18n="cd.hot">Hot</button>
+                <button type="button" data-demo-weather="windy" aria-pressed="false" data-i18n="cd.windy">Windy</button>
+                <button type="button" data-demo-weather="rain" aria-pressed="false" data-i18n="cd.rain">Rain</button>
+                <button type="button" data-demo-weather="snow" aria-pressed="false" data-i18n="cd.snow">Snow</button>
               </div>
-              <div class="seg seg-dark" role="group" aria-label="Style">
+              <div class="seg seg-dark" role="group" aria-label="Style" data-i18n-attr="aria-label:cd.style">
                 <button type="button" data-demo-style="ascii" aria-pressed="true">ASCII</button>
-                <button type="button" data-demo-style="pixel" aria-pressed="false">Pixel</button>
+                <button type="button" data-demo-style="pixel" aria-pressed="false" data-i18n="cd.pixel">Pixel</button>
               </div>
             </div>
           </figcaption>
@@ -212,102 +219,102 @@
 
       <article class="feature">
         <div class="feature-copy">
-          <h2>Type less, find more</h2>
-          <p>Commands you ran before appear as a grey suggestion while you type. Press <kbd>→</kbd> to take it.</p>
+          <h2 data-i18n="f4.title">Type less, find more</h2>
+          <p data-i18n="f4.text">Commands you ran before appear as a grey suggestion while you type. Press <kbd>→</kbd> to take it.</p>
           <ul>
-            <li>Compiler and test errors like <code>src/app.ts:42:7</code> open at that line in VS Code, Cursor or Windsurf</li>
-            <li>Search every command you ran with <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>H</kbd></li>
-            <li>Run package.json scripts, Git and Docker tasks from the palette with <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd></li>
+            <li data-i18n="f4.li1">Compiler and test errors like <code>src/app.ts:42:7</code> open at that line in VS Code, Cursor or Windsurf</li>
+            <li data-i18n="f4.li2">Search every command you ran with <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>H</kbd></li>
+            <li data-i18n="f4.li3">Run package.json scripts, Git and Docker tasks from the palette with <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd></li>
           </ul>
         </div>
-        <figure class="shot shot-zoom"><img src="/assets/suggest.webp" alt="The prompt shows npm t typed and the rest of npm test suggested in grey" width="1176" height="128" loading="lazy" /></figure>
+        <figure class="shot shot-zoom"><img src="/assets/suggest.webp" data-i18n-attr="alt:f4.alt" alt="The prompt shows npm t typed and the rest of npm test suggested in grey" width="1176" height="128" loading="lazy" /></figure>
       </article>
 
       <article class="feature">
         <div class="feature-copy">
-          <h2>See the screenshots your tools save</h2>
-          <p>When an agent, a test run or a script saves an image or a video in your project, a preview card shows up in the corner of the terminal. Drop or paste a file and you get the same card.</p>
+          <h2 data-i18n="f5.title">See the screenshots your tools save</h2>
+          <p data-i18n="f5.text">When an agent, a test run or a script saves an image or a video in your project, a preview card shows up in the corner of the terminal. Drop or paste a file and you get the same card.</p>
           <ul>
-            <li>Cards fold into small thumbnails in the info strip so nothing piles up</li>
-            <li>Click one to view it full size or play the video, open it, show it in its folder, or insert its path for your agent</li>
-            <li>Video thumbnails come from Windows itself, no ffmpeg needed, and nothing leaves your machine</li>
+            <li data-i18n="f5.li1">Cards fold into small thumbnails in the info strip so nothing piles up</li>
+            <li data-i18n="f5.li2">Click one to view it full size or play the video, open it, show it in its folder, or insert its path for your agent</li>
+            <li data-i18n="f5.li3">Video thumbnails come from Windows itself, no ffmpeg needed, and nothing leaves your machine</li>
           </ul>
         </div>
-        <figure class="shot"><img src="/assets/media-cards.webp" alt="npm run capture saves two screenshots and a recording; three preview cards with thumbnails appear in the bottom-right corner of the terminal" width="1075" height="675" loading="lazy" /></figure>
+        <figure class="shot"><img src="/assets/media-cards.webp" data-i18n-attr="alt:f5.alt" alt="npm run capture saves two screenshots and a recording; three preview cards with thumbnails appear in the bottom-right corner of the terminal" width="1075" height="675" loading="lazy" /></figure>
       </article>
 
       <article class="feature">
         <div class="feature-copy">
-          <h2>Make it feel like yours</h2>
-          <p>Fifteen themes and a custom palette editor, Mica and Acrylic backdrops on Windows 11, cursor trails and an optional retro CRT screen. Motion can be subtle, full or off, and the system reduce-motion setting always wins.</p>
+          <h2 data-i18n="f6.title">Make it feel like yours</h2>
+          <p data-i18n="f6.text">Fifteen themes and a custom palette editor, Mica and Acrylic backdrops on Windows 11, cursor trails and an optional retro CRT screen. Motion can be subtle, full or off, and the system reduce-motion setting always wins.</p>
           <ul>
-            <li>WebGL rendering, ligatures and inline images (Sixel and iTerm2)</li>
-            <li>Mechanical or soft key sounds, and confetti when your tests pass, if you want them</li>
+            <li data-i18n="f6.li1">WebGL rendering, ligatures and inline images (Sixel and iTerm2)</li>
+            <li data-i18n="f6.li2">Mechanical or soft key sounds, and confetti when your tests pass, if you want them</li>
           </ul>
         </div>
-        <figure class="shot"><img src="/assets/crt.webp" alt="TermFlow Lite in the green Matrix theme with scanlines and phosphor glow" width="1375" height="875" loading="lazy" /></figure>
+        <figure class="shot"><img src="/assets/crt.webp" data-i18n-attr="alt:f6.alt" alt="TermFlow Lite in the green Matrix theme with scanlines and phosphor glow" width="1375" height="875" loading="lazy" /></figure>
       </article>
 
       <article class="feature">
         <div class="feature-copy">
-          <h2>See your year in the terminal</h2>
-          <p>Wrapped counts your commands, top tools, busiest hour and streaks, and hands out badges like Night Owl and Commit Machine. It is drawn like terminal output, in your terminal font and theme colors. Save it as an image to share.</p>
-          <p class="note">Wrapped stores counters and tool names only, never arguments or output, and nothing leaves your machine.</p>
+          <h2 data-i18n="f7.title">See your year in the terminal</h2>
+          <p data-i18n="f7.text">Wrapped counts your commands, top tools, busiest hour and streaks, and hands out badges like Night Owl and Commit Machine. It is drawn like terminal output, in your terminal font and theme colors. Save it as an image to share.</p>
+          <p class="note" data-i18n="f7.note">Wrapped stores counters and tool names only, never arguments or output, and nothing leaves your machine.</p>
         </div>
-        <figure class="shot"><img src="/assets/wrapped-ascii.webp" alt="TermFlow Wrapped drawn as ASCII terminal output: command counts, top tools as bars, an hourly block chart and a badge checklist" width="1375" height="875" loading="lazy" /></figure>
+        <figure class="shot"><img src="/assets/wrapped-ascii.webp" data-i18n-attr="alt:f7.alt" alt="TermFlow Wrapped drawn as ASCII terminal output: command counts, top tools as bars, an hourly block chart and a badge checklist" width="1375" height="875" loading="lazy" /></figure>
       </article>
     </section>
 
     <section class="more" aria-labelledby="more-title">
-      <h2 id="more-title">Also in the box</h2>
+      <h2 id="more-title" data-i18n="more.title">Also in the box</h2>
       <dl>
-        <div><dt>SSH that survives a dropped link</dt><dd>Saved hosts use your own OpenSSH. Attach to tmux or screen so builds keep running.</dd></div>
-        <div><dt>File panel</dt><dd>Ctrl+Shift+E lists the folder you are in and follows every cd. Double-click a file to open it in your editor.</dd></div>
-        <div><dt>Session restore</dt><dd>Tabs, folders and the split layout come back on the next launch.</dd></div>
-        <div><dt>Quake mode</dt><dd>Drop the window from the top of the screen with a global hotkey.</dd></div>
-        <div><dt>Broadcast input</dt><dd>Type once into every pane of a split with <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>B</kbd>.</dd></div>
-        <div><dt>Open in TermFlow Lite</dt><dd>Start any shell or agent in a folder from the Windows Explorer menu.</dd></div>
-        <div><dt>Close to tray</dt><dd>Closing the window keeps terminals and agents alive.</dd></div>
-        <div><dt>GitHub pull requests</dt><dd>Open a pull request in its own worktree with any agent, using your existing gh login.</dd></div>
-        <div><dt>Widget view</dt><dd>Shrink to a compact status widget in the corner. Sessions keep running; one click brings the full window back.</dd></div>
-        <div><dt>Agent characters</dt><dd>Three characters with ten expressions, in ASCII or pixel art. Hidden panels cost nothing, and reduce-motion keeps them still.</dd></div>
-        <div><dt>Agent inbox</dt><dd>A redacted timeline of approvals, tool calls, completions and failures across tabs.</dd></div>
-        <div><dt>Automatic updates</dt><dd>The installed app checks for releases and updates when you confirm.</dd></div>
+        <div><dt data-i18n="more.ssh">SSH that survives a dropped link</dt><dd data-i18n="more.sshText">Saved hosts use your own OpenSSH. Attach to tmux or screen so builds keep running.</dd></div>
+        <div><dt data-i18n="more.files">File panel</dt><dd data-i18n="more.filesText">Ctrl+Shift+E lists the folder you are in and follows every cd. Double-click a file to open it in your editor.</dd></div>
+        <div><dt data-i18n="more.restore">Session restore</dt><dd data-i18n="more.restoreText">Tabs, folders and the split layout come back on the next launch.</dd></div>
+        <div><dt data-i18n="more.quake">Quake mode</dt><dd data-i18n="more.quakeText">Drop the window from the top of the screen with a global hotkey.</dd></div>
+        <div><dt data-i18n="more.broadcast">Broadcast input</dt><dd data-i18n="more.broadcastText">Type once into every pane of a split with <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>B</kbd>.</dd></div>
+        <div><dt data-i18n="more.open">Open in TermFlow Lite</dt><dd data-i18n="more.openText">Start any shell or agent in a folder from the Windows Explorer menu.</dd></div>
+        <div><dt data-i18n="more.tray">Close to tray</dt><dd data-i18n="more.trayText">Closing the window keeps terminals and agents alive.</dd></div>
+        <div><dt data-i18n="more.prs">GitHub pull requests</dt><dd data-i18n="more.prsText">Open a pull request in its own worktree with any agent, using your existing gh login.</dd></div>
+        <div><dt data-i18n="more.widget">Widget view</dt><dd data-i18n="more.widgetText">Shrink to a compact status widget in the corner. Sessions keep running; one click brings the full window back.</dd></div>
+        <div><dt data-i18n="more.chars">Agent characters</dt><dd data-i18n="more.charsText">Three characters with ten expressions, in ASCII or pixel art. Hidden panels cost nothing, and reduce-motion keeps them still.</dd></div>
+        <div><dt data-i18n="more.inbox">Agent inbox</dt><dd data-i18n="more.inboxText">A redacted timeline of approvals, tool calls, completions and failures across tabs.</dd></div>
+        <div><dt data-i18n="more.updates">Automatic updates</dt><dd data-i18n="more.updatesText">The installed app checks for releases and updates when you confirm.</dd></div>
       </dl>
     </section>
 
     <section class="download" id="download">
       <div class="download-head">
-        <h2>Get TermFlow Lite</h2>
-        <p>Free and open source. <span data-version-sentence>Version 1.15.0</span>.</p>
+        <h2 data-i18n="dl.title">Get TermFlow Lite</h2>
+        <p><span data-i18n="free">Free and open source.</span> <span data-version-sentence>Version 1.15.0</span>.</p>
       </div>
       <div class="dl-grid">
         <a class="dl dl-main" data-dl="exe" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-x64.exe">
-          <span class="dl-os">Windows installer</span>
+          <span class="dl-os" data-i18n="dl.winOs">Windows installer</span>
           <span class="dl-file" data-file="exe">TermFlow-Lite-1.15.0-x64.exe</span>
-          <span class="dl-hint">Windows 10 and 11, 64-bit</span>
+          <span class="dl-hint" data-i18n="dl.winHint">Windows 10 and 11, 64-bit</span>
         </a>
         <a class="dl" data-dl="zip" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-x64.zip">
-          <span class="dl-os">Windows portable</span>
+          <span class="dl-os" data-i18n="dl.zipOs">Windows portable</span>
           <span class="dl-file" data-file="zip">TermFlow-Lite-1.15.0-x64.zip</span>
-          <span class="dl-hint">No installer, unzip and run</span>
+          <span class="dl-hint" data-i18n="dl.zipHint">No installer, unzip and run</span>
         </a>
         <a class="dl" data-dl="appimage" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-x86_64.AppImage">
           <span class="dl-os">Linux AppImage</span>
           <span class="dl-file" data-file="appimage">TermFlow-Lite-1.15.0-x86_64.AppImage</span>
-          <span class="dl-hint">Most x64 distributions</span>
+          <span class="dl-hint" data-i18n="dl.appimageHint">Most x64 distributions</span>
         </a>
         <a class="dl" data-dl="deb" href="https://github.com/palamut62/termflow-lite/releases/download/v1.15.0/TermFlow-Lite-1.15.0-amd64.deb">
-          <span class="dl-os">Debian and Ubuntu</span>
+          <span class="dl-os" data-i18n="dl.debOs">Debian and Ubuntu</span>
           <span class="dl-file" data-file="deb">TermFlow-Lite-1.15.0-amd64.deb</span>
-          <span class="dl-hint">.deb package, x64</span>
+          <span class="dl-hint" data-i18n="dl.debHint">.deb package, x64</span>
         </a>
       </div>
       <div class="silent">
-        <p>Installing on many machines? The Windows installer runs silently:</p>
+        <p data-i18n="dl.silent">Installing on many machines? The Windows installer runs silently:</p>
         <pre><code><span data-file="exe">TermFlow-Lite-1.15.0-x64.exe</span> /S</code></pre>
       </div>
-      <p class="release-link"><a data-release-notes href="https://github.com/palamut62/termflow-lite/releases/tag/v1.15.0" target="_blank" rel="noopener noreferrer">Read what changed in this release</a></p>
+      <p class="release-link"><a data-release-notes href="https://github.com/palamut62/termflow-lite/releases/tag/v1.15.0" target="_blank" rel="noopener noreferrer" data-i18n="dl.notes">Read what changed in this release</a></p>
     </section>
   </main>
 
@@ -316,17 +323,18 @@
       <img src="/assets/icon-256.png" alt="" width="28" height="28" />
       <span>TermFlow Lite</span>
     </div>
-    <p class="owner">Product Owner: Umut Çelik
+    <p class="owner"><span data-i18n="owner">Product Owner: Umut Çelik</span>
       <a href="https://x.com/palamut62" target="_blank" rel="noopener noreferrer">X</a>
       <a href="https://github.com/palamut62" target="_blank" rel="noopener noreferrer">GitHub</a>
     </p>
     <p class="foot-links">
-      <a href="https://github.com/palamut62/termflow-lite" target="_blank" rel="noopener noreferrer">Source code</a>
-      <a href="https://github.com/palamut62/termflow-lite/releases" target="_blank" rel="noopener noreferrer">All releases</a>
-      <a href="https://github.com/palamut62/termflow-lite/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT license</a>
+      <a href="https://github.com/palamut62/termflow-lite" target="_blank" rel="noopener noreferrer" data-i18n="foot.source">Source code</a>
+      <a href="https://github.com/palamut62/termflow-lite/releases" target="_blank" rel="noopener noreferrer" data-i18n="foot.releases">All releases</a>
+      <a href="https://github.com/palamut62/termflow-lite/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-i18n="foot.license">MIT license</a>
     </p>
   </footer>
 
+  <script src="/i18n.js" defer></script>
   <script src="/main.js" defer></script>
   <script src="/companion.js" defer></script>
 </body>

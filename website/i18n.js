@@ -1,0 +1,227 @@
+// TermFlow Lite site: English and Turkish. English lives in the HTML; this file
+// holds the Turkish text and the strings main.js and companion.js build at runtime.
+// Order: ?lang= in the URL, then the visitor's earlier pick, then the browser language.
+(() => {
+  'use strict'
+
+  const STORE = 'tfl.lang'
+
+  /** Strings the scripts build at runtime. */
+  const EN = {
+    version: 'Version {v}',
+    released: 'released {d}',
+    latest: 'latest release',
+    stars: '{n} stars',
+    openSource: 'Open source',
+    accept: '→ to accept'
+  }
+
+  const TR = {
+    version: 'Sürüm {v}',
+    released: '{d} yayınlandı',
+    latest: 'son sürüm',
+    stars: '{n} yıldız',
+    openSource: 'Açık kaynak',
+    accept: '→ ile kabul et',
+
+    'meta.title': 'TermFlow Lite: her komutun nasıl bittiğini gösteren terminal',
+    'meta.desc': 'TermFlow Lite, Windows ve Linux için hızlı ve ücretsiz bir terminal. Sekmeler, bölmeler, PowerShell, Git Bash, WSL ve Claude Code, Codex gibi kodlama ajanları; her komut geçti, kaldı ya da çalışıyor olarak işaretlenir.',
+    skip: 'İçeriğe geç',
+    'nav.home': 'TermFlow Lite ana sayfa',
+    'nav.main': 'Ana menü',
+    'nav.features': 'Özellikler',
+    'nav.download': 'İndir',
+    'nav.lang': 'Dil',
+
+    'hero.title': 'Her komutun nasıl bittiğini gösteren terminal.',
+    'hero.lede': 'TermFlow Lite; PowerShell, Git Bash, WSL ve Claude&nbsp;Code, Codex gibi kodlama ajanlarını sekmelerde ve bölmelerde çalıştırır. Her komut bir işaret alır: geçti, kaldı ya da hâlâ çalışıyor.',
+    'hero.dlWin': 'Windows için indir',
+    'hero.linux': 'Linux sürümleri',
+    free: 'Ücretsiz ve açık kaynak.',
+
+    'demo.label': 'TermFlow Lite önizlemesi: npm test çalışıyor, git push başarısız oluyor ve satır içi bir öneri beliriyor',
+    'demo.prompt': "src/price.js'e bir indirim kuralı ekle ve testini yaz",
+    'demo.controls': 'Önizleme ayarları',
+    'demo.theme': 'Tema',
+    'demo.dark': 'Koyu',
+    'demo.light': 'Açık',
+    'demo.cursor': 'İmleç',
+    'demo.plain': 'Sade',
+    'demo.trail': 'İz',
+    'demo.blaze': 'Alev',
+    'demo.replay': 'Tekrar oynat',
+
+    'proof.label': 'Proje bilgileri',
+    'proof.license': "GitHub'da, MIT lisanslı",
+    'proof.themes': '15 tema',
+    'proof.palette': 've kendi paletin',
+    'proof.accounts': '0 hesap',
+    'proof.local': 'giriş yok, ayarlar cihazında kalır',
+
+    'f1.title': 'Uzun bir oturumu tek bakışta oku',
+    'f1.text': "Kabuk entegrasyonu PowerShell, Git Bash, bash ve zsh'teki her komutu işaretler. Yeşil çizgi geçtiğini, kırmızı kaldığını gösterir; yavaş komutlar ne kadar sürdüğünü de yazar.",
+    'f1.li1': '<kbd>Ctrl</kbd> <kbd>↑</kbd> ve <kbd>Ctrl</kbd> <kbd>↓</kbd> ile uzun bir geçmişte komutlar arasında atla',
+    'f1.li2': 'Bir komuta sağ tıkla; çıktısını kopyala, yeniden çalıştır ya da bir yapay zekâ ajanına hazır biçimde kopyala',
+    'f1.li3': 'Arka plandaki bir sekmede 10 saniyeden uzun süren bir komut bitince bildirim gelir',
+    'f1.alt': "TermFlow Lite'ta npm test 4,1 saniyede geçti, git push ise 128 çıkış koduyla kaldı olarak işaretli",
+
+    'f2.title': 'Ajanları ve kabukları yan yana çalıştır',
+    'f2.text': "Pencereyi böl, bölmeleri sürükleyip yeniden diz; Claude Code, Codex ya da OpenCode'u testlerini çalıştıran kabuğun yanında tut.",
+    'f2.li1': "Her ajana kendi git worktree'sini ver, paralel oturumlar birbirinin üzerine yazmasın",
+    'f2.li2': 'İşi bir ajandan ya da sağlayıcıdan diğerine bağlamı kaybetmeden devret',
+    'f2.li3': 'Sekmeler canlı durumu gösterir: çalışıyor, girdi bekliyor, yeni çıktı var, bitti ya da kaldı',
+    'f2.alt': 'Yan yana iki bölme: npm test çalıştıran PowerShell ve git diff ile git log gösteren Git Bash',
+
+    'f3.title': 'Ajanının ne yaptığını gör',
+    'f3.text': 'Ember, Miso ya da Piko her ajan terminalinin yanında oturur ve gerçek oturumu canlandırır: ajan düzenleme yaparken yazar, düşünür, onayını bekler, iş bitince sevinir.',
+    'f3.li1': 'İfadesi oturumun kendisini izler, çıktıdan tahmin yürütmez; altyazı da yapılan işi söyler, örneğin "upload.ts düzenleniyor"',
+    'f3.li2': 'Uzun bir seriden sonra yorgun bir yüzle ve ara sıra esneyerek devam eder. Boş bırakırsan uyuyakalır',
+    'f3.li3': 'ASCII ya da piksel sanatıyla çizilir; her ajana ayrı bir karakter ya da seçtiğin tek bir karakter',
+    'f3.li4': 'Üzerine gelince gözleriyle imlecini takip eder, yaklaşınca gülümser. Burada dene',
+    'f3.li5': 'Havanın içinde yaşar: değişen bir gökyüzü ya da şehrinin canlı hava durumu. Yağmurda şemsiye, karda atkı, sıcakta ter',
+    'cd.canvas': 'Ajan karakteri',
+    'cd.state': 'Ajan durumu',
+    'cd.working': 'Çalışıyor',
+    'cd.thinking': 'Düşünüyor',
+    'cd.waiting': 'Seni bekliyor',
+    'cd.done': 'Bitti',
+    'cd.tired': 'Yorgun',
+    'cd.error': 'Hata',
+    'cd.angry': 'Huysuz',
+    'cd.sleeping': 'Uykuda',
+    'cd.kind': 'Karakter',
+    'cd.weather': 'Hava',
+    'cd.auto': 'Otomatik gök',
+    'cd.sunny': 'Güneşli',
+    'cd.hot': 'Sıcak',
+    'cd.windy': 'Rüzgârlı',
+    'cd.rain': 'Yağmur',
+    'cd.snow': 'Kar',
+    'cd.style': 'Stil',
+    'cd.pixel': 'Piksel',
+
+    'f4.title': 'Daha az yaz, daha çok bul',
+    'f4.text': 'Daha önce çalıştırdığın komutlar sen yazarken gri bir öneri olarak belirir. Almak için <kbd>→</kbd> tuşuna bas.',
+    'f4.li1': "<code>src/app.ts:42:7</code> gibi derleyici ve test hataları VS Code, Cursor ya da Windsurf'te tam o satırda açılır",
+    'f4.li2': 'Çalıştırdığın tüm komutlarda <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>H</kbd> ile ara',
+    'f4.li3': "package.json script'lerini, Git ve Docker görevlerini <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd> ile paletten çalıştır",
+    'f4.alt': "İstemde npm t yazılı, npm test'in geri kalanı gri olarak öneriliyor",
+
+    'f5.title': 'Araçlarının kaydettiği ekran görüntülerini gör',
+    'f5.text': 'Bir ajan, test çalıştırması ya da script projene bir görsel veya video kaydettiğinde terminalin köşesinde bir önizleme kartı belirir. Bir dosyayı bırak ya da yapıştır, aynı kartı alırsın.',
+    'f5.li1': 'Kartlar bilgi şeridinde küçük önizlemelere katlanır, hiçbir şey üst üste yığılmaz',
+    'f5.li2': 'Birine tıklayıp tam boyutta gör ya da videoyu oynat; aç, klasöründe göster ya da yolunu ajanın için ekle',
+    'f5.li3': "Video önizlemeleri doğrudan Windows'tan gelir, ffmpeg gerekmez ve hiçbir şey bilgisayarından dışarı çıkmaz",
+    'f5.alt': 'npm run capture iki ekran görüntüsü ve bir kayıt kaydediyor; terminalin sağ alt köşesinde önizlemeli üç kart beliriyor',
+
+    'f6.title': 'Kendine göre ayarla',
+    'f6.text': "On beş tema ve özel palet düzenleyici, Windows 11'de Mica ve Acrylic arka planlar, imleç izleri ve isteğe bağlı retro CRT ekran. Hareket hafif, tam ya da kapalı olabilir; sistemin hareketi azaltma ayarı her zaman önce gelir.",
+    'f6.li1': 'WebGL ile çizim, ligatürler ve satır içi görseller (Sixel ve iTerm2)',
+    'f6.li2': 'İstersen mekanik ya da yumuşak tuş sesleri ve testlerin geçince konfeti',
+    'f6.alt': 'Tarama çizgileri ve fosfor parıltısıyla yeşil Matrix temasında TermFlow Lite',
+
+    'f7.title': 'Yılını terminalde gör',
+    'f7.text': 'Wrapped komutlarını, en çok kullandığın araçları, en yoğun saatini ve serilerini sayar; Night Owl ve Commit Machine gibi rozetler dağıtır. Terminal çıktısı gibi, terminal yazı tipin ve tema renklerinle çizilir. Paylaşmak için görsel olarak kaydet.',
+    'f7.note': 'Wrapped yalnızca sayaçları ve araç adlarını tutar, argümanları ya da çıktıyı asla; hiçbir şey bilgisayarından dışarı çıkmaz.',
+    'f7.alt': 'ASCII terminal çıktısı olarak çizilmiş TermFlow Wrapped: komut sayıları, çubuklarla en çok kullanılan araçlar, saatlik blok grafik ve rozet listesi',
+
+    'more.title': 'Kutudan bunlar da çıkıyor',
+    'more.ssh': 'Kopan bağlantıya dayanan SSH',
+    'more.sshText': "Kayıtlı sunucular kendi OpenSSH'ini kullanır. tmux ya da screen'e bağlan, derlemeler çalışmaya devam etsin.",
+    'more.files': 'Dosya paneli',
+    'more.filesText': "Ctrl+Shift+E bulunduğun klasörü listeler ve her cd'yi takip eder. Bir dosyaya çift tıklayıp editöründe aç.",
+    'more.restore': 'Oturum geri yükleme',
+    'more.restoreText': 'Sekmeler, klasörler ve bölme düzeni bir sonraki açılışta geri gelir.',
+    'more.quake': 'Quake modu',
+    'more.quakeText': 'Genel bir kısayolla pencereyi ekranın üstünden aşağı indir.',
+    'more.broadcast': 'Toplu girdi',
+    'more.broadcastText': '<kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>B</kbd> ile bir kez yaz, bölmedeki tüm panellere gitsin.',
+    'more.open': "TermFlow Lite'ta aç",
+    'more.openText': 'Windows Gezgini menüsünden herhangi bir kabuğu ya da ajanı bir klasörde başlat.',
+    'more.tray': 'Tepsiye kapat',
+    'more.trayText': 'Pencereyi kapatmak terminalleri ve ajanları çalışır halde tutar.',
+    'more.prs': "GitHub pull request'leri",
+    'more.prsText': 'Bir pull request\'i mevcut gh oturumunla, herhangi bir ajanla kendi worktree\'sinde aç.',
+    'more.widget': 'Widget görünümü',
+    'more.widgetText': "Köşede küçük bir durum widget'ına küçült. Oturumlar çalışmaya devam eder; tek tıkla tam pencere geri gelir.",
+    'more.chars': 'Ajan karakterleri',
+    'more.charsText': 'ASCII ya da piksel sanatıyla, on ifadeli üç karakter. Gizli paneller hiçbir kaynak harcamaz, hareketi azaltma ayarı onları sabit tutar.',
+    'more.inbox': 'Ajan gelen kutusu',
+    'more.inboxText': 'Tüm sekmelerdeki onayların, araç çağrılarının, tamamlanan ve başarısız işlerin hassas bilgileri gizlenmiş zaman çizelgesi.',
+    'more.updates': 'Otomatik güncellemeler',
+    'more.updatesText': 'Kurulu uygulama yeni sürümleri denetler, sen onaylayınca güncellenir.',
+
+    'dl.title': "TermFlow Lite'ı indir",
+    'dl.winOs': 'Windows kurulum dosyası',
+    'dl.winHint': 'Windows 10 ve 11, 64 bit',
+    'dl.zipOs': 'Windows taşınabilir',
+    'dl.zipHint': 'Kurulum yok, zipten çıkar ve çalıştır',
+    'dl.appimageHint': 'Çoğu x64 dağıtım',
+    'dl.debOs': 'Debian ve Ubuntu',
+    'dl.debHint': '.deb paketi, x64',
+    'dl.silent': 'Çok sayıda makineye mi kuruyorsun? Windows kurulum dosyası sessiz çalışır:',
+    'dl.notes': 'Bu sürümde nelerin değiştiğini oku',
+
+    owner: 'Ürün sahibi: Umut Çelik',
+    'foot.source': 'Kaynak kodu',
+    'foot.releases': 'Tüm sürümler',
+    'foot.license': 'MIT lisansı'
+  }
+
+  function pick() {
+    const query = new URLSearchParams(location.search).get('lang')
+    if (query === 'en' || query === 'tr') return query
+    try {
+      const saved = localStorage.getItem(STORE)
+      if (saved === 'en' || saved === 'tr') return saved
+    } catch {}
+    return /^tr\b/i.test(navigator.language || '') ? 'tr' : 'en'
+  }
+
+  let lang = pick()
+  const htmlEn = new WeakMap()
+  const attrEn = new WeakMap()
+
+  function t(key, vars = {}) {
+    const text = (lang === 'tr' ? TR[key] : EN[key]) ?? EN[key] ?? key
+    return text.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ''))
+  }
+
+  /** Swaps the static text. Turkish comes from TR above, never from page input. */
+  function apply() {
+    document.documentElement.lang = lang
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      if (!htmlEn.has(el)) htmlEn.set(el, el.innerHTML)
+      const tr = TR[el.dataset.i18n]
+      el.innerHTML = lang === 'tr' && tr != null ? tr : htmlEn.get(el)
+    })
+    document.querySelectorAll('[data-i18n-attr]').forEach((el) => {
+      if (!attrEn.has(el)) attrEn.set(el, {})
+      const saved = attrEn.get(el)
+      for (const pair of el.dataset.i18nAttr.split(';')) {
+        const [attr, key] = pair.split(':').map((s) => s.trim())
+        if (!(attr in saved)) saved[attr] = el.getAttribute(attr)
+        const tr = TR[key]
+        el.setAttribute(attr, lang === 'tr' && tr != null ? tr : saved[attr])
+      }
+    })
+    document.querySelectorAll('[data-set-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)))
+  }
+
+  function set(next) {
+    if ((next !== 'en' && next !== 'tr') || next === lang) return
+    lang = next
+    try { localStorage.setItem(STORE, lang) } catch {}
+    const url = new URL(location.href)
+    if (lang === 'tr') url.searchParams.set('lang', 'tr')
+    else url.searchParams.delete('lang')
+    history.replaceState(null, '', url)
+    apply()
+    document.dispatchEvent(new CustomEvent('tfl:lang', { detail: lang }))
+  }
+
+  window.tflI18n = { get lang() { return lang }, t, set }
+
+  apply()
+  document.querySelectorAll('[data-set-lang]').forEach((b) => b.addEventListener('click', () => set(b.dataset.setLang)))
+})()

@@ -69,10 +69,14 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--paper); pa
 
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
 .brand img { border-radius: 8px; }
-.nav nav { display: flex; gap: 26px; font-size: 15px; }
+.nav nav { display: flex; align-items: center; gap: 26px; font-size: 15px; }
 .nav nav a { text-decoration: none; color: var(--slate); }
 .nav nav a:hover { color: var(--graphite); }
 .nav-gh .stars { margin-left: 6px; color: var(--graphite); font-weight: 700; }
+.lang { display: inline-flex; padding: 2px; border: 1px solid var(--hair); border-radius: 999px; }
+.lang button { font: 600 12px/1 var(--mono); letter-spacing: 0.04em; color: var(--slate); background: none; border: 0; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+.lang button:hover { color: var(--graphite); }
+.lang button[aria-pressed="true"] { background: var(--graphite); color: var(--paper); }
 
 /* ---------- Hero ---------- */
 .hero { max-width: var(--wrap); margin: 0 auto; padding: clamp(24px, 6vw, 72px) var(--gutter) 0; }
@@ -451,6 +455,9 @@ h2 {
 @media (max-width: 600px) {
   body { font-size: 16px; }
   .nav nav a:not(.nav-gh) { display: none; }
+  .nav { gap: 12px; }
+  .nav nav { gap: 14px; }
+  .brand { white-space: nowrap; }
   .mascot { width: 84px; top: -56px; }
   .mascot svg { width: 84px; height: 64px; }
   .app-tab { padding: 0 10px; }

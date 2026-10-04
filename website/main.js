@@ -15,6 +15,25 @@
     deb: /\.deb$/
   }
 
+  const { t } = window.tflI18n
+  // The release and star facts are kept here so a language switch can rewrite them.
+  const facts = { version: '1.15.0', date: null, stars: '' }
+
+  function showFacts() {
+    const version = t('version', { v: facts.version })
+    document.querySelectorAll('[data-version], [data-version-sentence]').forEach((el) => (el.textContent = version))
+    document.querySelectorAll('[data-version-short]').forEach((el) => (el.textContent = facts.version))
+    const date = facts.date?.toLocaleDateString(window.tflI18n.lang, { month: 'long', day: 'numeric', year: 'numeric' })
+    document.querySelectorAll('[data-release-date]').forEach((el) => (el.textContent = date ? t('released', { d: date }) : t('latest')))
+    document.querySelectorAll('[data-stars]').forEach((el) => {
+      el.textContent = facts.stars ? t('stars', { n: facts.stars }) : ''
+      el.hidden = !facts.stars
+    })
+    document.querySelectorAll('[data-stars-big]').forEach((el) => (el.textContent = facts.stars ? t('stars', { n: facts.stars }) : t('openSource')))
+  }
+  showFacts()
+  document.addEventListener('tfl:lang', showFacts)
+
   fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
     .then((release) => {
@@ -26,17 +45,12 @@
         document.querySelectorAll(`[data-dl="${kind}"]`).forEach((a) => (a.href = asset.browser_download_url))
         document.querySelectorAll(`[data-file="${kind}"]`).forEach((el) => (el.textContent = asset.name))
       }
-      document.querySelectorAll('[data-version]').forEach((el) => (el.textContent = `Version ${version}`))
-      document.querySelectorAll('[data-version-sentence]').forEach((el) => (el.textContent = `Version ${version}`))
-      document.querySelectorAll('[data-version-short]').forEach((el) => (el.textContent = version))
       if (String(release.html_url).startsWith(`https://github.com/${REPO}/releases/`)) {
         document.querySelectorAll('[data-release-notes]').forEach((a) => (a.href = release.html_url))
       }
-      const date = release.published_at ? new Date(release.published_at) : null
-      if (date) {
-        const label = date.toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })
-        document.querySelectorAll('[data-release-date]').forEach((el) => (el.textContent = `released ${label}`))
-      }
+      facts.version = version
+      if (release.published_at) facts.date = new Date(release.published_at)
+      showFacts()
     })
     .catch(() => {})
 
@@ -45,12 +59,8 @@
     .then((repo) => {
       const stars = Number(repo.stargazers_count)
       if (!Number.isFinite(stars) || stars < 1) return
-      const label = stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars)
-      document.querySelectorAll('[data-stars]').forEach((el) => {
-        el.textContent = `${label} stars`
-        el.hidden = false
-      })
-      document.querySelectorAll('[data-stars-big]').forEach((el) => (el.textContent = `${label} stars`))
+      facts.stars = stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : String(stars)
+      showFacts()
     })
     .catch(() => {})
 
@@ -136,7 +146,7 @@
       line.appendChild(ghost)
       const hint = document.createElement('span')
       hint.className = 'key-hint'
-      hint.textContent = '→ to accept'
+      hint.textContent = t('accept')
       line.appendChild(hint)
       // The cursor sits before the grey suggestion, as in the app.
       line.insertBefore(cursorEl, ghost)
@@ -246,7 +256,7 @@
       ...TEST_OUTPUT.map(([h]) => [h, 'gut gut-pass']),
       [`${escapeHtml(PROMPT)}${highlight('git push')}<span class="badge badge-fail">✗ 128  190ms</span>`, 'gut gut-fail'],
       ['<span class="c-red">fatal: No configured push destination.</span>', 'gut gut-fail'],
-      [`${escapeHtml(PROMPT)}${highlight('npm t')}<span class="cursor"></span><span class="c-ghost">est</span><span class="key-hint">→ to accept</span>`, '']
+      [`${escapeHtml(PROMPT)}${highlight('npm t')}<span class="cursor"></span><span class="c-ghost">est</span><span class="key-hint">${escapeHtml(t('accept'))}</span>`, '']
     ]
     for (const [html, cls] of lines) addLine(html, cls)
   }

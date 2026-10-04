@@ -28,7 +28,23 @@ const SCRIPTS: Record<DemoState, Script> = {
   sleeping: { state: 'sleeping', label: STATE_LABELS.sleeping, line: 'zzz...', terminal: [['⏺ Done. Anything else?'], ['', 'muted'], ['  (no input for a while)', 'muted']] }
 }
 
-const TOUR: DemoState[] = ['working', 'thinking', 'waiting', 'done', 'tired', 'error', 'angry', 'sleeping']
+/** Turkish copy for the site's language switch (website/i18n.js). Agent UI text stays as the agents print it. */
+const SCRIPTS_TR: Record<DemoState, Partial<Script>> = {
+  working: { label: 'Çalışıyor', line: 'upload.ts düzenleniyor', terminal: [['> yüklemeye yeniden deneme ekle', 'muted'], ...SCRIPTS.working.terminal.slice(1)] },
+  thinking: { label: 'Düşünüyor', line: 'Seçenekleri tartıyor.', terminal: [['> yükleme yavaş ağlarda neden başarısız oluyor?', 'muted'], ...SCRIPTS.thinking.terminal.slice(1)] },
+  waiting: { label: 'Seni bekliyor', line: 'Onayını bekliyor.' },
+  done: { label: 'Bitti', line: 'Hepsi tamam!', terminal: [...SCRIPTS.done.terminal.slice(0, 2), ['⏺ Yeniden deneme eklendi, tüm testler geçiyor.']] },
+  error: { label: 'Hata', line: 'Bir şeyler ters gitti.' },
+  tired: { label: 'Yorgun ama çalışıyor', line: 'upload.ts düzenleniyor (uzun oturum)', terminal: [...SCRIPTS.tired.terminal.slice(0, 3), ['  ...bir saatlik düzenlemeden sonra', 'muted']] },
+  angry: { label: 'Huysuz', line: 'Yine mi bu hata?!' },
+  sleeping: { label: 'Uyuyor', terminal: [['⏺ Bitti. Başka bir şey var mı?'], ['', 'muted'], ['  (bir süredir girdi yok)', 'muted']] }
+}
+
+declare global {
+  interface Window { tflI18n?: { lang: string } }
+}
+
+const TOUR: DemoState[] =['working', 'thinking', 'waiting', 'done', 'tired', 'error', 'angry', 'sleeping']
 const TOUR_MS = 5200
 const FRAME_MS = 42
 /** The demo's Auto sky changes much faster than the app's. */
@@ -59,7 +75,7 @@ function mount(root: HTMLElement): void {
     const attr = `data-${group.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`
     root.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((button) => button.setAttribute('aria-pressed', String(button.dataset[group] === value)))
   }
-  const script = (): Script => SCRIPTS[demo]
+  const script = (): Script => (window.tflI18n?.lang === 'tr' ? { ...SCRIPTS[demo], ...SCRIPTS_TR[demo] } : SCRIPTS[demo])
   const showTerminal = (): void => {
     // textContent only: the demo never builds HTML from strings.
     term.replaceChildren(...script().terminal.map(([text, tone]) => {
@@ -152,6 +168,10 @@ function mount(root: HTMLElement): void {
     last = 0
   }).observe(root)
   reduce.addEventListener('change', still)
+  document.addEventListener('tfl:lang', () => {
+    showTerminal()
+    paint()
+  })
   void document.fonts?.ready.then(still)
   apply()
   measure()
