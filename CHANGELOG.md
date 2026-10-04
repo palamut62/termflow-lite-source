@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.16.0 - 2026-10-04
 
 - Media previews: dropping or pasting an image or video, or a new one appearing in the tab's folder (screenshots, Playwright recordings, ffmpeg output), shows a preview card in the bottom-right corner of the terminal. After a few seconds it folds into a thumbnail in the info strip. Click to view it full size or play the video, open it, show it in its folder, copy its path or insert the path into the command line. Video thumbnails come from Windows itself, no ffmpeg needed. Settings > Terminal > Media Previews turns it off or limits it to drop and paste.
 
