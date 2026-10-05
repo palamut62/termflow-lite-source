@@ -58,7 +58,10 @@ export function resolveStartupCwd(): string | undefined {
 
 interface TerminalState {
   tabs: TerminalTab[]
-  /** Path inherited by new shells/agents until the user explicitly chooses another path. */
+  /**
+   * Last explicitly opened folder (Explorer launch, saved workspace). Only a hint for
+   * the GitHub panel and worktree launcher; new shells always use the startup directory.
+   */
   workspaceCwd?: string
   activeTabId: string | null
   splitDirection: 'vertical' | 'horizontal' | null
@@ -175,7 +178,9 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   },
 
   addTab(profileId, activate = true, cwd, launchCommand, permissionMode, worktree) {
-    const effectiveCwd = worktree?.path || cwd || get().workspaceCwd || resolveStartupCwd()
+    // An explicit folder belongs to this tab only; it must not become the path of
+    // every later shell, so plain new tabs always follow the startup directory.
+    const effectiveCwd = worktree?.path || cwd || resolveStartupCwd()
     const tab = makeTab(profileId, effectiveCwd, undefined, launchCommand, permissionMode, worktree)
     set((s) => ({
       tabs: [...s.tabs, tab],
@@ -247,7 +252,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     if (next.length === 0) {
       // Uygulama hiç boş kalmasın: default profile ile yeni tab aç.
       const { settings, shells } = useSettingsStore.getState()
-      const tab = makeTab(resolveDefaultProfileId(settings, shells), get().workspaceCwd)
+      const tab = makeTab(resolveDefaultProfileId(settings, shells), resolveStartupCwd())
       set({ tabs: [tab], activeTabId: tab.id, splitDirection: null, splitTabIds: null, paneTree: null })
       return
     }
@@ -332,7 +337,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     if (!state.activeTabId) return
     if (state.paneTree) {
       const { settings, shells } = useSettingsStore.getState()
-      const tab = makeTab(resolveDefaultProfileId(settings, shells), state.workspaceCwd)
+      const tab = makeTab(resolveDefaultProfileId(settings, shells), resolveStartupCwd())
       const paneTree = splitPane(state.paneTree, state.activeTabId, tab.id, direction)
       set({ tabs: [...state.tabs, tab], paneTree, splitDirection: direction, splitTabIds: paneTerminalIds(paneTree), activeTabId: tab.id })
       return
@@ -341,7 +346,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     let tabs = state.tabs
     if (!second) {
       const { settings, shells } = useSettingsStore.getState()
-      second = makeTab(resolveDefaultProfileId(settings, shells), state.workspaceCwd)
+      second = makeTab(resolveDefaultProfileId(settings, shells), resolveStartupCwd())
       tabs = [...tabs, second]
     }
     const paneTree = buildTiledPane(tabs.map((tab) => tab.id), direction)!

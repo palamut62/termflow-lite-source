@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.17.1 - 2026-10-05
+
+- Saved Commands: when Add is greyed out, the form now says why. A missing working folder for a scheduled command, a missing shell or agent, or an empty command gets a red border and a short note under the form.
+- Settings > Terminal > Confirm Before Close now explains what it does: when it is off, the X button and Ctrl+W close a tab without asking.
+- New terminals (+, Ctrl+T, split, and the tab that replaces the last closed one) always open in the startup folder from Settings > Terminal. Before, a folder opened once from Explorer, a saved command or a scheduled run stuck around, survived restarts and pulled every new shell into that project.
+
 ## 1.17.0 - 2026-10-04
 
 - ASCII backgrounds: give any profile a picture and it is drawn in characters behind the terminal text, a dotted photo behind PowerShell, a logo behind Claude Code. Settings > Appearance > ASCII Background picks the profile and the picture (PNG, JPG, WEBP, BMP or GIF), the characters (dots, ASCII or blocks), the density and the opacity, with a live preview. Shells, custom profiles, providers and SSH hosts can each have their own.

@@ -30,6 +30,16 @@ export function SavedCommands(): React.JSX.Element {
     ...profiles.map((item) => [item.id, item.name] as const),
     ...settings.providerProfiles.map((item) => [providerProfileId(item.id), item.name] as const)
   ])
+  // Eksik alanlar yalnizca kullanici forma bir sey girmeye basladiktan sonra isaretlenir.
+  const touched = !!(name.trim() || command.trim() || profileId || cwd.trim() || scheduleKind !== 'none')
+  const missingCwd = scheduleKind !== 'none' && !cwd.trim()
+  const missingProfile = touched && !profileId
+  const missingCommand = touched && !command.trim()
+  const missingHint = [
+    missingCwd && 'Choose a working folder for scheduled commands',
+    missingProfile && 'Select a shell or agent',
+    missingCommand && 'Enter a command'
+  ].filter(Boolean).join(' · ')
   const needle = query.trim().toLowerCase()
   const filtered = commands.filter((item) => !needle || `${item.name} ${item.command}`.toLowerCase().includes(needle))
 
@@ -94,12 +104,12 @@ export function SavedCommands(): React.JSX.Element {
       </header>
       <form className="saved-command-form" onSubmit={save}>
         <div className="saved-command-input-row">
-          <input value={cwd} onChange={event => setCwd(event.target.value)} placeholder="Working folder (required for schedules)" aria-label="Command working folder" />
+          <input value={cwd} onChange={event => setCwd(event.target.value)} placeholder={missingCwd ? 'Working folder is required for this schedule' : 'Working folder (required for schedules)'} aria-label="Command working folder" aria-invalid={missingCwd} className={missingCwd ? 'is-invalid' : undefined} />
           <button type="button" onClick={async () => { const path = await window.termflow.dialog.openDir(); if (path) setCwd(path) }}>Browse...</button>
         </div>
         <label><input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)} /> Schedule enabled</label>
         <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name (for example: Claude update)" aria-label="Command name" />
-        <select value={profileId} onChange={(event) => setProfileId(event.target.value)} aria-label="Run command in">
+        <select value={profileId} onChange={(event) => setProfileId(event.target.value)} aria-label="Run command in" aria-invalid={missingProfile} className={missingProfile ? 'is-invalid' : undefined}>
           <option value="">Select shell or agent...</option>
           {shells.length > 0 && <optgroup label="Shells">{shells.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</optgroup>}
           {profiles.length > 0 && <optgroup label="Agents and profiles">{profiles.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</optgroup>}
@@ -125,12 +135,13 @@ export function SavedCommands(): React.JSX.Element {
           )}
         </div>
         <div className="saved-command-input-row">
-          <input autoFocus value={command} onChange={(event) => setCommand(event.target.value)} placeholder="Command (for example: claude update)" aria-label="Command" />
-          <button type="submit" disabled={!command.trim() || !profileId || (scheduleKind !== 'none' && !cwd.trim())} title={editingId ? 'Save changes' : 'Add command'}>
+          <input autoFocus value={command} onChange={(event) => setCommand(event.target.value)} placeholder="Command (for example: claude update)" aria-label="Command" aria-invalid={missingCommand} className={missingCommand ? 'is-invalid' : undefined} />
+          <button type="submit" disabled={!command.trim() || !profileId || missingCwd} title={missingHint || (editingId ? 'Save changes' : 'Add command')}>
             {editingId ? <Check size={14} /> : <Plus size={14} />}{editingId ? 'Save' : 'Add'}
           </button>
           {editingId && <button type="button" onClick={resetForm}>Cancel</button>}
         </div>
+        {missingHint && <small className="saved-command-hint" role="status">{missingHint}</small>}
       </form>
       <label className="history-search saved-command-search"><Search size={13} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saved commands..." /></label>
       <div className="history-list">

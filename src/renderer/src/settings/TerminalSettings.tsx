@@ -161,7 +161,10 @@ export function TerminalSettings(): React.JSX.Element {
             label="Path menu on right click"
           />
         </Field>
-        <Field label="Confirm Before Close">
+        <Field
+          label="Confirm Before Close"
+          hint="Ask before closing a tab with its X button or Ctrl+W. When off, the tab closes right away."
+        >
           <Toggle checked={settings.confirmBeforeClose} onChange={(v) => void update({ confirmBeforeClose: v })} label="Confirm before close" />
         </Field>
         <Field

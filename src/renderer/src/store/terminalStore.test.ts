@@ -65,7 +65,7 @@ describe('addTab', () => {
     ])
   })
 
-  it('prefers an Explorer launch path over the configured startup directory', () => {
+  it('opens an Explorer launch path only in its own tab; later tabs use the startup directory', () => {
     useSettingsStore.setState({
       settings: { ...DEFAULT_SETTINGS, startupDirectory: 'custom', customStartupDirectory: 'C:\\default-workspace' }
     })
@@ -73,8 +73,21 @@ describe('addTab', () => {
     useTerminalStore.getState().addTab('codex')
     expect(useTerminalStore.getState().tabs.map((tab) => tab.launchCwd)).toEqual([
       'C:\\opened-folder',
-      'C:\\opened-folder'
+      'C:\\default-workspace'
     ])
+  })
+
+  it('ignores a restored workspace path for new tabs, splits and the replacement tab', () => {
+    useSettingsStore.setState({
+      settings: { ...DEFAULT_SETTINGS, startupDirectory: 'custom', customStartupDirectory: 'C:\\default-workspace' }
+    })
+    useTerminalStore.setState({ workspaceCwd: 'C:\\old-project' })
+    useTerminalStore.getState().addTab('bash')
+    useTerminalStore.getState().splitActive('vertical')
+    const launchCwds = (): Array<string | undefined> => useTerminalStore.getState().tabs.map((tab) => tab.launchCwd)
+    expect(launchCwds()).toEqual(['C:\\default-workspace', 'C:\\default-workspace'])
+    for (const tab of useTerminalStore.getState().tabs) useTerminalStore.getState().closeTab(tab.id)
+    expect(launchCwds()).toEqual(['C:\\default-workspace'])
   })
 
   it('uses the last directory when that startup option is selected', () => {

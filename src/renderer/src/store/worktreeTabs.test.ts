@@ -45,9 +45,9 @@ describe('addTab with a worktree', () => {
     useTerminalStore.getState().addTab('bash', true, undefined, undefined, undefined, WT)
     expect(useTerminalStore.getState().workspaceCwd).toBe('/repo')
 
-    // A later plain tab still inherits the repository, not the worktree.
+    // A later plain tab opens in the startup directory, never in the worktree.
     const plain = useTerminalStore.getState().addTab('bash')
-    expect(useTerminalStore.getState().tabs.find((t) => t.id === plain)!.cwd).toBe('/repo')
+    expect(useTerminalStore.getState().tabs.find((t) => t.id === plain)!.cwd).not.toBe(WT.path)
   })
 
   it('wins over an explicit cwd argument', () => {
