@@ -12,7 +12,7 @@
     released: 'released {d}',
     latest: 'latest release',
     stars: '{n} stars',
-    openSource: 'Open source',
+    openSource: 'Free',
     accept: '→ to accept'
   }
 
@@ -21,7 +21,7 @@
     released: '{d} yayınlandı',
     latest: 'son sürüm',
     stars: '{n} yıldız',
-    openSource: 'Açık kaynak',
+    openSource: 'Ücretsiz',
     accept: '→ ile kabul et',
 
     'meta.title': 'TermFlow Lite: her komutun nasıl bittiğini gösteren terminal',
@@ -37,7 +37,7 @@
     'hero.lede': 'TermFlow Lite; PowerShell, Git Bash, WSL ve Claude&nbsp;Code, Codex gibi kodlama ajanlarını sekmelerde ve bölmelerde çalıştırır. Her komut bir işaret alır: geçti, kaldı ya da hâlâ çalışıyor.',
     'hero.dlWin': 'Windows için indir',
     'hero.linux': 'Linux sürümleri',
-    free: 'Ücretsiz ve açık kaynak.',
+    free: 'Kullanımı ücretsiz.',
 
     'demo.label': 'TermFlow Lite önizlemesi: npm test çalışıyor, git push başarısız oluyor ve satır içi bir öneri beliriyor',
     'demo.prompt': "src/price.js'e bir indirim kuralı ekle ve testini yaz",
@@ -52,7 +52,7 @@
     'demo.replay': 'Tekrar oynat',
 
     'proof.label': 'Proje bilgileri',
-    'proof.license': "GitHub'da, MIT lisanslı",
+    'proof.license': 'ücret yok, reklam yok, kayıt yok',
     'proof.themes': '15 tema',
     'proof.palette': 've kendi paletin',
     'proof.accounts': '0 hesap',
@@ -166,9 +166,8 @@
     coffee: 'Bana bir kahve ısmarla',
 
     owner: 'Ürün sahibi: Umut Çelik',
-    'foot.source': 'Kaynak kodu',
     'foot.releases': 'Tüm sürümler',
-    'foot.license': 'MIT lisansı'
+    'foot.license': 'Lisans'
   }
 
   function pick() {

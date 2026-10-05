@@ -9,7 +9,8 @@
 import { createHash } from 'crypto'
 
 const tag = process.argv[2]
-const repo = process.env.GITHUB_REPOSITORY ?? 'palamut62/termflow-lite'
+// Releases live in the public repo; the source repo is private.
+const repo = process.env.RELEASE_REPOSITORY ?? 'palamut62/termflow-lite'
 if (!tag) {
   console.error('usage: node scripts/verify-release-assets.mjs <tag>')
   process.exit(1)

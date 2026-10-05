@@ -1,8 +1,10 @@
 name: CI
 
+# The source repo is private, so Actions minutes are metered (Windows counts
+# double). Tests run locally in `npm run verify` before every release; run this
+# workflow by hand from the Actions tab when a full CI pass is wanted.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   ci:

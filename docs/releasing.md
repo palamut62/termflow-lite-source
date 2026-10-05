@@ -19,6 +19,18 @@ That is exactly what shipped in v1.4.2: a local `latest.yml` next to the CI
 installer. The fix was re-running the Release workflow so every asset came from
 a single build.
 
+## Where releases go
+
+The source repo (`palamut62/termflow-lite-source`) is **private**. The Release
+workflow publishes every asset to the **public** `palamut62/termflow-lite` repo,
+which holds only a README, the LICENSE and the releases. The auto-updater
+(`publish` in `electron-builder.cjs`) and the website read from that public repo.
+
+The workflow needs the `RELEASES_TOKEN` secret in the source repo: a
+fine-grained token scoped to `palamut62/termflow-lite` only, with
+*Contents: Read and write*. When it expires, the upload steps fail with 403;
+create a new one and run `gh secret set RELEASES_TOKEN --repo palamut62/termflow-lite-source`.
+
 ## How to cut a release
 
 1. Update `CHANGELOG.md` with a `## <version> - <date>` section. The GitHub

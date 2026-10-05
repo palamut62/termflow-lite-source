@@ -153,7 +153,9 @@ npm run dist:linux   # Linux AppImage + deb (dist/)
 
 ## License
 
-Distributed under the [MIT License](LICENSE).
+Freeware: free to use, source code closed, all rights reserved. See [LICENSE](LICENSE).
+This repository is private; installers and updates are published to the public
+[palamut62/termflow-lite](https://github.com/palamut62/termflow-lite/releases) repository.
 
 ---
 

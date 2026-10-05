@@ -95,8 +95,8 @@ export function AboutSettings(): React.JSX.Element {
         <a href="https://termflow-lite.vercel.app" target="_blank" rel="noopener noreferrer">
           Website
         </a>
-        <a href="https://github.com/palamut62/termflow-lite" target="_blank" rel="noopener noreferrer">
-          Source code
+        <a href="https://github.com/palamut62/termflow-lite/releases" target="_blank" rel="noopener noreferrer">
+          Releases
         </a>
       </div>
 
@@ -115,7 +115,7 @@ export function AboutSettings(): React.JSX.Element {
       </div>
 
       <div className="settings-section-title">License</div>
-      <div className="about-license">MIT License</div>
+      <div className="about-license">Freeware. Free to use, source code closed. All rights reserved.</div>
     </section>
   )
 }
