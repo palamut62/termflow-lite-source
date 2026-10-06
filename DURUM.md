@@ -1,13 +1,13 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-06 | son arac: Claude Code | dal: `main`
+guncel: 2026-10-06 | son arac: Claude Code | dal: `main` | surum 1.18.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
 
 ## Ne bu proje
 Minimal, hizli, cok ozellestirilebilir capraz platform (Windows/Linux) terminal; gelistiriciler ve CLI ajan kullanicilari icin.
-Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.17.2 (freeware, kapali kaynak).
+Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.18.0 (freeware, kapali kaynak).
 Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamut62/termflow-lite`. Site: termflowlite.lol (Vercel, `website/`).
 
 ## Calistir / test et
@@ -20,7 +20,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.15-1.17: dosya paneli, medya onizleme kartlari, profil basina ASCII arka plan
 - [x] Site EN/TR dil destegi, Buy Me a Coffee butonu
 - [x] 1.17.2: kapali kaynaga gecis (freeware); CI/RELEASES_TOKEN akisi uctan uca dogrulandi
-- [x] Agent Memory (Unreleased): 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
+- [x] 1.18.0 Agent Memory: 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-06)
@@ -29,7 +29,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Varsayilan model `deepseek/deepseek-v4-flash`; kesilen cevap (`finish_reason: length`) son satiri atilir
 
 ## Yarim kalan / siradaki adim
-- Surum numarasi verilmedi (CHANGELOG "Unreleased"). Yayin oncesi: surum + `npm run verify` + `release:tag`
+- 1.18.0 tag'i atildi; Release workflow sonucu ve site indirme linkleri kontrol edilmeli
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
