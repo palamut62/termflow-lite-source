@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Agent Memory (Settings > Memory, off until you enable it): TermFlow reads your own Claude Code, Codex and OpenCode sessions from the last 30 days and keeps a short memory per project: where it stands, what is unfinished, which problems are still open, what was done and which decisions were made. Your agents read it at the start of a session and continue where the last one stopped instead of rediscovering the project.
+- Summaries are written by an OpenRouter model of your choice with your own key (stored encrypted). Only a short digest of each session leaves the computer: your requests, the agent's final answers, task lists, changed file names, commit messages and failed check names. File contents and command output are never sent, and API keys are masked. A typical update costs a fraction of a cent.
+- It only works when something changed: every 30 minutes TermFlow checks whether any session file changed and calls the model only for those. Entries older than 30 days are deleted, so the memory never grows.
+- Connect Claude Code, Codex or OpenCode with one click. TermFlow registers a small, read-only memory server through each agent's own command (OpenCode: its config file, backed up first). It runs on your computer, reads only the memory folder, and works while TermFlow is closed. Exclude any project to delete its memory and never read it again.
+
 ## 1.17.2 - 2026-10-06
 
 - TermFlow Lite is now freeware: still free to use, but the source code is closed. Installers and automatic updates keep coming from the same GitHub Releases page. Versions up to 1.17.1 stay under the MIT License.

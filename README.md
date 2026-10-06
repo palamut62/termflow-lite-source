@@ -73,6 +73,7 @@ TermFlow Lite opens straight into a terminal — no welcome screens, no setup wi
 - **Profile Health** checks the installed CLI, version, permission support and credential availability. Provider connection checks are explicit.
 - **Saved commands** support working folders, paused schedules, overlap prevention and recent exit results. Scheduled tasks run while TermFlow is open.
 - **Backup & Restore** exports settings, workspaces and tasks with environment variables and encrypted credentials excluded. Preview imports before applying; imported schedules start paused. Review command text before sharing backups.
+- **Agent Memory** (opt-in) builds a 30-day memory from your own Claude Code, Codex and OpenCode sessions: per project, what was done, what is unfinished and which problems are still open. Summaries are made with your OpenRouter key and model; only a short redacted digest of each session is sent, never file contents or command output. Connected agents read it through a local, read-only MCP server at the start of a session, so they pick up where the last one stopped. Memory stays on your computer, entries older than 30 days are deleted, and any project can be excluded.
 - **Handover review** lets you edit transferred context and add remaining work before starting the target agent. The source tab remains available.
 
 ## Installation
@@ -119,6 +120,7 @@ All settings apply in real time and are stored locally:
 - **Terminal** - scrollback, shell integration, inline suggestions, command notifications, tips, bell and sounds, copy-on-select, right-click behavior, confirm on close, startup directory
 - **Profiles** - default profile and custom shell profiles (command, arguments, working directory, environment)
 - **Providers** - current selectable models, CLI command, endpoint, environment-variable mapping, permission controls, and menu color; secret values remain in the OS environment
+- **Memory** - enable Agent Memory, OpenRouter key and model, update now, connect Claude Code / Codex / OpenCode, view or exclude project memories
 - **Keyboard** - rebind any shortcut
 - **About** - version, product owner, links
 

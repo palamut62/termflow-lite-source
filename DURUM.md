@@ -20,21 +20,23 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.15-1.17: dosya paneli, medya onizleme kartlari, profil basina ASCII arka plan
 - [x] Site EN/TR dil destegi, Buy Me a Coffee butonu
 - [x] 1.17.2: kapali kaynaga gecis (freeware); CI/RELEASES_TOKEN akisi uctan uca dogrulandi
-- [ ] Devam eden: belirsiz - kullaniciya sor (bekleyen is kaydi yok)
+- [x] Agent Memory (Unreleased): 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-06)
-- 1.17.2 yayinlandi (ilk kapali kaynak surum): RELEASES_TOKEN yenilendi, Windows+Linux+verify yesil, site linkleri v1.17.2
-- Site navbar'indan GitHub butonu kaldirildi (commit 0a30e76), Vercel prod deploy canli
-- Kapali kaynak akisi (private source + public releases) dogrulandi
+- Agent Memory tamamlandi: `src/main/memory/` (extract, sources, store, openrouter, prompts, engine, mcpServer, connect), `ipc/memory.ts`, `settings/MemorySettings.tsx`, `e2e/memory.spec.ts`; `npm run build` artik `build:mcp`'yi de kosar
+- Gercek OpenRouter ile denendi (`output/memory-e2e.ts`): 3 istek ~$0.0004, Turkce temiz proje hafizasi; MCP sunucusu Electron exe'siyle (ELECTRON_RUN_AS_NODE) calisiyor
+- Varsayilan model `deepseek/deepseek-v4-flash`; kesilen cevap (`finish_reason: length`) son satiri atilir
 
 ## Yarim kalan / siradaki adim
-- Kodda commitlenmemis degisiklik yok.
-- Siradaki is belirsiz - kullaniciya sor. Aday: `tab.activity` bosta ajan icin 'Running' gostermesi
+- Surum numarasi verilmedi (CHANGELOG "Unreleased"). Yayin oncesi: surum + `npm run verify` + `release:tag`
+- Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
+- Ertelenen aday: `tab.activity` 'Running' sorunu
 
 ## Acik sorunlar / bilinen sinirlar
 - Durum cubugu/sekme durumu Claude Code ve Codex bostayken de 'Running' gosteriyor (karakter artik spinner'a bakiyor, sekme degil)
 - CI E2E `afterEach app.close()` 60 sn teardown zaman asimi (1.6.1'den beri, kararsiz)
+- Birim testlerde bir test ara sira 5 sn zaman asimina dusuyor (tekrarda geciyor); `@vitest/coverage-v8` kurulu degil
 - PSReadLine 2.1+ cift oneri korumasi yalniz script ile test edildi (makinede 2.0)
 - zsh shim'i Linux'ta elle dogrulanmali
 - README ekran goruntuleri yeni gorselleri icermiyor
