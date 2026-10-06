@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.17.2 - 2026-10-06
 
 - TermFlow Lite is now freeware: still free to use, but the source code is closed. Installers and automatic updates keep coming from the same GitHub Releases page. Versions up to 1.17.1 stay under the MIT License.
 
