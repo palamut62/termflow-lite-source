@@ -77,7 +77,6 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--paper); pa
 .nav nav { display: flex; align-items: center; gap: 26px; font-size: 15px; }
 .nav nav a { text-decoration: none; color: var(--slate); }
 .nav nav a:hover { color: var(--graphite); }
-.nav-gh .stars { margin-left: 6px; color: var(--graphite); font-weight: 700; }
 .nav nav a.nav-coffee { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: var(--coffee); color: var(--coffee-text); font-weight: 700; font-size: 14px; white-space: nowrap; transition: transform 140ms ease, background 140ms ease; }
 .nav nav a.nav-coffee:hover { background: var(--coffee-hover); transform: translateY(-1px); }
 .lang { display: inline-flex; padding: 2px; border: 1px solid var(--hair); border-radius: 999px; }
@@ -472,7 +471,7 @@ h2 {
 
 @media (max-width: 600px) {
   body { font-size: 16px; }
-  .nav nav a:not(.nav-gh) { display: none; }
+  .nav nav a:not(.nav-coffee) { display: none; }
   .nav { gap: 12px; }
   .nav nav { gap: 14px; }
   .brand { white-space: nowrap; }

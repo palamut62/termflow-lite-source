@@ -25,10 +25,6 @@
     document.querySelectorAll('[data-version-short]').forEach((el) => (el.textContent = facts.version))
     const date = facts.date?.toLocaleDateString(window.tflI18n.lang, { month: 'long', day: 'numeric', year: 'numeric' })
     document.querySelectorAll('[data-release-date]').forEach((el) => (el.textContent = date ? t('released', { d: date }) : t('latest')))
-    document.querySelectorAll('[data-stars]').forEach((el) => {
-      el.textContent = facts.stars ? t('stars', { n: facts.stars }) : ''
-      el.hidden = !facts.stars
-    })
     document.querySelectorAll('[data-stars-big]').forEach((el) => (el.textContent = facts.stars ? t('stars', { n: facts.stars }) : t('openSource')))
   }
   showFacts()
