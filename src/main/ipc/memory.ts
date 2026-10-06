@@ -1,0 +1,65 @@
+import { BrowserWindow, ipcMain } from 'electron'
+import { IPC } from '../../shared/ipc'
+import type { MemoryAgent, MemoryConnection, MemoryProject } from '../../shared/types'
+import { connect, connectionStatus, disconnect, type ServerLaunch } from '../memory/connect'
+import type { MemoryEngine } from '../memory/engine'
+import type { MemoryStore } from '../memory/store'
+
+export const MEMORY_SECRET_ID = 'termflow-memory'
+const AGENTS: MemoryAgent[] = ['claude', 'codex', 'opencode']
+const FIRST_RUN_DELAY_MS = 30_000
+const RUN_INTERVAL_MS = 30 * 60 * 1000
+
+const isAgent = (value: unknown): value is MemoryAgent => AGENTS.includes(value as MemoryAgent)
+
+export interface MemoryIpcDeps {
+  engine: MemoryEngine
+  store: MemoryStore
+  /** null: sunucu betiği kurulamadı; bağlantı yapılamaz. */
+  launch: ServerLaunch | null
+}
+
+export function registerMemoryIpc({ engine, store, launch }: MemoryIpcDeps): void {
+  ipcMain.handle(IPC.MEMORY_STATUS, () => engine.getStatus())
+  ipcMain.handle(IPC.MEMORY_RUN, () => engine.run({ force: true }))
+  ipcMain.handle(IPC.MEMORY_PROJECTS, (): MemoryProject[] =>
+    store.listProjects().map(({ key, path, lastSessionAt, generatedAt, sessions, status }) => ({ key, path, lastSessionAt, generatedAt, sessions, status })))
+  ipcMain.handle(IPC.MEMORY_PROJECT, (_event, key: unknown) => typeof key === 'string' && key.length < 1024 ? store.readProject(key) : null)
+  // Hariç tutma ayarını renderer kendi settings store'u üzerinden yazar; burada yalnızca veri silinir.
+  ipcMain.handle(IPC.MEMORY_FORGET, (_event, key: unknown) => {
+    if (typeof key === 'string' && key && key.length < 1024) engine.forget(key)
+  })
+  ipcMain.handle(IPC.MEMORY_CLEAR, () => engine.clear())
+
+  const unavailable = (agent: MemoryAgent): MemoryConnection => ({ agent, state: 'error', detail: 'Memory server is not installed. Restart TermFlow Lite.' })
+  ipcMain.handle(IPC.MEMORY_CONNECTIONS, async (): Promise<MemoryConnection[]> =>
+    Promise.all(AGENTS.map((agent) => launch ? connectionStatus(agent, launch) : unavailable(agent))))
+  ipcMain.handle(IPC.MEMORY_CONNECT, async (_event, agent: unknown): Promise<MemoryConnection | null> => {
+    if (!isAgent(agent)) return null
+    return launch ? connect(agent, launch) : unavailable(agent)
+  })
+  ipcMain.handle(IPC.MEMORY_DISCONNECT, async (_event, agent: unknown): Promise<MemoryConnection | null> => {
+    if (!isAgent(agent)) return null
+    try {
+      await disconnect(agent)
+    } catch (error) {
+      return { agent, state: 'error', detail: error instanceof Error ? error.message.split('\n')[0] : String(error) }
+    }
+    return launch ? connectionStatus(agent, launch) : { agent, state: 'disconnected' }
+  })
+}
+
+/** Açılıştan kısa süre sonra ve sonra 30 dk'da bir; değişen session yoksa API çağrısı olmaz. */
+export function startMemoryScheduler(engine: MemoryEngine): () => void {
+  const tick = (): void => { void engine.run().catch((error) => console.warn('[memory] run failed:', error)) }
+  const first = setTimeout(tick, FIRST_RUN_DELAY_MS)
+  const interval = setInterval(tick, RUN_INTERVAL_MS)
+  return () => {
+    clearTimeout(first)
+    clearInterval(interval)
+  }
+}
+
+export function sendMemoryStatus(window: BrowserWindow | null, status: unknown): void {
+  if (window && !window.isDestroyed()) window.webContents.send(IPC.MEMORY_STATUS_EVENT, status)
+}

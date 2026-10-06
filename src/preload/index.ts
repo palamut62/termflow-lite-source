@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
-import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
+import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
 // option keys its reflow behaviour on this; fall back to a modern build when
@@ -149,6 +149,23 @@ const api = {
     warnings: (): Promise<string[]> => ipcRenderer.invoke(IPC.AGENT_SESSION_WARNINGS),
     list: (query: AgentSessionsQuery = {}): Promise<AgentSession[]> => ipcRenderer.invoke(IPC.AGENT_SESSIONS_LIST, query),
     handover: (session: AgentSessionRef): Promise<string> => ipcRenderer.invoke(IPC.AGENT_SESSION_HANDOVER, session)
+  },
+  /** Agent Memory: 30-day per-project memory and the agent MCP connections. */
+  memory: {
+    status: (): Promise<MemoryStatus> => ipcRenderer.invoke(IPC.MEMORY_STATUS),
+    run: (): Promise<MemoryStatus> => ipcRenderer.invoke(IPC.MEMORY_RUN),
+    projects: (): Promise<MemoryProject[]> => ipcRenderer.invoke(IPC.MEMORY_PROJECTS),
+    project: (key: string): Promise<string | null> => ipcRenderer.invoke(IPC.MEMORY_PROJECT, key),
+    forget: (key: string): Promise<void> => ipcRenderer.invoke(IPC.MEMORY_FORGET, key),
+    clear: (): Promise<void> => ipcRenderer.invoke(IPC.MEMORY_CLEAR),
+    connections: (): Promise<MemoryConnection[]> => ipcRenderer.invoke(IPC.MEMORY_CONNECTIONS),
+    connect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.MEMORY_CONNECT, agent),
+    disconnect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.MEMORY_DISCONNECT, agent),
+    onStatus: (callback: (status: MemoryStatus) => void): (() => void) => {
+      const handler = (_event: unknown, status: MemoryStatus): void => callback(status)
+      ipcRenderer.on(IPC.MEMORY_STATUS_EVENT, handler)
+      return () => ipcRenderer.removeListener(IPC.MEMORY_STATUS_EVENT, handler)
+    }
   },
   agentEvents: {
     list: (limit = 500): Promise<AgentEvent[]> => ipcRenderer.invoke(IPC.AGENT_EVENTS_LIST, limit),

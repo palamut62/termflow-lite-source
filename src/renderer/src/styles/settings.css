@@ -693,3 +693,14 @@
   top: 10px;
   font-size: 13px;
 }
+
+/* Agent Memory */
+.memory-inline { display:flex; align-items:center; gap:6px; }
+.memory-status { color:var(--tab-inactive-foreground); font-size:11px; }
+.memory-status-error { color:var(--error-foreground, #f14c4c); }
+.memory-consent { display:flex; flex-direction:column; gap:6px; margin:6px 0 12px; padding:12px; border:1px solid var(--widget-border); background:var(--side-bar-background); }
+.memory-consent span { color:var(--tab-inactive-foreground); font-size:11px; line-height:1.45; }
+.memory-preview { max-height:320px; overflow:auto; margin:0 0 10px; padding:10px; border:1px solid var(--widget-border); background:var(--side-bar-background); font-size:11px; line-height:1.45; white-space:pre-wrap; }
+.memory-spin { animation: memory-spin 1s linear infinite; }
+@keyframes memory-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .memory-spin { animation: none; } }

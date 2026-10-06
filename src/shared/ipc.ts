@@ -62,6 +62,16 @@ export const IPC = {
   AGENT_SESSIONS_LIST: 'agent-sessions:list',
   AGENT_SESSION_WARNINGS: 'agent-sessions:warnings',
   AGENT_SESSION_HANDOVER: 'agent-sessions:handover',
+  MEMORY_STATUS: 'memory:status', // -> MemoryStatus
+  MEMORY_STATUS_EVENT: 'memory:status-event', // main -> renderer MemoryStatus
+  MEMORY_RUN: 'memory:run', // () -> MemoryStatus; elle "Update now"
+  MEMORY_PROJECTS: 'memory:projects', // -> MemoryProject[]
+  MEMORY_PROJECT: 'memory:project', // (key) -> markdown | null
+  MEMORY_FORGET: 'memory:forget', // (key) -> void; projenin hafıza verisini siler
+  MEMORY_CLEAR: 'memory:clear', // () -> void
+  MEMORY_CONNECTIONS: 'memory:connections', // -> MemoryConnection[]
+  MEMORY_CONNECT: 'memory:connect', // (agent) -> MemoryConnection
+  MEMORY_DISCONNECT: 'memory:disconnect', // (agent) -> MemoryConnection
   AGENT_EVENTS_LIST: 'agent-events:list',
   AGENT_EVENTS_APPEND: 'agent-events:append',
   AGENT_EVENTS_CLEAR: 'agent-events:clear',

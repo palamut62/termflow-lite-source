@@ -26,6 +26,10 @@ import { registerSessionIpc } from './ipc/session'
 import { registerUpdaterIpc } from './ipc/updater'
 import { registerAgentEventsIpc } from './ipc/agentEvents'
 import { registerProviderSecretsIpc } from './ipc/providerSecrets'
+import { MEMORY_SECRET_ID, registerMemoryIpc, sendMemoryStatus, startMemoryScheduler } from './ipc/memory'
+import { MemoryEngine } from './memory/engine'
+import { MemoryStore } from './memory/store'
+import { appExecutable, installServerScript, serverLaunch, type ServerLaunch } from './memory/connect'
 import { ProviderSecretStore } from './storage/ProviderSecretStore'
 import { registerProfileHealth } from './ipc/profileHealth'
 import { AgentEventStore } from './storage/AgentEventStore'
@@ -64,6 +68,7 @@ let settingsStore: SettingsStore | null = null
 /** Compact widget view of the main window; created once settings are loaded. */
 let widget: WidgetController | null = null
 let sessionStore: SessionStore | null = null
+let stopMemoryScheduler: (() => void) | null = null
 let manager: TerminalManager | null = null
 
 // ---- Sistem tepsisi durumu ----
@@ -343,11 +348,34 @@ app.whenReady().then(() => {
     refreshContextMenu()
   })
 
+  // Agent Memory: kullanıcıya özel, userData/memory altında. Sunucu betiği sabit
+  // bir yola kopyalanır ki ajan kayıtları güncellemelerden sonra da çalışsın.
+  const memoryDir = join(app.getPath('userData'), 'memory')
+  const memoryStore = new MemoryStore(memoryDir)
+  const memoryEngine = new MemoryEngine({
+    store: memoryStore,
+    getConfig: () => (settingsStore ? settingsStore.get() : DEFAULT_SETTINGS).memory,
+    getApiKey: () => providerSecrets.get(MEMORY_SECRET_ID),
+    onStatus: (status) => sendMemoryStatus(mainWindow, status)
+  })
+  let memoryLaunch: ServerLaunch | null = null
+  try {
+    const script = installServerScript(join(app.getAppPath(), 'out', 'mcp', 'memory-server.cjs'), join(app.getPath('userData'), 'mcp'))
+    memoryLaunch = serverLaunch(appExecutable(), script, memoryDir)
+  } catch (error) {
+    console.warn('[memory] MCP server script could not be installed:', error)
+  }
+  registerMemoryIpc({ engine: memoryEngine, store: memoryStore, launch: memoryLaunch })
+  stopMemoryScheduler = startMemoryScheduler(memoryEngine)
+  let memoryWasEnabled = settingsStore.get().memory.enabled
+
   // Ayar değişince main tarafında uygulanacaklar: explorer menüsü + quake.
   const onSettingsChanged = (settings: AppSettings): void => {
     refreshContextMenu()
     applyQuakeConfig(settings)
     applyTrayConfig(settings)
+    if (settings.memory.enabled && !memoryWasEnabled) void memoryEngine.run().catch(() => undefined)
+    memoryWasEnabled = settings.memory.enabled
   }
 
   registerTerminalIpc(manager)
@@ -486,6 +514,7 @@ app.on('before-quit', () => {
   sessionStore?.flush() // write the debounced tab/split layout
   manager?.shutdown() // kill every live PTY
   unwatchAllMedia()
+  stopMemoryScheduler?.()
 })
 
 app.on('will-quit', () => {

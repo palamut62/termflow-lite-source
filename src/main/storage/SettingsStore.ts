@@ -4,6 +4,16 @@ import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
 import { DEFAULT_SETTINGS, type AppSettings } from '../../shared/types'
 
 const WRITE_DEBOUNCE_MS = 300
+
+function normalizeMemorySettings(value: unknown): AppSettings['memory'] {
+  const input = value && typeof value === 'object' ? value as Partial<AppSettings['memory']> : {}
+  const defaults = DEFAULT_SETTINGS.memory
+  const model = typeof input.model === 'string' && input.model.trim() ? input.model.trim().slice(0, 200) : defaults.model
+  const excluded = Array.isArray(input.excludedProjects)
+    ? [...new Set(input.excludedProjects.filter((key): key is string => typeof key === 'string' && key.length > 0 && key.length < 1024))]
+    : []
+  return { enabled: input.enabled === true, model, excludedProjects: excluded }
+}
 const BACKDROPS: AppSettings['backdrop'][] = ['none', 'mica', 'acrylic', 'tabbed']
 
 /**
@@ -43,6 +53,7 @@ export class SettingsStore {
     if ((settings as Partial<AppSettings>).backdrop === undefined && settings.blur) merged.backdrop = 'acrylic'
     if (!BACKDROPS.includes(merged.backdrop)) merged.backdrop = 'none'
     merged.asciiBackgrounds = normalizeAsciiBackgrounds(settings.asciiBackgrounds)
+    merged.memory = normalizeMemorySettings(settings.memory)
     return merged
   }
 

@@ -371,6 +371,8 @@ export interface AppSettings {
   weatherPlace: { name: string; latitude: number; longitude: number } | null
   /** Per-profile picture drawn as ASCII behind the terminal text (key = profile id). */
   asciiBackgrounds: Record<string, AsciiBackground>
+  /** Agent Memory: 30-day per-project memory built from local agent sessions (opt-in). */
+  memory: MemorySettings
   /** Widget görünümünün son konumu (null = sağ üst köşe), daraltılmış ve üstte tutma durumu. */
   widgetX: number | null
   widgetY: number | null
@@ -387,6 +389,42 @@ export type SoundTheme = 'off' | 'mechanical' | 'soft'
 export type AgentAnimationStyle = 'face' | 'scenes'
 export type AgentCharacter = 'auto' | 'ember' | 'miso' | 'piko'
 export type AgentWeather = 'off' | 'cycle' | 'live'
+
+export interface MemorySettings {
+  enabled: boolean
+  /** OpenRouter model id. */
+  model: string
+  /** Project keys (normalized git roots) that are never read or sent. */
+  excludedProjects: string[]
+}
+
+export interface MemoryStatus {
+  state: 'disabled' | 'no-key' | 'idle' | 'running' | 'error'
+  projects: number
+  done?: number
+  total?: number
+  lastRunAt?: number
+  lastError?: string
+  usage?: { promptTokens: number; completionTokens: number; requests: number; cost?: number }
+}
+
+export interface MemoryProject {
+  key: string
+  path: string
+  lastSessionAt: number
+  generatedAt: number
+  sessions: number
+  status: string
+}
+
+export type MemoryAgent = 'claude' | 'codex' | 'opencode'
+
+export interface MemoryConnection {
+  agent: MemoryAgent
+  /** missing: CLI not installed; outdated: registered with another app path. */
+  state: 'missing' | 'disconnected' | 'connected' | 'outdated' | 'error'
+  detail?: string
+}
 export type AsciiCharset = 'dots' | 'ascii' | 'blocks'
 
 export interface AsciiBackground {
@@ -550,6 +588,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentWeather: 'cycle',
   weatherPlace: null,
   asciiBackgrounds: {},
+  memory: { enabled: false, model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,

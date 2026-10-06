@@ -32,6 +32,13 @@ describe('SettingsStore', () => {
     expect(new SettingsStore(file()).get().backdrop).toBe('acrylic')
   })
 
+  it('keeps agent memory off by default and sanitizes its settings', () => {
+    writeFileSync(file(), JSON.stringify({ memory: { enabled: 'yes', model: '  ', excludedProjects: ['c:\a', 'c:\a', 3, ''] } }))
+    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: false, model: DEFAULT_SETTINGS.memory.model, excludedProjects: ['c:\a'] })
+    writeFileSync(file(), JSON.stringify({ memory: { enabled: true, model: ' x/y ' } }))
+    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: true, model: 'x/y', excludedProjects: [] })
+  })
+
   it('rejects an unknown backdrop material', () => {
     writeFileSync(file(), JSON.stringify({ ...DEFAULT_SETTINGS, backdrop: 'glass' }), 'utf-8')
     expect(new SettingsStore(file()).get().backdrop).toBe('none')
