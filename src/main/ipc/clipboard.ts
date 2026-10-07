@@ -1,6 +1,7 @@
-import { clipboard, ipcMain } from 'electron'
+import { app, clipboard, ipcMain } from 'electron'
 import { existsSync } from 'fs'
-import { isAbsolute } from 'path'
+import { isAbsolute, join } from 'path'
+import { savePastedImage } from '../pastedImages'
 import { IPC } from '../../shared/ipc'
 
 /**
@@ -22,6 +23,18 @@ export function registerClipboardIpc(): void {
       const filePath = clipboard.readBuffer('FileNameW').toString('utf16le').replace(/\0+$/g, '').trim()
       if (filePath && isAbsolute(filePath) && existsSync(filePath)) return { kind: 'file' as const, value: filePath }
     }
-    return { kind: 'text' as const, value: clipboard.readText() }
+    const text = clipboard.readText()
+    if (text) return { kind: 'text' as const, value: text }
+    // Yalnız resim (ekran alıntısı, "resmi kopyala"): PNG'ye kaydedip yolunu
+    // dosya gibi yapıştır; ajanlar resmi bu yoldan okur.
+    const image = clipboard.readImage()
+    if (!image.isEmpty()) {
+      try {
+        return { kind: 'file' as const, value: savePastedImage(image.toPNG(), join(app.getPath('temp'), 'termflow-lite-paste')) }
+      } catch {
+        return { kind: 'text' as const, value: '' }
+      }
+    }
+    return { kind: 'text' as const, value: '' }
   })
 }

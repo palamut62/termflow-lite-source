@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Paste an image: when the clipboard holds only a picture (a screenshot, or Copy image in a browser), Paste and Ctrl+V now save it as a PNG and insert its path, so you can hand it straight to Claude Code, Codex or a command. A preview card shows up as with other pasted files. Pasted images are kept for 7 days.
+- After Paste from the right-click menu you can keep typing; the terminal no longer loses focus.
+
 ## 1.19.0 - 2026-10-07
 
 - Type over a selection: double-click a word in the line you are typing (shell prompt or an agent's input box such as Claude Code or Codex) and just start typing. The word is replaced in place and the cursor stays there instead of jumping to the end of the line. Backspace or Delete removes the selected word.

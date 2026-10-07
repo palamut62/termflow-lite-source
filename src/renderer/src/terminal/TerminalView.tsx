@@ -762,6 +762,8 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   const handlePaste = (): void => {
     if (termRef.current) pasteFromClipboard(termRef.current, tabId)
     closeMenu()
+    // Menü tıklaması odağı aldı; yapıştırdıktan sonra yazmaya devam edilebilsin.
+    termRef.current?.focus()
   }
   const handleSelectAll = (): void => {
     termRef.current?.selectAll()

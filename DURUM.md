@@ -22,12 +22,13 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.17.2: kapali kaynaga gecis (freeware); CI/RELEASES_TOKEN akisi uctan uca dogrulandi
 - [x] 1.18.0 Agent Memory: 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
 - [x] 1.19.0 Secimin uzerine yazma: cift tikla secilen kelime yazilan metinle yerinde degisir
+- [ ] Resim yapistirma: commit'li, henuz yayinlanmadi
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-07)
-- Secimin uzerine yazma: `terminal/selectionEdit.ts` (saf `planSelectionEdit` + `handleSelectionEditKey`), `TerminalView` key handler'ina bagli
-- Secim imlecin mantiksal satirindaysa (soft wrap dahil) oklarla secim sonuna gidilir, backspace ile silinir, karakter xterm'e birakilir; aksi halde eski davranis. Broadcast acikken kapali
-- Birim `selectionEdit.test.ts` (8) + E2E `e2e/selection-edit.spec.ts` (PowerShell'de gercek tus/cift tik) gecti; `npm run verify` yesil
+- 1.19.0: secimin uzerine yazma (`terminal/selectionEdit.ts`) yayinlandi, site EN/TR guncellendi (Vercel)
+- Resim yapistirma (Unreleased): panoda yalniz resim varsa `main/pastedImages.ts` PNG'yi `%TEMP%/termflow-lite-paste`'e kaydeder (7 gun), yol dosya gibi yapistirilir; sag tik Paste sonrasi odak terminale doner. E2E `e2e/paste-image.spec.ts` (main pano okumalari stub'li)
+- Coklu dosya kopyasinda hala yalniz ilk yol gelir: Electron Windows'ta CF_HDROP okuyamiyor, PowerShell `Get-Clipboard` ~2 sn ve kararsiz
 
 ## Yarim kalan / siradaki adim
 - 1.19.0 yayinda (2026-10-07): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
@@ -38,6 +39,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Acik sorunlar / bilinen sinirlar
 - Durum cubugu/sekme durumu Claude Code ve Codex bostayken de 'Running' gosteriyor (karakter artik spinner'a bakiyor, sekme degil)
+- E2E `app.spec` "pastes ..." iki testi gercek OS panosuna yazar; pano kilitliyken (2026-10-07) degisiklikten bagimsiz kirilir
 - CI E2E `afterEach app.close()` 60 sn teardown zaman asimi (1.6.1'den beri, kararsiz)
 - Birim testlerde bir test ara sira 5 sn zaman asimina dusuyor (tekrarda geciyor); `@vitest/coverage-v8` kurulu degil
 - PSReadLine 2.1+ cift oneri korumasi yalniz script ile test edildi (makinede 2.0)
