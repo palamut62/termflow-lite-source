@@ -70,6 +70,7 @@
     'f2.li1': "Her ajana kendi git worktree'sini ver, paralel oturumlar birbirinin üzerine yazmasın",
     'f2.li2': 'İşi bir ajandan ya da sağlayıcıdan diğerine bağlamı kaybetmeden devret',
     'f2.li3': 'Sekmeler canlı durumu gösterir: çalışıyor, girdi bekliyor, yeni çıktı var, bitti ya da kaldı',
+    'f2.li4': 'Agent Memory son 30 günün oturumlarından her proje için kısa bir hafıza tutar; sıradaki ajan bir öncekinin kaldığı yerden devam eder',
     'f2.alt': 'Yan yana iki bölme: npm test çalıştıran PowerShell ve git diff ile git log gösteren Git Bash',
 
     'f3.title': 'Ajanının ne yaptığını gör',
@@ -105,6 +106,7 @@
     'f4.li1': "<code>src/app.ts:42:7</code> gibi derleyici ve test hataları VS Code, Cursor ya da Windsurf'te tam o satırda açılır",
     'f4.li2': 'Çalıştırdığın tüm komutlarda <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>H</kbd> ile ara',
     'f4.li3': "package.json script'lerini, Git ve Docker görevlerini <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd> ile paletten çalıştır",
+    'f4.li4': 'Yazdığın satırdaki bir kelimeye çift tıkla ve üzerine yaz. İmleç olduğun yerde kalır; kabukta da ajan istemlerinde de',
     'f4.alt': "İstemde npm t yazılı, npm test'in geri kalanı gri olarak öneriliyor",
 
     'f5.title': 'Araçlarının kaydettiği ekran görüntülerini gör',

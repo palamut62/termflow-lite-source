@@ -31,7 +31,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - 1.19.0 yayinda (2026-10-07): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
-- Site Agent Memory ve secimin uzerine yazma ozelliginden henuz bahsetmiyor
+- Site guncel: Agent Memory (f2) ve secimin uzerine yazma (f4) maddeleri EN/TR eklendi, Vercel prod
 - Secimin uzerine yazma Claude Code/Codex icinde elle denenmeli (imleci gercek caret'e koymayan TUI'de devreye girmez, eski davranis kalir)
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
