@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-07 | son arac: Claude Code | dal: `feature/secimi-yazarak-degistir` | surum 1.19.0
+guncel: 2026-10-07 | son arac: Claude Code | dal: `main` | surum 1.19.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -30,8 +30,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Birim `selectionEdit.test.ts` (8) + E2E `e2e/selection-edit.spec.ts` (PowerShell'de gercek tus/cift tik) gecti; `npm run verify` yesil
 
 ## Yarim kalan / siradaki adim
+- 1.19.0 yayinda (2026-10-07): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
 - Secimin uzerine yazma Claude Code/Codex icinde elle denenmeli (imleci gercek caret'e koymayan TUI'de devreye girmez, eski davranis kalir)
-- 1.18.0 yayinda (2026-10-06): Release + verify-release yesil, public repoda exe/zip/AppImage/deb + latest*.yml. Site Agent Memory'den henuz bahsetmiyor
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
