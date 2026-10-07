@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.19.0 - 2026-10-07
 
 - Type over a selection: double-click a word in the line you are typing (shell prompt or an agent's input box such as Claude Code or Codex) and just start typing. The word is replaced in place and the cursor stays there instead of jumping to the end of the line. Backspace or Delete removes the selected word.
 
