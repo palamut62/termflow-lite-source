@@ -29,7 +29,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Varsayilan model `deepseek/deepseek-v4-flash`; kesilen cevap (`finish_reason: length`) son satiri atilir
 
 ## Yarim kalan / siradaki adim
-- 1.18.0 tag'i atildi; Release workflow sonucu ve site indirme linkleri kontrol edilmeli
+- 1.18.0 yayinda (2026-10-06): Release + verify-release yesil, public repoda exe/zip/AppImage/deb + latest*.yml. Site Agent Memory'den henuz bahsetmiyor
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
