@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Type over a selection: double-click a word in the line you are typing (shell prompt or an agent's input box such as Claude Code or Codex) and just start typing. The word is replaced in place and the cursor stays there instead of jumping to the end of the line. Backspace or Delete removes the selected word.
+
 ## 1.18.0 - 2026-10-06
 
 - Agent Memory (Settings > Memory, off until you enable it): TermFlow reads your own Claude Code, Codex and OpenCode sessions from the last 30 days and keeps a short memory per project: where it stands, what is unfinished, which problems are still open, what was done and which decisions were made. Your agents read it at the start of a session and continue where the last one stopped instead of rediscovering the project.

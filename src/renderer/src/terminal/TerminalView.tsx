@@ -19,6 +19,7 @@ import { burstConfetti, shouldCelebrate } from '../fun/confetti'
 import { useStatsStore } from '../store/statsStore'
 import { playCue } from '../fun/sounds'
 import { ShellIntegration, formatDuration, type FinishedCommand } from './shellIntegration'
+import { handleSelectionEditKey } from './selectionEdit'
 import { InlineSuggest } from './inlineSuggest'
 import { motionEnabled } from '../motion'
 import { formatDroppedPaths } from './dropPaths'
@@ -525,6 +526,9 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
           return false
         }
       }
+      // Seçili kelimenin üzerine yazma (broadcast'te imleç hareketleri diğer
+      // panellerde anlamsız olacağı için devre dışı).
+      if (!useTerminalStore.getState().broadcastInput && handleSelectionEditKey(term, e)) return false
       return true
     })
 

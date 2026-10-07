@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-06 | son arac: Claude Code | dal: `main` | surum 1.18.0
+guncel: 2026-10-07 | son arac: Claude Code | dal: `feature/secimi-yazarak-degistir` | surum 1.18.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -21,14 +21,16 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] Site EN/TR dil destegi, Buy Me a Coffee butonu
 - [x] 1.17.2: kapali kaynaga gecis (freeware); CI/RELEASES_TOKEN akisi uctan uca dogrulandi
 - [x] 1.18.0 Agent Memory: 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
+- [x] Secimin uzerine yazma (Unreleased): cift tikla secilen kelime yazilan metinle yerinde degisir
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
-## Son oturum (2026-10-06)
-- Agent Memory tamamlandi: `src/main/memory/` (extract, sources, store, openrouter, prompts, engine, mcpServer, connect), `ipc/memory.ts`, `settings/MemorySettings.tsx`, `e2e/memory.spec.ts`; `npm run build` artik `build:mcp`'yi de kosar
-- Gercek OpenRouter ile denendi (`output/memory-e2e.ts`): 3 istek ~$0.0004, Turkce temiz proje hafizasi; MCP sunucusu Electron exe'siyle (ELECTRON_RUN_AS_NODE) calisiyor
-- Varsayilan model `deepseek/deepseek-v4-flash`; kesilen cevap (`finish_reason: length`) son satiri atilir
+## Son oturum (2026-10-07)
+- Secimin uzerine yazma: `terminal/selectionEdit.ts` (saf `planSelectionEdit` + `handleSelectionEditKey`), `TerminalView` key handler'ina bagli
+- Secim imlecin mantiksal satirindaysa (soft wrap dahil) oklarla secim sonuna gidilir, backspace ile silinir, karakter xterm'e birakilir; aksi halde eski davranis. Broadcast acikken kapali
+- Birim `selectionEdit.test.ts` (8) + E2E `e2e/selection-edit.spec.ts` (PowerShell'de gercek tus/cift tik) gecti; `npm run verify` yesil
 
 ## Yarim kalan / siradaki adim
+- Secimin uzerine yazma Claude Code/Codex icinde elle denenmeli (imleci gercek caret'e koymayan TUI'de devreye girmez, eski davranis kalir)
 - 1.18.0 yayinda (2026-10-06): Release + verify-release yesil, public repoda exe/zip/AppImage/deb + latest*.yml. Site Agent Memory'den henuz bahsetmiyor
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
