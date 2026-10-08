@@ -1,13 +1,13 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-08 | son arac: Claude Code | dal: `main` | surum 1.20.0
+guncel: 2026-10-08 | son arac: Claude Code | dal: `main` | surum 1.20.1
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
 
 ## Ne bu proje
 Minimal, hizli, cok ozellestirilebilir capraz platform (Windows/Linux) terminal; gelistiriciler ve CLI ajan kullanicilari icin.
-Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.20.0 (freeware, kapali kaynak).
+Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.20.1 (freeware, kapali kaynak).
 Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamut62/termflow-lite`. Site: termflowlite.lol (Vercel, `website/`).
 
 ## Calistir / test et
@@ -25,7 +25,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.19.1 Resim yapistirma: panodaki resim PNG olarak kaydedilip yolu yapistirilir
 - [x] 1.20.0 Secim duzeltmesi: Claude Code caret'i, tum input secilip Delete ile temizleme
 - [x] 1.20.0 Memory model katalogu: OpenRouter'dan tum modeller, 24 saat cache, Refresh + Test
-- [ ] Model secici (Unreleased): datalist yerine `settings/ModelPicker.tsx`; acilinca tum modeller, All/Free filtresi, ucretsizler yesil
+- [x] 1.20.1 Model secici: datalist yerine `settings/ModelPicker.tsx`; acilinca tum modeller, All/Free filtresi, ucretsizler yesil
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-08)
@@ -36,7 +36,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - 1.19.1 yayinda (2026-10-08): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
-- Site: Agent Memory (f2), secimin uzerine yazma (f4), resim yapistirma (f5) EN/TR; tum inputu silme yayinlaninca f4.li4e eklenecek
+- Site: Agent Memory (f2), secimin uzerine yazma + tum satiri silme (f4), resim yapistirma (f5) EN/TR; Vercel prod
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 

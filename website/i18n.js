@@ -106,7 +106,7 @@
     'f4.li1': "<code>src/app.ts:42:7</code> gibi derleyici ve test hataları VS Code, Cursor ya da Windsurf'te tam o satırda açılır",
     'f4.li2': 'Çalıştırdığın tüm komutlarda <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>H</kbd> ile ara',
     'f4.li3': "package.json script'lerini, Git ve Docker görevlerini <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd> ile paletten çalıştır",
-    'f4.li4': 'Yazdığın satırdaki bir kelimeye çift tıkla ve üzerine yaz. İmleç olduğun yerde kalır; kabukta da ajan istemlerinde de',
+    'f4.li4': "Yazdığın satırdaki bir kelimeye çift tıkla ve üzerine yaz. İmleç olduğun yerde kalır; kabukta da Claude Code ya da Codex'te de. Tüm satırı silmek için üç tıkla ve Delete'e bas",
     'f4.alt': "İstemde npm t yazılı, npm test'in geri kalanı gri olarak öneriliyor",
 
     'f5.title': 'Araçlarının kaydettiği ekran görüntülerini gör',

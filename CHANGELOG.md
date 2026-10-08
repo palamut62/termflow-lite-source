@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.20.1 - 2026-10-08
 
 - The Memory model picker now shows every OpenRouter model when you open it, not only the ones matching the current model. Search by name or id, switch to Free to see only free models, and spot free models at a glance by their green Free badge. You can still type any model id that is not in the list.
 
