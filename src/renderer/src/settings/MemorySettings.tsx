@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Brain, RefreshCw, Trash2 } from 'lucide-react'
-import type { MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus } from '../../../shared/types'
+import { Brain, FlaskConical, RefreshCw, Trash2 } from 'lucide-react'
+import type { MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModel, OpenRouterModelList, OpenRouterModelTest } from '../../../shared/types'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
 import { Field, TextInput, Toggle } from './Settings'
 
 const SECRET_ID = 'termflow-memory'
+/** Model listesi hiç çekilemediyse (ilk açılış, çevrimdışı) gösterilen yedek öneriler. */
 const MODEL_SUGGESTIONS = ['deepseek/deepseek-v4-flash', 'google/gemini-3.5-flash-lite', 'openai/gpt-6-luna', 'anthropic/claude-haiku-4.5']
 const AGENT_LABEL: Record<MemoryAgent, string> = { claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode' }
 const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
@@ -17,6 +18,26 @@ const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
 }
 
 const date = (time?: number): string => time ? new Date(time).toLocaleString() : 'never'
+
+const usd = (value: number): string => `$${value < 1 ? Number(value.toPrecision(2)) : value.toFixed(2)}`
+
+function contextText(tokens: number): string {
+  if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(1))}M context`
+  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K context`
+  return tokens ? `${tokens} context` : 'context unknown'
+}
+
+function priceText(model: OpenRouterModel): string {
+  if (model.inputPrice === null || model.outputPrice === null) return 'variable price'
+  if (model.inputPrice === 0 && model.outputPrice === 0) return 'free'
+  return `${usd(model.inputPrice)} in / ${usd(model.outputPrice)} out per 1M tokens`
+}
+
+function testText(result: OpenRouterModelTest): string {
+  if (!result.ok) return result.error ?? 'Test failed'
+  const seconds = `${(result.latencyMs / 1000).toFixed(1)} s`
+  return `Works · ${seconds}${result.cost !== undefined ? ` · ${usd(result.cost)}` : ''}`
+}
 
 function statusText(status: MemoryStatus | null): string {
   if (!status) return 'Loading...'
@@ -43,6 +64,10 @@ export function MemorySettings(): React.JSX.Element {
   const [apiKey, setApiKey] = useState('')
   const [hasKey, setHasKey] = useState(false)
   const [model, setModel] = useState(memory.model)
+  const [catalog, setCatalog] = useState<OpenRouterModelList | null>(null)
+  const [refreshingModels, setRefreshingModels] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<OpenRouterModelTest | null>(null)
 
   const refresh = useCallback(async (): Promise<void> => {
     const [nextStatus, nextProjects, keyStored] = await Promise.all([
@@ -65,6 +90,21 @@ export function MemorySettings(): React.JSX.Element {
   }, [refresh])
 
   useEffect(() => setModel(memory.model), [memory.model])
+
+  // Cache tazeyse ağa çıkılmaz; main en fazla günde bir kez yeniden çeker.
+  useEffect(() => { void window.termflow.memory.models().then(setCatalog) }, [])
+
+  const refreshModels = async (): Promise<void> => {
+    setRefreshingModels(true)
+    try {
+      const next = await window.termflow.memory.models(true)
+      setCatalog(next)
+      if (next.error) toast(next.error, 'error')
+      else toast(`${next.models.length} models loaded`, 'success')
+    } finally {
+      setRefreshingModels(false)
+    }
+  }
 
   const setEnabled = async (enabled: boolean): Promise<void> => {
     setConsent(false)
@@ -94,6 +134,21 @@ export function MemorySettings(): React.JSX.Element {
   const saveModel = async (): Promise<void> => {
     const next = model.trim()
     if (next && next !== memory.model) await update({ memory: { ...memory, model: next } })
+  }
+
+  const testSelectedModel = async (): Promise<void> => {
+    const id = model.trim()
+    if (!id) return
+    await saveModel()
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const result = await window.termflow.memory.testModel(id)
+      setTestResult(result)
+      toast(`${id}: ${testText(result)}`, result.ok ? 'success' : 'error')
+    } finally {
+      setTesting(false)
+    }
   }
 
   const runNow = async (): Promise<void> => {
@@ -151,6 +206,14 @@ export function MemorySettings(): React.JSX.Element {
   }
 
   const running = status?.state === 'running'
+  const trimmedModel = model.trim()
+  const selectedModel = catalog?.models.find((item) => item.id === trimmedModel)
+  const unknownModel = Boolean(trimmedModel && catalog?.models.length && !selectedModel)
+  const modelHint = !catalog
+    ? 'Loading the OpenRouter model list...'
+    : catalog.models.length
+      ? `${catalog.models.length} OpenRouter models · list from ${date(catalog.fetchedAt)}${catalog.error ? ` · refresh failed: ${catalog.error}` : ''}`
+      : `Model list unavailable${catalog.error ? `: ${catalog.error}` : ''}. Any OpenRouter model id works`
 
   return (
     <section>
@@ -187,10 +250,30 @@ export function MemorySettings(): React.JSX.Element {
         </span>
       </Field>
 
-      <Field label="Model" hint="Any OpenRouter model id; cheap long-context models work well">
-        <TextInput className="settings-input-wide" list="memory-models" value={model} onChange={(e) => setModel(e.target.value)} onBlur={() => void saveModel()} onKeyDown={(e) => { if (e.key === 'Enter') void saveModel() }} />
-        <datalist id="memory-models">{MODEL_SUGGESTIONS.map((id) => <option key={id} value={id} />)}</datalist>
+      <Field label="Model" hint={modelHint}>
+        <span className="memory-inline">
+          <TextInput className="settings-input-wide" list="memory-models" value={model} placeholder="Search OpenRouter models" onChange={(e) => { setModel(e.target.value); setTestResult(null) }} onBlur={() => void saveModel()} onKeyDown={(e) => { if (e.key === 'Enter') void saveModel() }} />
+          <button className="settings-btn settings-btn-small" disabled={refreshingModels} onClick={() => void refreshModels()} aria-label="Refresh model list" title="Fetch the model list from OpenRouter again">
+            <RefreshCw size={12} className={refreshingModels ? 'memory-spin' : undefined} />
+          </button>
+          <button className="settings-btn settings-btn-small" disabled={testing || !hasKey || !model.trim()} onClick={() => void testSelectedModel()} title={hasKey ? 'Send a tiny request to check the key and model' : 'Save an OpenRouter API key first'}>
+            <FlaskConical size={12} className={testing ? 'memory-spin' : undefined} /> {testing ? 'Testing...' : 'Test'}
+          </button>
+        </span>
+        <datalist id="memory-models">
+          {catalog?.models.length
+            ? catalog.models.map((item) => <option key={item.id} value={item.id} label={`${item.name} · ${priceText(item)}`} />)
+            : MODEL_SUGGESTIONS.map((id) => <option key={id} value={id} />)}
+        </datalist>
       </Field>
+      {(selectedModel || unknownModel || testResult) && (
+        <p className="settings-note memory-model-info">
+          {selectedModel && <>{selectedModel.name} · {contextText(selectedModel.contextLength)} · {priceText(selectedModel)}</>}
+          {selectedModel && !selectedModel.structured && <> · <span className="memory-status-error">no structured output, summaries may fail</span></>}
+          {unknownModel && <span className="memory-status-error">Not in the OpenRouter model list</span>}
+          {testResult && <><br /><span className={testResult.ok ? 'memory-status' : 'memory-status memory-status-error'}>Test: {testText(testResult)}</span></>}
+        </p>
+      )}
 
       <Field label="Status" hint={status?.usage?.requests ? `Last run: ${status.usage.requests} requests, ${status.usage.promptTokens + status.usage.completionTokens} tokens${status.usage.cost ? `, $${status.usage.cost.toFixed(4)}` : ''}` : 'Checks for changed sessions every 30 minutes'}>
         <span className="memory-inline">

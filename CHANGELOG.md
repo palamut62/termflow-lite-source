@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Settings > Memory now lists every OpenRouter model. The list comes from OpenRouter itself, is cached for a day so it opens instantly and works offline, and can be refreshed with one click. The chosen model shows its context size and price, and a warning when it cannot return the structured summaries memory needs.
+- Test the chosen model before you rely on it: one tiny request with your key shows whether it works, how long it took and what it cost.
 - Typing over a selection now works in Claude Code. It draws its own cursor and parks the real one a column away, so a replaced word used to lose the wrong letters; TermFlow now follows the cursor Claude Code draws.
 - Select the whole input (triple-click, drag past the end, or Select All) and press Delete or Backspace to clear it, or just type to replace it. Text outside the line you are typing is left alone.
 

@@ -24,12 +24,14 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.19.0 Secimin uzerine yazma: cift tikla secilen kelime yazilan metinle yerinde degisir
 - [x] 1.19.1 Resim yapistirma: panodaki resim PNG olarak kaydedilip yolu yapistirilir
 - [ ] Secim duzeltmesi (Unreleased): main'de ve bu PC'ye 1.19.1 numarasiyla yerel kuruldu; GitHub release'e henuz girmedi (surum artinca CI yayinlar)
+- [ ] Memory model katalogu (Unreleased): OpenRouter'dan tum modeller, 24 saat cache, Refresh + Test
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-08)
 - 1.19.1 yayinlandi (resim yapistirma)
 - Secimin uzerine yazma Claude Code'da bozuktu: Claude gercek imleci gizleyip cizdigi caret'in 1 sutun sagina park ediyor, yanlis harf siliniyordu. `SelectionEdit` sinifi DECTCEM (?25) takip eder; imlec gizliyken secim satirindaki tek inverse hucre caret sayilir
 - Secim imlecin mantiksal satirina kirpilir: uc tik / Select All + Delete inputu temizler. Gercek Claude Code 2.1.289 ve Codex 0.160 ile probe'la dogrulandi; E2E'ye uc tik + Delete eklendi
+- Memory > Model: `main/memory/models.ts` (`ModelCatalog` + `testModel`), IPC `memory:models` / `memory:test-model`; canli denendi (467 model, cache 68 KB, deepseek-v4-flash testi 1.4 sn, $0.0000074). Global kural BRAIN-POLICY'ye eklendi
 
 ## Yarim kalan / siradaki adim
 - 1.19.1 yayinda (2026-10-08): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml

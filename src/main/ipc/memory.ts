@@ -1,8 +1,9 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
-import type { MemoryAgent, MemoryConnection, MemoryProject } from '../../shared/types'
+import type { MemoryAgent, MemoryConnection, MemoryProject, OpenRouterModelList, OpenRouterModelTest } from '../../shared/types'
 import { connect, connectionStatus, disconnect, type ServerLaunch } from '../memory/connect'
 import type { MemoryEngine } from '../memory/engine'
+import { testModel, type ModelCatalog } from '../memory/models'
 import type { MemoryStore } from '../memory/store'
 
 export const MEMORY_SECRET_ID = 'termflow-memory'
@@ -17,9 +18,11 @@ export interface MemoryIpcDeps {
   store: MemoryStore
   /** null: sunucu betiği kurulamadı; bağlantı yapılamaz. */
   launch: ServerLaunch | null
+  catalog: ModelCatalog
+  getApiKey: () => string | undefined
 }
 
-export function registerMemoryIpc({ engine, store, launch }: MemoryIpcDeps): void {
+export function registerMemoryIpc({ engine, store, launch, catalog, getApiKey }: MemoryIpcDeps): void {
   ipcMain.handle(IPC.MEMORY_STATUS, () => engine.getStatus())
   ipcMain.handle(IPC.MEMORY_RUN, () => engine.run({ force: true }))
   ipcMain.handle(IPC.MEMORY_PROJECTS, (): MemoryProject[] =>
@@ -30,6 +33,15 @@ export function registerMemoryIpc({ engine, store, launch }: MemoryIpcDeps): voi
     if (typeof key === 'string' && key && key.length < 1024) engine.forget(key)
   })
   ipcMain.handle(IPC.MEMORY_CLEAR, () => engine.clear())
+  ipcMain.handle(IPC.MEMORY_MODELS, (_event, force: unknown): Promise<OpenRouterModelList> => catalog.list(force === true))
+  // Anahtar main'de kalır; renderer yalnız model id'sini gönderir.
+  ipcMain.handle(IPC.MEMORY_TEST_MODEL, async (_event, model: unknown): Promise<OpenRouterModelTest> => {
+    const id = typeof model === 'string' ? model.trim() : ''
+    if (!id || id.length > 200) return { ok: false, model: id, latencyMs: 0, error: 'Enter an OpenRouter model id first.' }
+    const apiKey = getApiKey()
+    if (!apiKey) return { ok: false, model: id, latencyMs: 0, error: 'Save an OpenRouter API key first.' }
+    return testModel(apiKey, id)
+  })
 
   const unavailable = (agent: MemoryAgent): MemoryConnection => ({ agent, state: 'error', detail: 'Memory server is not installed. Restart TermFlow Lite.' })
   ipcMain.handle(IPC.MEMORY_CONNECTIONS, async (): Promise<MemoryConnection[]> =>

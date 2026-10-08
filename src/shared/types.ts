@@ -417,6 +417,36 @@ export interface MemoryProject {
   status: string
 }
 
+/** OpenRouter model kataloğundan, cache'e yazılan sade kayıt. */
+export interface OpenRouterModel {
+  id: string
+  name: string
+  contextLength: number
+  /** USD per 1M tokens; null: değişken ya da bilinmiyor. */
+  inputPrice: number | null
+  outputPrice: number | null
+  /** json_schema structured output destekler (memory özeti buna dayanır). */
+  structured: boolean
+}
+
+export interface OpenRouterModelList {
+  models: OpenRouterModel[]
+  /** Listenin OpenRouter'dan çekildiği an; 0: hiç çekilemedi. */
+  fetchedAt: number
+  source: 'cache' | 'network' | 'none'
+  /** Yenileme başarısız oldu; varsa eski cache dönülmüştür. */
+  error?: string
+}
+
+export interface OpenRouterModelTest {
+  ok: boolean
+  model: string
+  latencyMs: number
+  reply?: string
+  cost?: number
+  error?: string
+}
+
 export type MemoryAgent = 'claude' | 'codex' | 'opencode'
 
 export interface MemoryConnection {

@@ -27,6 +27,7 @@ import { registerUpdaterIpc } from './ipc/updater'
 import { registerAgentEventsIpc } from './ipc/agentEvents'
 import { registerProviderSecretsIpc } from './ipc/providerSecrets'
 import { MEMORY_SECRET_ID, registerMemoryIpc, sendMemoryStatus, startMemoryScheduler } from './ipc/memory'
+import { ModelCatalog } from './memory/models'
 import { MemoryEngine } from './memory/engine'
 import { MemoryStore } from './memory/store'
 import { appExecutable, installServerScript, serverLaunch, type ServerLaunch } from './memory/connect'
@@ -365,7 +366,13 @@ app.whenReady().then(() => {
   } catch (error) {
     console.warn('[memory] MCP server script could not be installed:', error)
   }
-  registerMemoryIpc({ engine: memoryEngine, store: memoryStore, launch: memoryLaunch })
+  registerMemoryIpc({
+    engine: memoryEngine,
+    store: memoryStore,
+    launch: memoryLaunch,
+    catalog: new ModelCatalog(join(app.getPath('userData'), 'cache', 'openrouter-models.json')),
+    getApiKey: () => providerSecrets.get(MEMORY_SECRET_ID)
+  })
   stopMemoryScheduler = startMemoryScheduler(memoryEngine)
   let memoryWasEnabled = settingsStore.get().memory.enabled
 

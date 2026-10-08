@@ -70,3 +70,32 @@ test('memory settings: consent, status, project preview and server install', asy
   await expect(win.locator('.profile-row', { hasText: '4 sessions' })).toHaveCount(0)
   expect(existsSync(projectFile())).toBe(false)
 })
+
+test('memory model picker reads the cached OpenRouter list without a network call', async () => {
+  // Taze cache: uygulama ağa çıkmadan bu listeyi göstermeli.
+  const cache = join(userData, 'cache')
+  mkdirSync(cache, { recursive: true })
+  writeFileSync(join(cache, 'openrouter-models.json'), JSON.stringify({
+    fetchedAt: Date.now(),
+    models: [
+      { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', contextLength: 1048576, inputPrice: 0.0228, outputPrice: 1.28, structured: true },
+      { id: 'plain/no-schema', name: 'Plain', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false }
+    ]
+  }))
+
+  await win.keyboard.press('Control+,')
+  await win.waitForSelector('.settings-backdrop')
+  await win.locator('.settings-nav-item', { hasText: 'Memory' }).click()
+  await expect(win.getByText('2 OpenRouter models', { exact: false })).toBeVisible()
+  await expect(win.locator('#memory-models option')).toHaveCount(2)
+  await expect(win.locator('.memory-model-info')).toContainText('DeepSeek V4 Flash · 1M context · $0.023 in / $1.28 out per 1M tokens')
+  // Anahtar yokken test edilemez.
+  await expect(win.getByRole('button', { name: 'Test' })).toBeDisabled()
+
+  const input = win.getByPlaceholder('Search OpenRouter models')
+  await input.fill('plain/no-schema')
+  await expect(win.locator('.memory-model-info')).toContainText('free · no structured output, summaries may fail')
+  await input.fill('made/up-model')
+  await expect(win.locator('.memory-model-info')).toContainText('Not in the OpenRouter model list')
+  await win.screenshot({ path: 'test-results/memory-models.png' })
+})

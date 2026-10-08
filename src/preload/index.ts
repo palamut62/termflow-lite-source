@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
-import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
+import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
 // option keys its reflow behaviour on this; fall back to a modern build when
@@ -161,6 +161,10 @@ const api = {
     connections: (): Promise<MemoryConnection[]> => ipcRenderer.invoke(IPC.MEMORY_CONNECTIONS),
     connect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.MEMORY_CONNECT, agent),
     disconnect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.MEMORY_DISCONNECT, agent),
+    /** Tüm OpenRouter modelleri; 24 saat cache'li, force ile yeniden çekilir. */
+    models: (force = false): Promise<OpenRouterModelList> => ipcRenderer.invoke(IPC.MEMORY_MODELS, force),
+    /** Modeli kayıtlı anahtarla kısa bir json_schema isteğiyle dener. */
+    testModel: (model: string): Promise<OpenRouterModelTest> => ipcRenderer.invoke(IPC.MEMORY_TEST_MODEL, model),
     onStatus: (callback: (status: MemoryStatus) => void): (() => void) => {
       const handler = (_event: unknown, status: MemoryStatus): void => callback(status)
       ipcRenderer.on(IPC.MEMORY_STATUS_EVENT, handler)

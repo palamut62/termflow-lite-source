@@ -72,6 +72,8 @@ export const IPC = {
   MEMORY_CONNECTIONS: 'memory:connections', // -> MemoryConnection[]
   MEMORY_CONNECT: 'memory:connect', // (agent) -> MemoryConnection
   MEMORY_DISCONNECT: 'memory:disconnect', // (agent) -> MemoryConnection
+  MEMORY_MODELS: 'memory:models', // (force?) -> OpenRouterModelList; 24 saat cache'li
+  MEMORY_TEST_MODEL: 'memory:test-model', // (model) -> OpenRouterModelTest
   AGENT_EVENTS_LIST: 'agent-events:list',
   AGENT_EVENTS_APPEND: 'agent-events:append',
   AGENT_EVENTS_CLEAR: 'agent-events:clear',
