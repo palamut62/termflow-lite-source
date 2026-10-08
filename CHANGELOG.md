@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The Memory model picker now shows every OpenRouter model when you open it, not only the ones matching the current model. Search by name or id, switch to Free to see only free models, and spot free models at a glance by their green Free badge. You can still type any model id that is not in the list.
+
 ## 1.20.0 - 2026-10-08
 
 - Settings > Memory now lists every OpenRouter model. The list comes from OpenRouter itself, is cached for a day so it opens instantly and works offline, and can be refreshed with one click. The chosen model shows its context size and price, and a warning when it cannot return the structured summaries memory needs.

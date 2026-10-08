@@ -71,31 +71,55 @@ test('memory settings: consent, status, project preview and server install', asy
   expect(existsSync(projectFile())).toBe(false)
 })
 
-test('memory model picker reads the cached OpenRouter list without a network call', async () => {
+test('memory model picker lists every cached OpenRouter model and marks free ones', async () => {
   // Taze cache: uygulama ağa çıkmadan bu listeyi göstermeli.
   const cache = join(userData, 'cache')
   mkdirSync(cache, { recursive: true })
   writeFileSync(join(cache, 'openrouter-models.json'), JSON.stringify({
     fetchedAt: Date.now(),
     models: [
+      { id: 'anthropic/claude-haiku-4.5', name: 'Claude Haiku 4.5', contextLength: 200000, inputPrice: 1, outputPrice: 5, structured: true },
       { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', contextLength: 1048576, inputPrice: 0.0228, outputPrice: 1.28, structured: true },
-      { id: 'plain/no-schema', name: 'Plain', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false }
+      { id: 'plain/no-schema:free', name: 'Plain', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false }
     ]
   }))
 
   await win.keyboard.press('Control+,')
   await win.waitForSelector('.settings-backdrop')
   await win.locator('.settings-nav-item', { hasText: 'Memory' }).click()
-  await expect(win.getByText('2 OpenRouter models', { exact: false })).toBeVisible()
-  await expect(win.locator('#memory-models option')).toHaveCount(2)
+  await expect(win.getByText('3 OpenRouter models', { exact: false })).toBeVisible()
   await expect(win.locator('.memory-model-info')).toContainText('DeepSeek V4 Flash · 1M context · $0.023 in / $1.28 out per 1M tokens')
   // Anahtar yokken test edilemez.
   await expect(win.getByRole('button', { name: 'Test' })).toBeDisabled()
 
-  const input = win.getByPlaceholder('Search OpenRouter models')
-  await input.fill('plain/no-schema')
-  await expect(win.locator('.memory-model-info')).toContainText('free · no structured output, summaries may fail')
-  await input.fill('made/up-model')
-  await expect(win.locator('.memory-model-info')).toContainText('Not in the OpenRouter model list')
+  // DeepSeek seçiliyken açılan liste yine TÜM modelleri gösterir.
+  const trigger = win.getByRole('button', { name: 'Model', exact: true })
+  await trigger.click()
+  const options = win.getByRole('listbox', { name: 'Models' }).getByRole('option')
+  await expect(options).toHaveCount(3)
+  const free = options.filter({ hasText: 'Plain' })
+  await expect(free).toHaveClass(/model-free/)
+  await expect(free.locator('.model-badge-free')).toHaveText('Free')
+  await expect(options.filter({ hasText: 'Claude Haiku 4.5' })).not.toHaveClass(/model-free/)
   await win.screenshot({ path: 'test-results/memory-models.png' })
+
+  await win.getByRole('button', { name: 'Free 1' }).click()
+  await expect(options).toHaveCount(1)
+  await win.keyboard.press('Enter')
+  await expect(trigger).toContainText('plain/no-schema:free')
+  await expect(trigger.locator('.model-badge-free')).toBeVisible()
+  await expect(win.locator('.memory-model-info')).toContainText('free · no structured output, summaries may fail')
+
+  // Listede olmayan id yazılıp seçilebilir.
+  await trigger.click()
+  await win.keyboard.type('made/up-model')
+  await win.keyboard.press('Enter')
+  await expect(trigger).toContainText('made/up-model')
+  await expect(win.locator('.memory-model-info')).toContainText('Not in the OpenRouter model list')
+
+  // Esc yalnız listeyi kapatır, ayarlar açık kalır.
+  await trigger.click()
+  await win.keyboard.press('Escape')
+  await expect(win.getByRole('listbox', { name: 'Models' })).toHaveCount(0)
+  await expect(win.locator('.settings-backdrop')).toBeVisible()
 })

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Brain, FlaskConical, RefreshCw, Trash2 } from 'lucide-react'
 import type { MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModel, OpenRouterModelList, OpenRouterModelTest } from '../../../shared/types'
+import { contextText, ModelPicker, priceText, usd } from './ModelPicker'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
 import { Field, TextInput, Toggle } from './Settings'
 
 const SECRET_ID = 'termflow-memory'
 /** Model listesi hiç çekilemediyse (ilk açılış, çevrimdışı) gösterilen yedek öneriler. */
-const MODEL_SUGGESTIONS = ['deepseek/deepseek-v4-flash', 'google/gemini-3.5-flash-lite', 'openai/gpt-6-luna', 'anthropic/claude-haiku-4.5']
+const MODEL_SUGGESTIONS: OpenRouterModel[] = ['deepseek/deepseek-v4-flash', 'google/gemini-3.5-flash-lite', 'openai/gpt-6-luna', 'anthropic/claude-haiku-4.5']
+  .map((id) => ({ id, name: id, contextLength: 0, inputPrice: null, outputPrice: null, structured: true }))
 const AGENT_LABEL: Record<MemoryAgent, string> = { claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode' }
 const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
   missing: 'CLI not installed',
@@ -18,20 +20,6 @@ const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
 }
 
 const date = (time?: number): string => time ? new Date(time).toLocaleString() : 'never'
-
-const usd = (value: number): string => `$${value < 1 ? Number(value.toPrecision(2)) : value.toFixed(2)}`
-
-function contextText(tokens: number): string {
-  if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(1))}M context`
-  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K context`
-  return tokens ? `${tokens} context` : 'context unknown'
-}
-
-function priceText(model: OpenRouterModel): string {
-  if (model.inputPrice === null || model.outputPrice === null) return 'variable price'
-  if (model.inputPrice === 0 && model.outputPrice === 0) return 'free'
-  return `${usd(model.inputPrice)} in / ${usd(model.outputPrice)} out per 1M tokens`
-}
 
 function testText(result: OpenRouterModelTest): string {
   if (!result.ok) return result.error ?? 'Test failed'
@@ -131,8 +119,8 @@ export function MemorySettings(): React.JSX.Element {
     await refresh()
   }
 
-  const saveModel = async (): Promise<void> => {
-    const next = model.trim()
+  const saveModel = async (id = model): Promise<void> => {
+    const next = id.trim()
     if (next && next !== memory.model) await update({ memory: { ...memory, model: next } })
   }
 
@@ -252,7 +240,7 @@ export function MemorySettings(): React.JSX.Element {
 
       <Field label="Model" hint={modelHint}>
         <span className="memory-inline">
-          <TextInput className="settings-input-wide" list="memory-models" value={model} placeholder="Search OpenRouter models" onChange={(e) => { setModel(e.target.value); setTestResult(null) }} onBlur={() => void saveModel()} onKeyDown={(e) => { if (e.key === 'Enter') void saveModel() }} />
+          <ModelPicker models={catalog?.models.length ? catalog.models : MODEL_SUGGESTIONS} value={model} onChange={(id) => { setModel(id); setTestResult(null); void saveModel(id) }} />
           <button className="settings-btn settings-btn-small" disabled={refreshingModels} onClick={() => void refreshModels()} aria-label="Refresh model list" title="Fetch the model list from OpenRouter again">
             <RefreshCw size={12} className={refreshingModels ? 'memory-spin' : undefined} />
           </button>
@@ -260,11 +248,6 @@ export function MemorySettings(): React.JSX.Element {
             <FlaskConical size={12} className={testing ? 'memory-spin' : undefined} /> {testing ? 'Testing...' : 'Test'}
           </button>
         </span>
-        <datalist id="memory-models">
-          {catalog?.models.length
-            ? catalog.models.map((item) => <option key={item.id} value={item.id} label={`${item.name} · ${priceText(item)}`} />)
-            : MODEL_SUGGESTIONS.map((id) => <option key={id} value={id} />)}
-        </datalist>
       </Field>
       {(selectedModel || unknownModel || testResult) && (
         <p className="settings-note memory-model-info">
