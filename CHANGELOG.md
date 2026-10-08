@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.20.0 - 2026-10-08
 
 - Settings > Memory now lists every OpenRouter model. The list comes from OpenRouter itself, is cached for a day so it opens instantly and works offline, and can be refreshed with one click. The chosen model shows its context size and price, and a warning when it cannot return the structured summaries memory needs.
 - Test the chosen model before you rely on it: one tiny request with your key shows whether it works, how long it took and what it cost.
