@@ -23,7 +23,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.18.0 Agent Memory: 30 gunluk session hafizasi + yerel MCP, Ayarlar > Memory. Spec `docs/agent-memory.md`, 8/8 dilim
 - [x] 1.19.0 Secimin uzerine yazma: cift tikla secilen kelime yazilan metinle yerinde degisir
 - [x] 1.19.1 Resim yapistirma: panodaki resim PNG olarak kaydedilip yolu yapistirilir
-- [ ] Secim duzeltmesi (Unreleased): Claude Code'da cizilen caret, tum input secilip Delete ile temizleme
+- [ ] Secim duzeltmesi (Unreleased): main'de ve bu PC'ye 1.19.1 numarasiyla yerel kuruldu; GitHub release'e henuz girmedi (surum artinca CI yayinlar)
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-08)
