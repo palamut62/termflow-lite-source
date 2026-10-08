@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.19.1 - 2026-10-08
 
 - Paste an image: when the clipboard holds only a picture (a screenshot, or Copy image in a browser), Paste and Ctrl+V now save it as a PNG and insert its path, so you can hand it straight to Claude Code, Codex or a command. A preview card shows up as with other pasted files. Pasted images are kept for 7 days.
 - After Paste from the right-click menu you can keep typing; the terminal no longer loses focus.
