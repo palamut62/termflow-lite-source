@@ -66,3 +66,31 @@ test('typing over a double-clicked word replaces it in place', async () => {
   // PowerShell echo her argümanı ayrı satıra yazar.
   expect(readFileSync(out, 'utf8').split(/\r?\n/).filter(Boolean).join(' ')).toBe('alpha XYZ charlie')
 })
+
+test('triple-click then Delete clears the whole input line', async () => {
+  const userData = mkdtempSync(join(tmpdir(), 'termflow-seledit-userdata-'))
+  cleanup.push(userData)
+  app = await electron.launch({
+    args: [resolve('.'), '--no-sandbox'],
+    env: { ...process.env, TERMFLOW_E2E: '1', TERMFLOW_E2E_USER_DATA: userData }
+  })
+  win = await app.firstWindow()
+  await win.waitForSelector('.terminal-host .xterm')
+  await win.locator('.terminal-view').first().locator('.terminal-host').click()
+  await win.waitForTimeout(2500)
+
+  await win.keyboard.type('echo this line should vanish')
+  await win.waitForTimeout(500)
+  const end = await caret(win)
+  // Satırın başına yakın (prompt üstü) üç tık: tüm satır seçilir, prompt dahil.
+  await win.mouse.click(end.x - 10 * 7, end.y + end.h / 2, { clickCount: 3 })
+  await win.waitForTimeout(300)
+  await win.keyboard.press('Delete')
+  await win.waitForTimeout(500)
+
+  const out = join(userData, 'out.txt')
+  await win.keyboard.type(`echo cleared | Out-File -Encoding ascii '${out}'`)
+  await win.keyboard.press('Enter')
+  await expect.poll(() => existsSync(out), { timeout: 10000 }).toBe(true)
+  expect(readFileSync(out, 'utf8').trim()).toBe('cleared')
+})

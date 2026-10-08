@@ -6,7 +6,7 @@ function grid(rows: string[], cols: number, wrapped: number[] = []): CellGrid {
   return {
     cols,
     width: (row, col) => (rows[row]?.[col] === '~' ? 0 : 1),
-    filled: (row, col) => col < (rows[row]?.length ?? 0),
+    chars: (row, col) => rows[row]?.[col] ?? '',
     isWrapped: (row) => wrapped.includes(row)
   }
 }
@@ -46,8 +46,25 @@ describe('planSelectionEdit', () => {
     expect(planSelectionEdit(g, { x: 2, y: 0 }, { x: 6, y: 0 }, { x: 9, y: 0 })).toEqual({ moves: -3, deletes: 2 })
   })
 
-  it('refuses selections that reach past the typed text', () => {
-    expect(planSelectionEdit(line, { x: 18, y: 0 }, { x: 30, y: 0 }, { x: 21, y: 0 })).toBeNull()
+  it('clips a selection that runs past the typed text', () => {
+    expect(planSelectionEdit(line, { x: 18, y: 0 }, { x: 30, y: 0 }, { x: 21, y: 0 })).toEqual({ moves: 0, deletes: 3 })
+  })
+
+  it('clears the whole input when the whole line is selected (triple-click)', () => {
+    // Prompt de seçime girer; fazladan backspace inputun başında etkisizdir.
+    expect(planSelectionEdit(line, { x: 0, y: 0 }, { x: 80, y: 0 }, { x: 21, y: 0 })).toEqual({ moves: 0, deletes: 21 })
+  })
+
+  it('clips Select All to the line the cursor is on', () => {
+    const g = grid(['old output', 'PS> echo hi', ''], 80)
+    expect(planSelectionEdit(g, { x: 0, y: 0 }, { x: 80, y: 2 }, { x: 11, y: 1 })).toEqual({ moves: 0, deletes: 11 })
+  })
+
+  it('works from a caret drawn by a TUI (Claude Code) with trailing blank cells', () => {
+    // "❯ alpha bravo charlie" + inverse boşluk caret (x=21)
+    const g = grid(['❯ alpha bravo charlie ', '', '──────'], 40)
+    expect(planSelectionEdit(g, { x: 8, y: 0 }, { x: 13, y: 0 }, { x: 21, y: 0 })).toEqual({ moves: -8, deletes: 5 })
+    expect(planSelectionEdit(g, { x: 0, y: 0 }, { x: 40, y: 0 }, { x: 21, y: 0 })).toEqual({ moves: 0, deletes: 21 })
   })
 
   it('refuses empty selections', () => {

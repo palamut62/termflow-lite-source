@@ -1,12 +1,12 @@
-import type { Terminal } from '@xterm/xterm'
+import type { IDisposable, Terminal } from '@xterm/xterm'
 
 /** Buffer'dan hücre okuyan küçük soyutlama; birim testte sahte ızgara verilir. */
 export interface CellGrid {
   cols: number
   /** Hücre genişliği: 1 normal, 2 geniş karakter başı, 0 geniş karakterin devamı. */
   width(row: number, col: number): number
-  /** Hücrede karakter var mı (satır sonundaki boş hücreler false). */
-  filled(row: number, col: number): boolean
+  /** Hücredeki karakter ('' ya da ' ' boş sayılır). */
+  chars(row: number, col: number): string
   /** Satır bir önceki satırın yumuşak sarmalı (soft wrap) devamı mı. */
   isWrapped(row: number): boolean
 }
@@ -24,41 +24,48 @@ export interface SelectionEditPlan {
   deletes: number
 }
 
+/** Mantıksal satır (yumuşak sarmallarla birleşen satırlar) aranırken üst sınır. */
+const MAX_WRAP_ROWS = 50
+
 /**
  * Seçili metnin yerine yazmak için imlecin kaç karakter oynatılacağını ve kaç
- * karakter silineceğini hesaplar. Seçim imleçle aynı mantıksal satırda (aynı
- * satır ya da yumuşak sarmal devamı) ve yazılmış metnin içinde değilse null:
- * o zaman terminal eski davranışına (imleçte yaz) devam eder.
+ * karakter silineceğini hesaplar. Seçim, imlecin mantıksal satırına (aynı satır
+ * ya da yumuşak sarmal devamı) kırpılır: üç tık, satır sonuna taşan sürükleme
+ * ya da Select All ile tüm input seçilip silinebilir. Seçim o satıra hiç
+ * değmiyorsa null: terminal eski davranışına (imleçte yaz) devam eder.
  */
 export function planSelectionEdit(
   grid: CellGrid,
   start: CellPos,
   end: CellPos,
-  cursor: CellPos
+  caret: CellPos
 ): SelectionEditPlan | null {
-  const firstRow = Math.min(start.y, end.y, cursor.y)
-  const lastRow = Math.max(start.y, end.y, cursor.y)
-  for (let row = firstRow + 1; row <= lastRow; row++) {
-    if (!grid.isWrapped(row)) return null
-  }
+  let firstRow = caret.y
+  while (firstRow > 0 && caret.y - firstRow < MAX_WRAP_ROWS && grid.isWrapped(firstRow)) firstRow--
+  let lastRow = caret.y
+  while (lastRow - caret.y < MAX_WRAP_ROWS && grid.isWrapped(lastRow + 1)) lastRow++
+  if (end.y < firstRow || start.y > lastRow) return null
+
+  const cells = (lastRow - firstRow + 1) * grid.cols
   const linear = (p: CellPos): number => (p.y - firstRow) * grid.cols + p.x
   const cell = (index: number): CellPos => ({ x: index % grid.cols, y: firstRow + Math.floor(index / grid.cols) })
-  const a = linear(start)
-  const b = linear(end)
-  const c = linear(cursor)
-  if (b <= a) return null
+  const c = linear(caret)
 
-  // Seçim yazılmış metnin dışına taşamaz; aksi halde oklar satır sonunda
-  // takılır ve backspace yanlış karakterleri siler.
+  // Yazılmış metnin sonu: son boş olmayan hücre (imleç sondaki boşlukların
+  // ötesindeyse imleç). Seçim bunun ötesine kırpılır; aksi halde oklar satır
+  // sonunda takılır ve fazladan backspace yanlış karakterleri siler.
   let textEnd = c
-  for (let i = (lastRow - firstRow + 1) * grid.cols - 1; i >= 0; i--) {
+  for (let i = cells - 1; i >= c; i--) {
     const p = cell(i)
-    if (grid.filled(p.y, p.x)) {
-      textEnd = Math.max(textEnd, i + 1)
+    const ch = grid.chars(p.y, p.x)
+    if (ch !== '' && ch !== ' ') {
+      textEnd = i + 1
       break
     }
   }
-  if (b > textEnd) return null
+  const a = Math.max(0, start.y < firstRow ? 0 : linear(start))
+  const b = Math.min(textEnd, end.y > lastRow ? cells : linear(end))
+  if (b <= a) return null
 
   // Ok tuşları hücre değil karakter başına ilerler: geniş karakterin devam
   // hücresi (genişlik 0) sayılmaz.
@@ -88,32 +95,80 @@ function producesText(e: KeyboardEvent): boolean {
 }
 
 /**
- * Çift tıkla seçilen kelimenin üzerine yazma: seçim imlecin satırındaysa,
- * yazılan karakterden önce imleç oklarla seçim sonuna götürülür ve seçim
- * backspace ile silinir. Backspace/Delete yalnızca seçimi siler. Shell ve
- * imleci gerçek caret'e koyan TUI ajanlar (Claude Code, Codex) ile çalışır.
- * true dönerse tuş tüketilmiştir (xterm'e iletilmez).
+ * Çift tıkla seçilen kelimenin (ya da tüm inputun) üzerine yazma: yazılan
+ * karakterden önce imleç oklarla seçim sonuna götürülür ve seçim backspace ile
+ * silinir; Backspace/Delete yalnızca seçimi siler.
+ *
+ * İmleç: gerçek terminal imleci görünürse o (shell, Codex). Claude Code gibi
+ * TUI'ler gerçek imleci gizleyip başka satıra park eder ve caret'i ters renkli
+ * (inverse) bir hücre olarak çizer; imleç gizliyken seçimin satırlarındaki tek
+ * inverse hücre caret sayılır.
  */
-export function handleSelectionEditKey(term: Terminal, e: KeyboardEvent): boolean {
-  if (!term.hasSelection()) return false
-  const isDelete = (e.key === 'Backspace' || e.key === 'Delete') && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey
-  if (!isDelete && !producesText(e)) return false
-  const range = term.getSelectionPosition()
-  if (!range) return false
-  const buffer = term.buffer.active
-  const grid: CellGrid = {
-    cols: term.cols,
-    width: (row, col) => buffer.getLine(row)?.getCell(col)?.getWidth() ?? 1,
-    filled: (row, col) => (buffer.getLine(row)?.getCell(col)?.getChars() ?? '') !== '',
-    isWrapped: (row) => buffer.getLine(row)?.isWrapped ?? false
+export class SelectionEdit implements IDisposable {
+  private cursorHidden = false
+  private readonly subs: IDisposable[]
+
+  constructor(private readonly term: Terminal) {
+    // DECTCEM (?25h / ?25l) takibi; false dönerek xterm'in kendi işleyicisi de çalışır.
+    const track = (hidden: boolean) => (params: (number | number[])[]): boolean => {
+      if (params.includes(25)) this.cursorHidden = hidden
+      return false
+    }
+    this.subs = [
+      term.parser.registerCsiHandler({ prefix: '?', final: 'h' }, track(false)),
+      term.parser.registerCsiHandler({ prefix: '?', final: 'l' }, track(true))
+    ]
   }
-  const cursor = { x: buffer.cursorX, y: buffer.baseY + buffer.cursorY }
-  const plan = planSelectionEdit(grid, range.start, range.end, cursor)
-  if (!plan) return false
-  const app = term.modes.applicationCursorKeysMode
-  const arrow = plan.moves >= 0 ? (app ? '\x1bOC' : '\x1b[C') : app ? '\x1bOD' : '\x1b[D'
-  term.clearSelection()
-  term.input(arrow.repeat(Math.abs(plan.moves)) + '\x7f'.repeat(plan.deletes), true)
-  // Silme tuşu işini yaptı; karakter tuşu xterm'e gider ve boşalan yere yazılır.
-  return isDelete
+
+  /** true dönerse tuş tüketilmiştir (xterm'e iletilmez). */
+  handleKey(e: KeyboardEvent): boolean {
+    const term = this.term
+    if (!term.hasSelection()) return false
+    const isDelete =
+      (e.key === 'Backspace' || e.key === 'Delete') && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey
+    if (!isDelete && !producesText(e)) return false
+    const range = term.getSelectionPosition()
+    if (!range) return false
+    const buffer = term.buffer.active
+    const grid: CellGrid = {
+      cols: term.cols,
+      width: (row, col) => buffer.getLine(row)?.getCell(col)?.getWidth() ?? 1,
+      chars: (row, col) => buffer.getLine(row)?.getCell(col)?.getChars() ?? '',
+      isWrapped: (row) => buffer.getLine(row)?.isWrapped ?? false
+    }
+    const caret = this.cursorHidden
+      ? this.drawnCaret(range.start.y, range.end.y)
+      : { x: buffer.cursorX, y: buffer.baseY + buffer.cursorY }
+    if (!caret) return false
+    const plan = planSelectionEdit(grid, range.start, range.end, caret)
+    if (!plan) return false
+    const app = term.modes.applicationCursorKeysMode
+    const arrow = plan.moves >= 0 ? (app ? '\x1bOC' : '\x1b[C') : app ? '\x1bOD' : '\x1b[D'
+    term.clearSelection()
+    term.input(arrow.repeat(Math.abs(plan.moves)) + '\x7f'.repeat(plan.deletes), true)
+    // Silme tuşu işini yaptı; karakter tuşu xterm'e gider ve boşalan yere yazılır.
+    return isDelete
+  }
+
+  /** Seçimin ekrandaki satırlarında tam bir inverse hücre varsa onun konumu. */
+  private drawnCaret(fromRow: number, toRow: number): CellPos | null {
+    const buffer = this.term.buffer.active
+    const top = Math.max(fromRow, buffer.viewportY)
+    const bottom = Math.min(toRow, buffer.viewportY + this.term.rows - 1)
+    let found: CellPos | null = null
+    for (let y = top; y <= bottom; y++) {
+      const line = buffer.getLine(y)
+      if (!line) continue
+      for (let x = 0; x < this.term.cols; x++) {
+        if (!line.getCell(x)?.isInverse()) continue
+        if (found) return null
+        found = { x, y }
+      }
+    }
+    return found
+  }
+
+  dispose(): void {
+    for (const sub of this.subs) sub.dispose()
+  }
 }

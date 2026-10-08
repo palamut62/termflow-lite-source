@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Typing over a selection now works in Claude Code. It draws its own cursor and parks the real one a column away, so a replaced word used to lose the wrong letters; TermFlow now follows the cursor Claude Code draws.
+- Select the whole input (triple-click, drag past the end, or Select All) and press Delete or Backspace to clear it, or just type to replace it. Text outside the line you are typing is left alone.
+
 ## 1.19.1 - 2026-10-08
 
 - Paste an image: when the clipboard holds only a picture (a screenshot, or Copy image in a browser), Paste and Ctrl+V now save it as a PNG and insert its path, so you can hand it straight to Claude Code, Codex or a command. A preview card shows up as with other pasted files. Pasted images are kept for 7 days.

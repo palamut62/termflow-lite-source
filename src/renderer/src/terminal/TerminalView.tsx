@@ -19,7 +19,7 @@ import { burstConfetti, shouldCelebrate } from '../fun/confetti'
 import { useStatsStore } from '../store/statsStore'
 import { playCue } from '../fun/sounds'
 import { ShellIntegration, formatDuration, type FinishedCommand } from './shellIntegration'
-import { handleSelectionEditKey } from './selectionEdit'
+import { SelectionEdit } from './selectionEdit'
 import { InlineSuggest } from './inlineSuggest'
 import { motionEnabled } from '../motion'
 import { formatDroppedPaths } from './dropPaths'
@@ -265,6 +265,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     }
     const shellIntegration = new ShellIntegration(term, onCommandFinished)
     shellRef.current = shellIntegration
+    const selectionEdit = new SelectionEdit(term)
     const inlineSuggest = new InlineSuggest(term, shellIntegration, {
       enabled: () => activeRef.current && useSettingsStore.getState().settings.inlineSuggestions,
       // Aynı profildeki komutlar önce; maskelenmiş (***) kayıtlar asla önerilmez.
@@ -528,7 +529,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       }
       // Seçili kelimenin üzerine yazma (broadcast'te imleç hareketleri diğer
       // panellerde anlamsız olacağı için devre dışı).
-      if (!useTerminalStore.getState().broadcastInput && handleSelectionEditKey(term, e)) return false
+      if (!useTerminalStore.getState().broadcastInput && selectionEdit.handleKey(e)) return false
       return true
     })
 
@@ -611,6 +612,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       pathLinksDisposable.dispose()
       cursorFx.dispose()
       inlineSuggest.dispose()
+      selectionEdit.dispose()
       shellIntegration.dispose()
       shellRef.current = null
       host.removeEventListener('contextmenu', onCtxMenu)
