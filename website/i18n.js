@@ -114,6 +114,7 @@
     'f5.li1': 'Kartlar bilgi şeridinde küçük önizlemelere katlanır, hiçbir şey üst üste yığılmaz',
     'f5.li2': 'Birine tıklayıp tam boyutta gör ya da videoyu oynat; aç, klasöründe göster ya da yolunu ajanın için ekle',
     'f5.li3': "Video önizlemeleri doğrudan Windows'tan gelir, ffmpeg gerekmez ve hiçbir şey bilgisayarından dışarı çıkmaz",
+    'f5.li4': "Ekran alıntısı ya da tarayıcıdan bir resim mi kopyaladın? Yapıştır; TermFlow onu PNG olarak kaydeder ve yolunu ekler, Claude Code ya da Codex'e hazır",
     'f5.alt': 'npm run capture iki ekran görüntüsü ve bir kayıt kaydediyor; terminalin sağ alt köşesinde önizlemeli üç kart beliriyor',
 
     'f6.title': 'Kendine göre ayarla',

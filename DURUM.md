@@ -33,7 +33,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - 1.19.1 yayinda (2026-10-08): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
-- Site guncel: Agent Memory (f2) ve secimin uzerine yazma (f4) maddeleri EN/TR eklendi, Vercel prod
+- Site: Agent Memory (f2), secimin uzerine yazma (f4), resim yapistirma (f5) EN/TR; tum inputu silme yayinlaninca f4.li4e eklenecek
 - Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
