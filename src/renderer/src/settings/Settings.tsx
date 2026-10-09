@@ -41,7 +41,10 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
  */
 export function Settings(): React.JSX.Element {
   const closeSettings = useSettingsStore((s) => s.closeSettings)
-  const [section, setSection] = useState<SectionId>('appearance')
+  const [section, setSection] = useState<SectionId>(() => {
+    const requested = useSettingsStore.getState().settingsSection
+    return SECTIONS.some((s) => s.id === requested) ? requested as SectionId : 'appearance'
+  })
   const [query, setQuery] = useState('')
   // Every word must appear in the section label or its field keywords.
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)

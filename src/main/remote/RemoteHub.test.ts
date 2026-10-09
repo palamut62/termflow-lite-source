@@ -14,13 +14,15 @@ function setup() {
   const ipcCalls: [string, unknown[]][] = []
   const remoteSettings: AppSettings[] = []
   const revoked: string[] = []
+  const termSizes = new Map<string, { cols: number; rows: number }>([['tab1', { cols: 120, rows: 30 }]])
   let settings: AppSettings = { ...DEFAULT_SETTINGS, asciiBackgrounds: { x: { image: 'data:', density: 1, opacity: 1, charset: 'a' } as never } }
   const hub = new RemoteHub({
     terminals: {
       onOutput: (listener) => { output = listener; return () => undefined },
       setRemoteSize: (id, size) => { sizes.push([id, size]) },
       write: (id, data) => { writes.push([id, data]) },
-      getBuffer: (id) => `history of ${id}`
+      getBuffer: (id) => `history of ${id}`,
+      size: (id) => termSizes.get(id) ?? null
     },
     devices: {
       authenticate: (token) => (token === TOKEN ? { id: 'dev1', name: 'Pixel', createdAt: 0, lastSeenAt: 0 } : null),
@@ -97,7 +99,7 @@ describe('RemoteHub', () => {
     await p.send({ t: 'auth', token: TOKEN })
     await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 })
     expect(sizes).toEqual([['tab1', { cols: 40, rows: 20 }]])
-    expect(p.sent.at(-1)).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'history of tab1' })
+    expect(p.sent.at(-1)).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'history of tab1', repaint: true })
     emit({ kind: 'data', ptyId: 'tab1', data: 'a' })
     emit({ kind: 'data', ptyId: 'tab1', data: 'b' })
     emit({ kind: 'data', ptyId: 'other', data: 'x' })
@@ -119,6 +121,23 @@ describe('RemoteHub', () => {
     expect(sizes.at(-1)).toEqual(['tab1', { cols: 40, rows: 20 }])
     hub.disconnect(a.conn)
     expect(sizes.at(-1)).toEqual(['tab1', null])
+  })
+
+  it('a tab opened from the phone claims the phone size before its PTY spawns', async () => {
+    const { phone, sizes } = setup()
+    const p = phone()
+    await p.send({ t: 'auth', token: TOKEN })
+    await p.send({ t: 'call', id: 11, method: 'tab.open', params: { profileId: 'pwsh', cols: 44, rows: 22 } })
+    expect(p.sent.at(-1)).toEqual({ t: 'result', id: 11, ok: true, value: 'newtab' })
+    expect(sizes.at(-1)).toEqual(['newtab', { cols: 44, rows: 22 }])
+  })
+
+  it('asks for no repaint when the PTY already has the phone size', async () => {
+    const { phone } = setup()
+    const p = phone()
+    await p.send({ t: 'auth', token: TOKEN })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 120, rows: 30 })
+    expect(p.sent.at(-1)).toMatchObject({ t: 'snapshot', repaint: false })
   })
 
   it('writes input only to known tabs', async () => {

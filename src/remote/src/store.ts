@@ -26,6 +26,8 @@ interface RemoteState {
   /** The tab this phone is looking at (independent of the desktop focus). */
   currentTabId: string | null
   screen: Screen
+  /** Size of the phone terminal; sent along when the phone opens a tab. */
+  termSize: { cols: number; rows: number } | null
   toasts: Toast[]
   attach(client: RemoteClient): () => void
   setScreen(screen: Screen): void
@@ -51,6 +53,7 @@ export const useRemote = create<RemoteState>()((set, get) => ({
   desktopActiveTabId: null,
   currentTabId: null,
   screen: 'terminal',
+  termSize: null,
   toasts: [],
 
   attach(client) {

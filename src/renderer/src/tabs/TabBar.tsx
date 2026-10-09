@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
-import { ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Plus, Rows2, PanelLeft } from 'lucide-react'
+import { ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Plus, Rows2, PanelLeft, Smartphone } from 'lucide-react'
 import { useWidgetStore } from '../widget/widgetStore'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
@@ -10,6 +10,21 @@ import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
 import { effectiveMotion } from '../motion'
+import { phonesLabel, useConnectedPhones } from '../remoteStatus'
+
+/** Top-right sign that a phone is controlling this window; opens Remote Access settings. */
+function RemoteIndicator(): React.JSX.Element | null {
+  const phones = useConnectedPhones()
+  if (phones.length === 0) return null
+  const title = `${phonesLabel(phones)}. Open Remote Access settings`
+  return (
+    <button className="split-tab-btn remote-indicator" onClick={() => useSettingsStore.getState().openSettings('remote')} title={title} aria-label={title}>
+      <Smartphone size={14} />
+      <span className="remote-indicator-dot" aria-hidden="true" />
+      {phones.length > 1 && <span className="remote-indicator-count">{phones.length}</span>}
+    </button>
+  )
+}
 
 interface TabBarProps {
   height: number
@@ -179,6 +194,7 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
             onOpenGithub={() => { setMenuOpen(false); setGithubOpen(true) }}
           />
         )}
+        <RemoteIndicator />
       </div>
       {pathLauncherOpen && <PathLauncherModal onClose={() => setPathLauncherOpen(false)} />}
       {worktreeLauncherOpen && <WorktreeLauncherModal onClose={() => setWorktreeLauncherOpen(false)} />}

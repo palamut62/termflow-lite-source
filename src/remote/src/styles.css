@@ -224,3 +224,6 @@ textarea.input { resize: vertical; }
 .toasts { position: fixed; left: 12px; right: 12px; bottom: calc(70px + var(--safe-bottom)); z-index: 40; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
 .toast { pointer-events: auto; max-width: 480px; width: 100%; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.3); text-align: left; font-size: 14px; animation: rise .15s ease-out; }
 .toast.error { border-color: color-mix(in srgb, var(--bad) 60%, var(--border)); }
+
+/* Live keyboard field: invisible, focused by tapping the terminal. 16px avoids iOS zoom. */
+.phone-input { position: absolute; left: 0; bottom: 0; width: 100%; height: 24px; opacity: 0; border: 0; padding: 0; margin: 0; resize: none; font-size: 16px; color: transparent; caret-color: transparent; background: transparent; pointer-events: none; z-index: -1; }

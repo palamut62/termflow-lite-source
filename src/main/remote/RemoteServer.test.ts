@@ -26,7 +26,7 @@ beforeAll(async () => {
   writeFileSync(join(dir, 'secret.txt'), 'top secret')
   devices = new DeviceStore(join(dir, 'devices.json'))
   const hub = new RemoteHub({
-    terminals: { onOutput: () => () => undefined, setRemoteSize: () => undefined, write: (_id, data) => { writes.push(data) }, getBuffer: () => 'PS C:\\> ' },
+    terminals: { onOutput: () => () => undefined, setRemoteSize: () => undefined, write: (_id, data) => { writes.push(data) }, getBuffer: () => 'PS C:\\> ', size: () => null },
     devices,
     invokeIpc: async () => null,
     getSettings: () => DEFAULT_SETTINGS,
@@ -96,7 +96,7 @@ describe('RemoteServer', () => {
     expect(await hello).toMatchObject({ t: 'hello', device: { name: 'Test phone' } })
     const snapshot = next(ws)
     ws.send(JSON.stringify({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 }))
-    expect(await snapshot).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'PS C:\\> ' })
+    expect(await snapshot).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'PS C:\\> ', repaint: false })
     ws.send(JSON.stringify({ t: 'input', tabId: 'tab1', data: 'echo hi\r' }))
     await new Promise((r) => setTimeout(r, 50))
     expect(writes).toContain('echo hi\r')

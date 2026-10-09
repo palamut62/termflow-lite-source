@@ -58,7 +58,7 @@ export function AgentsScreen(): React.JSX.Element {
 
   const runSaved = async (item: RemoteSavedCommand): Promise<void> => {
     try {
-      const tabId = await client().call<string>('saved.run', { id: item.id })
+      const tabId = await client().call<string>('saved.run', { id: item.id, ...useRemote.getState().termSize })
       toast(`Started "${item.name}"`)
       setCurrentTab(tabId)
     } catch (error) {
@@ -137,7 +137,7 @@ function ResumeSheet({ session, settings, onClose }: { session: AgentSession; se
   const start = async (): Promise<void> => {
     setBusy(true)
     try {
-      const tabId = await client().call<string>('agent.resume', { profileId, session: { agent: session.agent, id: session.id }, cwd: session.cwd, permissionMode: permission })
+      const tabId = await client().call<string>('agent.resume', { profileId, session: { agent: session.agent, id: session.id }, cwd: session.cwd, permissionMode: permission, ...useRemote.getState().termSize })
       setCurrentTab(tabId)
       onClose()
     } catch (error) {

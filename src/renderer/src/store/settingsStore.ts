@@ -39,7 +39,9 @@ interface SettingsState {
   loaded: boolean
   /** Settings modal açık mı (Ctrl+, / NewTabMenu "Settings" — Faz 6). */
   settingsOpen: boolean
-  openSettings(): void
+  /** Section to show when Settings opens; null = the default (Appearance). */
+  settingsSection: string | null
+  openSettings(section?: string): void
   closeSettings(): void
   /** Açık search bar'ın sahibi tab id; null = kapalı (Faz 7 — kısayol/menü açar). */
   uiSearchTabId: string | null
@@ -58,7 +60,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   shells: [],
   loaded: false,
   settingsOpen: false,
-  openSettings: () => set({ settingsOpen: true }),
+  settingsSection: null,
+  openSettings: (section) => set({ settingsOpen: true, settingsSection: section ?? null }),
   closeSettings: () => set({ settingsOpen: false }),
   uiSearchTabId: null,
   openSearch: (tabId) => set({ uiSearchTabId: tabId }),

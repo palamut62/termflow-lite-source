@@ -66,6 +66,29 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   expect(phone.url()).not.toContain('pair=')
   await expect(win.locator('.status-remote')).toBeVisible()
 
+  // The top-right tab bar shows the connected phone and opens Remote Access.
+  const indicator = win.locator('.remote-indicator')
+  await expect(indicator).toBeVisible()
+  await expect(indicator).toHaveAttribute('title', /connected/)
+  await win.screenshot({ path: 'test-results/remote-desktop-indicator.png', clip: { x: 0, y: 0, width: 1280, height: 60 } })
+  await indicator.click()
+  await expect(win.locator('.settings-section-title', { hasText: 'Remote Access' })).toBeVisible()
+  await win.keyboard.press('Escape')
+
+  // Tapping the terminal opens the live keyboard; keys reach the shell one by one.
+  await phone.locator('.term-host').tap()
+  await expect(phone.locator('.phone-input')).toBeFocused()
+  await expect(phone.locator('.compose')).toHaveCount(0)
+  await phone.keyboard.type('echo live-abX')
+  await phone.keyboard.press('Backspace')
+  await phone.keyboard.type('c')
+  await phone.keyboard.press('Enter')
+  await expect.poll(phoneText, { timeout: 15_000 }).toContain('live-abc')
+  await expect.poll(desktopText, { timeout: 15_000 }).toContain('live-abc')
+  // Hiding the keyboard brings the message box back.
+  await phone.getByRole('button', { name: 'Hide keyboard' }).click()
+  await expect(phone.locator('.compose')).toBeVisible()
+
   // Type through the compose box; the command runs in the desktop tab.
   await phone.locator('.compose-input').fill('echo remote-$((40+2))-ok')
   await phone.locator('.send').click()
@@ -96,6 +119,7 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   await win.evaluate((id) => window.termflow.remote.revoke(id), devices[0].id)
   await expect(phone.getByText('This phone was disconnected from the computer')).toBeVisible()
   await expect(win.locator('.status-remote')).toHaveCount(0)
+  await expect(win.locator('.remote-indicator')).toHaveCount(0)
 })
 
 test('the server refuses foreign origins and unknown tokens', async () => {

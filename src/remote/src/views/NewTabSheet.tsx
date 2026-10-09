@@ -43,7 +43,8 @@ export function NewTabSheet({ onClose, initialCwd, launchCommand }: { onClose():
         profileId: option.id,
         cwd: cwd.trim() || undefined,
         launchCommand,
-        permissionMode: isAgent ? permission : undefined
+        permissionMode: isAgent ? permission : undefined,
+        ...useRemote.getState().termSize
       })
       setCurrentTab(tabId)
       onClose()

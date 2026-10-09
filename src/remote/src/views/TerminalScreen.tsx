@@ -10,9 +10,9 @@ import { client, errorText, useRemote } from '../store'
 import { profileColor } from '../profiles'
 import { Confirm, Empty, Sheet, TextField } from '../ui'
 import { NewTabSheet } from './NewTabSheet'
+import { attachPhoneInput } from '../phoneInput'
 
 const FONT_KEY = 'termflow.remote.fontSize'
-const KEYBOARD_KEY = 'termflow.remote.directKeyboard'
 const RESIZE_DEBOUNCE_MS = 120
 
 function storedNumber(key: string, fallback: number): number {
@@ -53,10 +53,10 @@ export function TerminalScreen(): React.JSX.Element {
   const fitRef = useRef<FitAddon | null>(null)
   const tabRef = useRef<string | null>(null)
   const modRef = useRef<{ ctrl: boolean; alt: boolean }>({ ctrl: false, alt: false })
-  const keyboardRef = useRef(localStorage.getItem(KEYBOARD_KEY) === '1')
+  const liveRef = useRef<HTMLTextAreaElement>(null)
   const [mods, setMods] = useState({ ctrl: false, alt: false })
   const [fontSize, setFontSize] = useState(() => storedNumber(FONT_KEY, 12))
-  const [directKeyboard, setDirectKeyboard] = useState(keyboardRef.current)
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [exited, setExited] = useState<number | null>(null)
   const [newTabOpen, setNewTabOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -104,20 +104,16 @@ export function TerminalScreen(): React.JSX.Element {
     term.open(hostRef.current!)
     termRef.current = term
     fitRef.current = fit
-    const dataSub = term.onData((data) => sendInput(data))
-    // Compose mode: tapping the terminal must not pop the keyboard up.
+    // The phone xterm only displays. Its onData is not forwarded: the desktop
+    // terminal already answers the program's queries (cursor position, device
+    // attributes), and a second answer would land in the program's input.
+    // Typing goes through the phone input field instead (phoneInput.ts).
     const textarea = term.textarea
-    const onFocus = (): void => { if (!keyboardRef.current) textarea?.blur() }
-    textarea?.addEventListener('focus', onFocus)
-    if (textarea) {
-      textarea.setAttribute('autocapitalize', 'off')
-      textarea.setAttribute('autocorrect', 'off')
-      textarea.setAttribute('spellcheck', 'false')
-    }
+    const onXtermFocus = (): void => { textarea?.blur(); liveRef.current?.focus() }
+    textarea?.addEventListener('focus', onXtermFocus)
     try { fit.fit() } catch { /* hidden */ }
     return () => {
-      textarea?.removeEventListener('focus', onFocus)
-      dataSub.dispose()
+      textarea?.removeEventListener('focus', onXtermFocus)
       term.dispose()
       termRef.current = null
       fitRef.current = null
@@ -137,6 +133,7 @@ export function TerminalScreen(): React.JSX.Element {
 
   const sendSize = useCallback((): void => {
     const term = termRef.current
+    if (term) useRemote.setState({ termSize: { cols: term.cols, rows: term.rows } })
     const tabId = tabRef.current
     if (!term || !tabId) return
     useRemote.getState().client?.send({ t: 'resize', tabId, cols: term.cols, rows: term.rows })
@@ -189,7 +186,11 @@ export function TerminalScreen(): React.JSX.Element {
       if (!('tabId' in message) || message.tabId !== currentTabId) return
       if (message.t === 'snapshot') {
         term.reset()
-        term.write(message.data, () => term.scrollToBottom())
+        // ConPTY repaints the whole screen after a resize. Older frames were drawn
+        // for another width and TUIs skip cells instead of writing spaces, so the
+        // repaint starts on a clean screen (history stays in the scrollback).
+        const clean = message.repaint && useRemote.getState().platform === 'win32' ? '\x1b[H\x1b[2J' : ''
+        term.write(message.data + clean, () => term.scrollToBottom())
       } else if (message.t === 'data') {
         term.write(message.data)
       } else if (message.t === 'exit') {
@@ -208,13 +209,29 @@ export function TerminalScreen(): React.JSX.Element {
     setMods({ ...modRef.current })
   }
 
+  // Live keyboard: what is typed reaches the terminal key by key.
+  useEffect(() => {
+    const field = liveRef.current
+    if (!field) return
+    const detach = attachPhoneInput(field, {
+      onText: (data) => sendInput(data),
+      onKey: (data) => sendInput(data, true),
+      applicationCursor: () => termRef.current?.modes.applicationCursorKeysMode ?? false
+    })
+    const onFocus = (): void => setKeyboardOpen(true)
+    const onBlur = (): void => setKeyboardOpen(false)
+    field.addEventListener('focus', onFocus)
+    field.addEventListener('blur', onBlur)
+    return () => {
+      detach()
+      field.removeEventListener('focus', onFocus)
+      field.removeEventListener('blur', onBlur)
+    }
+  }, [sendInput])
+
   const toggleKeyboard = (): void => {
-    const next = !keyboardRef.current
-    keyboardRef.current = next
-    setDirectKeyboard(next)
-    localStorage.setItem(KEYBOARD_KEY, next ? '1' : '0')
-    if (next) termRef.current?.focus()
-    else termRef.current?.textarea?.blur()
+    if (document.activeElement === liveRef.current) liveRef.current?.blur()
+    else liveRef.current?.focus()
   }
 
   const arrow = (key: 'A' | 'B' | 'C' | 'D'): void => {
@@ -223,9 +240,9 @@ export function TerminalScreen(): React.JSX.Element {
   }
 
   const submitCompose = (): void => {
-    const text = compose
-    // paste() honours bracketed paste, so multi-line prompts arrive as one block.
-    if (text) termRef.current?.paste(text)
+    const text = compose.replace(/\r?\n/g, '\r')
+    // Bracketed paste (when the program asked for it) keeps a multi-line prompt in one block.
+    if (text) sendInput(termRef.current?.modes.bracketedPasteMode ? `\x1b[200~${text}\x1b[201~` : text, true)
     sendInput('\r', true)
     setCompose('')
   }
@@ -258,8 +275,26 @@ export function TerminalScreen(): React.JSX.Element {
         <button className="tab-chip add" onClick={() => setNewTabOpen(true)} aria-label="New tab"><Plus size={16} /></button>
       </div>
 
-      <div className="term-wrap">
+      <div
+        className="term-wrap"
+        onClick={(e) => {
+          // A tap on the terminal opens the keyboard; buttons inside keep their own action.
+          if (current && !(e.target as HTMLElement).closest('button, a')) liveRef.current?.focus()
+        }}
+      >
         <div ref={hostRef} className="term-host" />
+        <textarea
+          ref={liveRef}
+          className="phone-input"
+          aria-label={current ? `Type in ${current.title}` : 'Terminal input'}
+          autoCapitalize="off"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          enterKeyHint="enter"
+          rows={1}
+          tabIndex={-1}
+        />
         {!current && tabs.length === 0 && (
           <div className="term-overlay">
             <Empty icon={<SquareTerminal size={28} />} title="No tabs open" text="Open a shell or an agent on your computer.">
@@ -278,8 +313,9 @@ export function TerminalScreen(): React.JSX.Element {
         )}
       </div>
 
-      <div className="keybar" role="toolbar" aria-label="Special keys">
-        <button className={directKeyboard ? 'key on' : 'key'} onClick={toggleKeyboard} aria-label="Type directly in the terminal" aria-pressed={directKeyboard}><Keyboard size={16} /></button>
+      {/* Pressing a key must not take focus from the live field, or the keyboard would close. */}
+      <div className="keybar" role="toolbar" aria-label="Special keys" onPointerDown={(e) => e.preventDefault()}>
+        <button className={keyboardOpen ? 'key on' : 'key'} onClick={toggleKeyboard} aria-label={keyboardOpen ? 'Hide keyboard' : 'Show keyboard'} aria-pressed={keyboardOpen}><Keyboard size={16} /></button>
         <button className="key" onClick={() => sendInput('\x1b', true)}>Esc</button>
         <button className="key" onClick={() => sendInput('\t', true)}>Tab</button>
         <button className="key" onClick={() => sendInput('\x1b[Z', true)} aria-label="Shift Tab">⇧Tab</button>
@@ -296,7 +332,7 @@ export function TerminalScreen(): React.JSX.Element {
         {['/', '|', '~', '-', '*'].map((ch) => <button key={ch} className="key" onClick={() => sendInput(ch)}>{ch}</button>)}
       </div>
 
-      {!directKeyboard && (
+      {!keyboardOpen && (
         <form className="compose" onSubmit={(e) => { e.preventDefault(); submitCompose() }}>
           <textarea
             className="compose-input"

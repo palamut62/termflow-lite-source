@@ -16,6 +16,7 @@ import { agentProfileOptions, switchActiveAgentProfile } from '../agentHandover'
 import { OutputPulse } from './OutputPulse'
 import { useFilePanelStore } from '../store/filePanelStore'
 import { useStatsStore } from '../store/statsStore'
+import { phonesLabel, useConnectedPhones } from '../remoteStatus'
 
 const PERMISSION_MODES: AgentPermissionMode[] = ['safe', 'workspace', 'full']
 const PERMISSION_LABELS: Record<AgentPermissionMode, string> = {
@@ -28,16 +29,12 @@ const CONFIRM_RESET_MS = 6000
 
 /** Shown while a paired phone is connected through Remote Access; opens its settings. */
 function RemoteBadge(): React.JSX.Element | null {
-  const [connected, setConnected] = useState(0)
-  useEffect(() => {
-    void window.termflow.remote.status().then((status) => setConnected(status.connectedDevices))
-    return window.termflow.remote.onStatus((status) => setConnected(status.connectedDevices))
-  }, [])
-  if (connected === 0) return null
-  const title = `${connected} phone${connected === 1 ? '' : 's'} connected through Remote Access`
+  const phones = useConnectedPhones()
+  if (phones.length === 0) return null
+  const title = `${phonesLabel(phones)} through Remote Access`
   return (
-    <button className="status-item status-action status-remote" onClick={() => useSettingsStore.getState().openSettings()} title={title} aria-label={title}>
-      <Smartphone size={12} />{connected}
+    <button className="status-item status-action status-remote" onClick={() => useSettingsStore.getState().openSettings('remote')} title={title} aria-label={title}>
+      <Smartphone size={12} />{phones.length}
     </button>
   )
 }

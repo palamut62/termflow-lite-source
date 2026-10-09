@@ -107,7 +107,8 @@ export type ServerMessage =
   | { t: 'result'; id: number; ok: boolean; value?: unknown; error?: string }
   | ({ t: 'tabs' } & RemoteTabsState)
   | { t: 'settings'; settings: RemoteSettingsView }
-  | { t: 'snapshot'; tabId: string; data: string }
+  /** repaint: the PTY was just resized for this phone and a full repaint follows (ConPTY). */
+  | { t: 'snapshot'; tabId: string; data: string; repaint?: boolean }
   | { t: 'data'; tabId: string; data: string }
   | { t: 'exit'; tabId: string; exitCode: number }
   | { t: 'revoked' }

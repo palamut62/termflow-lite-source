@@ -77,6 +77,7 @@ export interface RemoteTerminals {
   setRemoteSize(id: string, size: { cols: number; rows: number } | null): void
   write(id: string, data: string): void
   getBuffer(id: string): string
+  size(id: string): { cols: number; rows: number } | null
 }
 
 export interface RemoteHubDeps {
@@ -240,11 +241,13 @@ export class RemoteHub {
       case 'sub': {
         if (!this.knownTab(message.tabId)) return
         const size = { cols: message.cols, rows: message.rows }
+        const before = this.deps.terminals.size(message.tabId)
         client.subs.set(message.tabId, size)
         client.pending.delete(message.tabId)
         client.stalled.delete(message.tabId)
         this.takeSize(client, message.tabId, size)
-        client.conn.send({ t: 'snapshot', tabId: message.tabId, data: tailSnapshot(this.deps.terminals.getBuffer(message.tabId)) })
+        const repaint = !!before && (before.cols !== size.cols || before.rows !== size.rows)
+        client.conn.send({ t: 'snapshot', tabId: message.tabId, data: tailSnapshot(this.deps.terminals.getBuffer(message.tabId)), repaint })
         return
       }
       case 'unsub':
@@ -292,13 +295,13 @@ export class RemoteHub {
         return await this.deps.invokeIpc(channel, args)
       }
       case 'tab.open':
-        return await this.deps.runTabCommand({
+        return this.openedAtPhoneSize(client, p, await this.deps.runTabCommand({
           kind: 'open',
           profileId: requireString(p.profileId, 'profile'),
           cwd: optionalString(p.cwd),
           launchCommand: optionalString(p.launchCommand),
           permissionMode: permission(p.permissionMode)
-        })
+        }))
       case 'tab.close':
         return await this.deps.runTabCommand({ kind: 'close', tabId: requireTab(p.tabId) })
       case 'tab.rename':
@@ -312,18 +315,18 @@ export class RemoteHub {
         if (!session || !['claude', 'codex', 'opencode'].includes(session.agent as string) || typeof session.id !== 'string' || !/^[a-zA-Z0-9_-]{1,160}$/.test(session.id)) {
           throw new Error('Invalid agent session')
         }
-        return await this.deps.runTabCommand({
+        return this.openedAtPhoneSize(client, p, await this.deps.runTabCommand({
           kind: 'resume',
           profileId: requireString(p.profileId, 'profile'),
           session: { agent: session.agent as 'claude' | 'codex' | 'opencode', id: session.id },
           cwd: optionalString(p.cwd),
           permissionMode: permission(p.permissionMode)
-        })
+        }))
       }
       case 'saved.list':
         return await this.deps.runTabCommand({ kind: 'saved-list' })
       case 'saved.run':
-        return await this.deps.runTabCommand({ kind: 'saved-run', id: requireString(p.id, 'command') })
+        return this.openedAtPhoneSize(client, p, await this.deps.runTabCommand({ kind: 'saved-run', id: requireString(p.id, 'command') }))
       case 'device.forget': {
         const id = client.device!.id
         this.deps.devices.revoke(id)
@@ -333,6 +336,21 @@ export class RemoteHub {
       default:
         throw new Error('Unknown method')
     }
+  }
+
+  /**
+   * A tab opened from the phone is watched there right away: claim the phone's
+   * size before its PTY spawns, so programs draw for the phone from the first
+   * frame instead of being redrawn after a resize.
+   */
+  private openedAtPhoneSize(client: Client, params: Record<string, unknown>, tabId: unknown): unknown {
+    const cols = params.cols
+    const rows = params.rows
+    if (!isValidTabId(tabId) || typeof cols !== 'number' || typeof rows !== 'number') return tabId
+    if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > 1000 || rows < 1 || rows > 500) return tabId
+    client.subs.set(tabId, { cols, rows })
+    this.takeSize(client, tabId, { cols, rows })
+    return tabId
   }
 
   // ---- PTY size arbitration: the last phone to view or resize a tab wins ----

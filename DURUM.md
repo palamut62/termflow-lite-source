@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.21.0
+guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.21.1
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -27,16 +27,17 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.20.0 Memory model katalogu: OpenRouter'dan tum modeller, 24 saat cache, Refresh + Test
 - [x] 1.20.1 Model secici: datalist yerine `settings/ModelPicker.tsx`; acilinca tum modeller, All/Free filtresi, ucretsizler yesil
 - [x] 1.21.0 Remote Access: Tailscale + QR ile telefondan tam kontrol; spec `docs/remote-access.md`, 3/3 faz; site f8 (EN/TR)
+- [x] 1.21.1 Telefon klavyesi (dokununca acilir, canli yazma, IME uyumlu), cift terminal cevabi giderildi, sekme cubugunda bagli telefon simgesi
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-09)
-- Remote Access: ana surecte Tailscale IP'sine bagli HTTP+WS sunucusu (`src/main/remote/`), QR ile tek kullanimlik eslestirme, kalici cihaz anahtari (hash), masaustunden kesme; Ayarlar > Remote Access + durum cubugu rozeti
-- Telefon istemcisi `src/remote/` (Vite -> `out/remote`): canli terminal + tus cubugu + yazma kutusu, sekme ac/kapat/yeniden adlandir/yeniden baslat, ayarlar/profil/provider (anahtar yazma)/SSH/Memory, ajan oturumu surdurme, kayitli komut, proje (git, gorev, dosya, worktree, PR)
-- PTY boyutu telefon izlerken telefona gecer, ayrilinca masaustune doner; cikti `PtyCore` tap'inden. Dogrulama: 591 birim test, `e2e/remote.spec.ts` 2/2, gercek Tailscale IP'sinde (100.89.62.116) yerlesik tarayiciyla canli deneme
+- 1.21.0 Remote Access yayinlandi (Tailscale + QR, canli terminal, ayarlar/profil/provider/SSH/Memory, ajan oturumu, proje); site f8 bolumu
+- 1.21.1: telefonda terminale dokununca klavye acilmiyordu. `src/remote/src/phoneInput.ts` (alan farki -> tus vurusu); telefondaki xterm onData'si artik gonderilmiyor (masaustuyle cift terminal cevabi ajan inputunu bozabiliyordu)
+- Telefondan acilan sekme telefon boyutunda dogar; abonelikte Windows'ta temiz ekran + ConPTY yeniden cizimi (Claude Code'da kayma yok). Sekme cubugu sag ustte bagli telefon simgesi (`RemoteIndicator`). Gercek Claude Code 2.1.289 ile telefon gorunumunde canli denendi
 
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
-- 1.21.0 yayinda (2026-10-09): Release + verify-release yesil; site Remote Access bolumu (f8, `assets/remote.webp`) Vercel prod. Bu PC'ye 1.21.0 henuz kurulmadi
+- 1.21.1 yayini (2026-10-09): etiket CI'a gitti; Release + verify-release sonucu kontrol edilmeli. Bu PC'de 1.21.0 kurulu, Remote Access 47321'de acik
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 

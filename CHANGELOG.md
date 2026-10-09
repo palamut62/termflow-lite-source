@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.21.1 - 2026-10-09
+
+- Typing on the phone: tap the terminal and the keyboard opens; every key reaches the shell or agent as you type, including in Claude Code, Codex and OpenCode input boxes. Word suggestions, autocorrect and Backspace on an empty line now work, and the special-key bar no longer closes the keyboard.
+- The phone no longer answers the terminal's own questions a second time, which could drop stray characters into an agent's input.
+- A tab opened from the phone starts at the phone's size, and switching to a tab gives the phone a clean redraw instead of leftovers from the wider desktop frame.
+- When a phone is connected, a green phone icon now shows at the top right of the window. Hover it to see which phone, click it to open Remote Access settings.
+
 ## 1.21.0 - 2026-10-09
 
 - Remote Access (Settings > Remote Access, off until you turn it on): control TermFlow Lite from your phone over Tailscale. Scan a QR code once and the phone stays connected until you disconnect it on the computer.
