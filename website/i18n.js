@@ -75,11 +75,19 @@
 
     'f8.title': 'Terminalini telefonuna taşı',
     'f8.text': "Remote Access'i aç, bir kez QR kodu okut; telefonun Tailscale üzerinden bilgisayarındaki TermFlow Lite'ı yönetsin. Bir ajan çalışırken masadan kalk, işi her yerden takip et.",
-    'f8.li1': 'Her sekme satır satır canlı akar; Esc, Tab, Ctrl ve ok tuşlarıyla ya da uzun istemler için mesaj kutusuyla içine yaz',
+    'f8.li1': 'Her sekme satır satır canlı akar, dokununca klavye açılır. Telefon masaüstü terminalini daraltmadan aynalar; bir sekmeyi telefona sığdırmak için Fit\'e dokun',
     'f8.li2': 'Sekme aç ve kapat; herhangi bir kabuğu, ajanı, sağlayıcıyı ya da SSH bağlantısını başlat, ajan oturumlarını sürdür, kayıtlı komutları çalıştır',
     'f8.li3': 'Ayarları, profilleri, sağlayıcıları ve SSH bağlantılarını telefondan değiştir; bilgisayar hemen uygular',
-    'f8.li4': 'Yalnızca Tailscale adresini dinler, yerel ağa ya da internete açılmaz; sen bağlantıyı kesene kadar eşli kalır',
+    'f8.li4': 'Yalnızca Tailscale adresini dinler, yerel ağa ya da internete açılmaz. Telefon uygulamasından, ana ekrandan bile QR okutarak eşleşir; sen bağlantıyı kesene kadar eşli kalır',
     'f8.alt': 'Eşleştirme QR kodu gösteren Ayarlar > Remote Access ve yanında aynı PowerShell sekmesini çalıştıran bir telefon',
+
+    'f9.title': 'Yazmak yerine konuş',
+    'f9.text': "Space'i basılı tut ve konuş, bırakınca metin imlecin olduğu yere temizlenmiş olarak gelir; Enter'a basmadan önce kontrol edersin. Kısa basış hâlâ boşluktur.",
+    'f9.li1': 'Noktalama ve yazım düzelir, dolgu sözcükleri atılır, komutlar ve dosya adları senin yazacağın gibi yazılır',
+    'f9.li2': "Nerede olduğunu bilir: kabuk isteminde komut, Claude Code, Codex ve OpenCode'da istek yazar",
+    'f9.li3': "Türkçe ve İngilizce; seçtiğin OpenRouter modeli ve kendi anahtarınla çalışır, on saniyelik konuşmanın maliyeti yaklaşık yüzde bir sent",
+    'f9.li4': "Sen açana kadar kapalıdır; Space'i basılı tutmadıkça hiçbir şey kaydedilmez, Esc iptal eder",
+    'f9.alt': 'Dikte edilen bir komut PowerShell isteminde beklerken Dinliyor göstergesi ikinci bir kaydı gösteriyor',
 
     'f3.title': 'Ajanının ne yaptığını gör',
     'f3.text': 'Ember, Miso ya da Piko her ajan terminalinin yanında oturur ve gerçek oturumu canlandırır: ajan düzenleme yaparken yazar, düşünür, onayını bekler, iş bitince sevinir.',
