@@ -97,6 +97,30 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   await expect.poll(desktopText, { timeout: 15_000 }).toContain('remote-42-ok')
   await phone.screenshot({ path: 'test-results/remote-phone-terminal.png' })
 
+  // Mirroring (default): the shell still sees the desktop width; Fit hands it the phone width.
+  const ptyWidth = async (tag: string): Promise<number> => {
+    await phone.locator('.compose-input').fill(`"${tag}=$($Host.UI.RawUI.WindowSize.Width)"`)
+    await phone.locator('.send').click()
+    let width = 0
+    await expect.poll(async () => {
+      const match = new RegExp(`${tag}=(\\d+)`).exec(await phoneText())
+      width = match ? Number(match[1]) : 0
+      return width
+    }, { timeout: 15_000 }).toBeGreaterThan(0)
+    return width
+  }
+  expect(await ptyWidth('MIRROR')).toBeGreaterThan(80)
+  await expect(phone.locator('.term-host')).toHaveAttribute('style', /scale/)
+  // Zoom in on the mirrored terminal from the tab menu (the desktop is unaffected).
+  await phone.locator('.tab-chip.active').click()
+  for (let i = 0; i < 4; i++) await phone.getByRole('button', { name: 'Zoom in' }).click()
+  await phone.keyboard.press('Escape')
+  await phone.screenshot({ path: 'test-results/remote-phone-zoom.png' })
+  await phone.getByRole('button', { name: 'Fit to phone' }).click()
+  expect(await ptyWidth('FIT')).toBeLessThan(70)
+  await phone.getByRole('button', { name: 'Fit to phone' }).click()
+  expect(await ptyWidth('BACK')).toBeGreaterThan(80)
+
   // Open a second tab from the phone; the desktop gets it too.
   const before = await win.locator('.tab-bar .tab-title').count()
   await phone.getByRole('button', { name: 'New tab' }).click()

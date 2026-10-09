@@ -23,8 +23,10 @@ Telefon ayri bir kopya degil, masaustunun uzaktan kumandasidir: iki ekran ayni d
   eslestirme denemelerine hiz siniri (IP basina dakikada 10).
 - Provider API anahtarlari telefona asla gitmez; telefon yalnizca yeni anahtar yazar/siler.
   `asciiBackgrounds` (buyuk resimler) telefona gonderilmez.
-- PTY boyutu: telefon bir sekmeye abone oldugunda PTY telefon boyutuna gecer; masaustunun
-  istedigi boyut saklanir ve telefon ayrilinca (sekme degisimi, arka plan, kopma) geri uygulanir.
+- PTY boyutu (2026-10-09 revize, kullanici karari): varsayilan AYNA modu; telefon PTY boyutuna
+  dokunmaz, masaustu genisligindeki goruntuyu ekrana olcekler (Zoom 1x-3x, yakinlasinca kaydirilir),
+  masaustu yeniden boyutlaninca `size` mesajiyla izler. Telefonda "Fit" (`termflow.remote.fitPhone`)
+  acilirsa eski davranis: PTY telefon boyutuna gecer, telefon ayrilinca masaustu boyutu geri gelir.
 - Cikti telefona `PtyCore` ham dokunusundan gider; masaustundeki render modundan (buffer) bagimsizdir.
 - Sekme durumu renderer'da kalir. Renderer sekme listesini ana surece yayinlar (`remote:tabs`);
   telefonun sekme komutlari (ac/kapat/yeniden adlandir/one al/ajan surdur/kayitli komut)

@@ -3,7 +3,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Plus, Send, SquareTerminal } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Plus, Send, Smartphone, SquareTerminal } from 'lucide-react'
 import { resolveTheme } from '../../../renderer/src/themes/themes'
 import type { RemoteTab, ServerMessage } from '../../../shared/remote'
 import { client, errorText, useRemote } from '../store'
@@ -13,6 +13,10 @@ import { NewTabSheet } from './NewTabSheet'
 import { attachPhoneInput } from '../phoneInput'
 
 const FONT_KEY = 'termflow.remote.fontSize'
+const FIT_KEY = 'termflow.remote.fitPhone'
+const ZOOM_KEY = 'termflow.remote.mirrorZoom'
+/** Mirrored terminals may be enlarged a little when the desktop is narrower than the phone. */
+const MAX_MIRROR_SCALE = 1.6
 const RESIZE_DEBOUNCE_MS = 120
 
 function storedNumber(key: string, fallback: number): number {
@@ -49,6 +53,7 @@ export function TerminalScreen(): React.JSX.Element {
   const pageVisible = usePageVisible()
 
   const hostRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const tabRef = useRef<string | null>(null)
@@ -56,7 +61,16 @@ export function TerminalScreen(): React.JSX.Element {
   const liveRef = useRef<HTMLTextAreaElement>(null)
   const [mods, setMods] = useState({ ctrl: false, alt: false })
   const [fontSize, setFontSize] = useState(() => storedNumber(FONT_KEY, 12))
+  // Mirror mode: 1 = the desktop width fits the screen; larger values zoom in and the view pans.
+  const [zoom, setZoom] = useState(() => Math.min(3, Math.max(1, storedNumber(ZOOM_KEY, 1))))
+  const zoomRef = useRef(zoom)
+  zoomRef.current = zoom
   const [keyboardOpen, setKeyboardOpen] = useState(false)
+  // Off: show the desktop terminal at its own size, scaled to the screen (the desktop never changes).
+  // On: the terminal takes the phone's size while the phone looks at it.
+  const [fitPhone, setFitPhone] = useState(() => localStorage.getItem(FIT_KEY) === '1')
+  const fitPhoneRef = useRef(fitPhone)
+  fitPhoneRef.current = fitPhone
   const [exited, setExited] = useState<number | null>(null)
   const [newTabOpen, setNewTabOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -131,44 +145,63 @@ export function TerminalScreen(): React.JSX.Element {
     document.documentElement.style.setProperty('--term-bg', colors.background)
   }, [settings])
 
-  const sendSize = useCallback((): void => {
+  /**
+   * Fit mode: size xterm to the phone and tell the desktop. Mirror mode: keep
+   * the desktop's columns and rows and scale the whole terminal to the screen.
+   */
+  const layout = useCallback((): void => {
     const term = termRef.current
-    if (term) useRemote.setState({ termSize: { cols: term.cols, rows: term.rows } })
-    const tabId = tabRef.current
-    if (!term || !tabId) return
-    useRemote.getState().client?.send({ t: 'resize', tabId, cols: term.cols, rows: term.rows })
+    const host = hostRef.current
+    const wrap = wrapRef.current
+    if (!term || !host || !wrap || wrap.clientWidth === 0) return
+    if (fitPhoneRef.current) {
+      host.style.cssText = ''
+      const before = `${term.cols}x${term.rows}`
+      try { fitRef.current?.fit() } catch { return }
+      useRemote.setState({ termSize: { cols: term.cols, rows: term.rows } })
+      const tabId = tabRef.current
+      if (tabId && `${term.cols}x${term.rows}` !== before) {
+        useRemote.getState().client?.send({ t: 'resize', tabId, cols: term.cols, rows: term.rows })
+      }
+      return
+    }
+    useRemote.setState({ termSize: null })
+    const screen = term.element?.querySelector<HTMLElement>('.xterm-screen')
+    if (!screen || screen.offsetWidth === 0) return
+    const width = screen.offsetWidth
+    const height = screen.offsetHeight
+    const scale = Math.min(MAX_MIRROR_SCALE, (wrap.clientWidth - 12) / width) * zoomRef.current
+    host.style.cssText = `right:auto;bottom:auto;width:${width}px;height:${height}px;transform:scale(${scale.toFixed(4)});transform-origin:top left`
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem(ZOOM_KEY, String(zoom))
+    requestAnimationFrame(layout)
+  }, [zoom, layout])
 
   useEffect(() => {
     localStorage.setItem(FONT_KEY, String(fontSize))
     const term = termRef.current
     if (!term) return
     term.options.fontSize = fontSize
-    try { fitRef.current?.fit() } catch { /* hidden */ }
-    sendSize()
-  }, [fontSize, sendSize])
+    requestAnimationFrame(layout)
+  }, [fontSize, layout])
 
-  // Refit on every layout change (rotation, keyboard, compose growing).
+  // Relayout on every size change of the area (rotation, keyboard, compose growing).
   useEffect(() => {
-    const host = hostRef.current
-    if (!host) return
+    const wrap = wrapRef.current
+    if (!wrap) return
     let timer: ReturnType<typeof setTimeout> | null = null
     const observer = new ResizeObserver(() => {
       if (timer) clearTimeout(timer)
-      timer = setTimeout(() => {
-        const term = termRef.current
-        if (!term || host.clientWidth === 0) return
-        const before = `${term.cols}x${term.rows}`
-        try { fitRef.current?.fit() } catch { return }
-        if (`${term.cols}x${term.rows}` !== before) sendSize()
-      }, RESIZE_DEBOUNCE_MS)
+      timer = setTimeout(layout, RESIZE_DEBOUNCE_MS)
     })
-    observer.observe(host)
+    observer.observe(wrap)
     return () => {
       if (timer) clearTimeout(timer)
       observer.disconnect()
     }
-  }, [sendSize])
+  }, [layout])
 
   // ---- Subscription: live while this tab is on screen and the app is visible ----
   useEffect(() => {
@@ -181,11 +214,20 @@ export function TerminalScreen(): React.JSX.Element {
     tabRef.current = currentTabId
     setExited(null)
     term.reset()
-    try { fitRef.current?.fit() } catch { /* hidden */ }
+    if (fitPhone) layout()
+    /** Mirror mode follows the desktop's size. */
+    const follow = (cols?: number, rows?: number): void => {
+      if (fitPhone || !cols || !rows) return
+      if (cols !== term.cols || rows !== term.rows) term.resize(cols, rows)
+      requestAnimationFrame(layout)
+    }
     const off = remote.onMessage((message: ServerMessage) => {
       if (!('tabId' in message) || message.tabId !== currentTabId) return
-      if (message.t === 'snapshot') {
+      if (message.t === 'size') {
+        follow(message.cols, message.rows)
+      } else if (message.t === 'snapshot') {
         term.reset()
+        follow(message.cols, message.rows)
         // ConPTY repaints the whole screen after a resize. Older frames were drawn
         // for another width and TUIs skip cells instead of writing spaces, so the
         // repaint starts on a clean screen (history stays in the scrollback).
@@ -197,12 +239,20 @@ export function TerminalScreen(): React.JSX.Element {
         setExited(message.exitCode)
       }
     })
-    remote.send({ t: 'sub', tabId: currentTabId, cols: term.cols, rows: term.rows })
+    remote.send({ t: 'sub', tabId: currentTabId, cols: term.cols, rows: term.rows, fit: fitPhone })
     return () => {
       off()
       remote.send({ t: 'unsub', tabId: currentTabId })
     }
-  }, [currentTabId, connection, pageVisible])
+  }, [currentTabId, connection, pageVisible, fitPhone, layout])
+
+  const toggleFit = (): void => {
+    const next = !fitPhone
+    localStorage.setItem(FIT_KEY, next ? '1' : '0')
+    fitPhoneRef.current = next
+    setFitPhone(next)
+    toast(next ? 'Fit to phone: the computer shows this tab at the phone size while you watch it.' : 'Mirroring: the computer keeps its own size.')
+  }
 
   const toggleMod = (mod: 'ctrl' | 'alt'): void => {
     modRef.current = { ...modRef.current, [mod]: !modRef.current[mod] }
@@ -276,7 +326,8 @@ export function TerminalScreen(): React.JSX.Element {
       </div>
 
       <div
-        className="term-wrap"
+        ref={wrapRef}
+        className={fitPhone ? 'term-wrap' : 'term-wrap mirror'}
         onClick={(e) => {
           // A tap on the terminal opens the keyboard; buttons inside keep their own action.
           if (current && !(e.target as HTMLElement).closest('button, a')) liveRef.current?.focus()
@@ -316,6 +367,7 @@ export function TerminalScreen(): React.JSX.Element {
       {/* Pressing a key must not take focus from the live field, or the keyboard would close. */}
       <div className="keybar" role="toolbar" aria-label="Special keys" onPointerDown={(e) => e.preventDefault()}>
         <button className={keyboardOpen ? 'key on' : 'key'} onClick={toggleKeyboard} aria-label={keyboardOpen ? 'Hide keyboard' : 'Show keyboard'} aria-pressed={keyboardOpen}><Keyboard size={16} /></button>
+        <button className={fitPhone ? 'key on' : 'key'} onClick={toggleFit} aria-label="Fit to phone" aria-pressed={fitPhone} title="Fit to phone: resize the terminal to this screen while you watch it"><Smartphone size={16} /> Fit</button>
         <button className="key" onClick={() => sendInput('\x1b', true)}>Esc</button>
         <button className="key" onClick={() => sendInput('\t', true)}>Tab</button>
         <button className="key" onClick={() => sendInput('\x1b[Z', true)} aria-label="Shift Tab">⇧Tab</button>
@@ -379,7 +431,17 @@ export function TerminalScreen(): React.JSX.Element {
                 <button className="menu-item" onClick={() => setRenaming(true)}>Rename</button>
                 <button className="menu-item" onClick={() => { setMenuOpen(false); void run('tab.focus', { tabId: current.id }, 'Shown on the desktop.') }}>Show on desktop</button>
                 <button className="menu-item" onClick={() => { setMenuOpen(false); void run('tab.restart', { tabId: current.id }) }}>Restart</button>
-                <div className="menu-item font-size">
+                {!fitPhone && (
+                  <div className="menu-item font-size">
+                    <span>Zoom</span>
+                    <span className="stepper">
+                      <button className="icon-btn" onClick={() => setZoom((z) => Math.max(1, z - 0.25))} aria-label="Zoom out"><Minus size={16} /></button>
+                      <span>{zoom.toFixed(2).replace(/\.?0+$/, '')}x</span>
+                      <button className="icon-btn" onClick={() => setZoom((z) => Math.min(3, z + 0.25))} aria-label="Zoom in"><Plus size={16} /></button>
+                    </span>
+                  </div>
+                )}
+                <div className="menu-item font-size" hidden={!fitPhone}>
                   <span>Text size</span>
                   <span className="stepper">
                     <button className="icon-btn" onClick={() => setFontSize((n) => Math.max(8, n - 1))} aria-label="Smaller text"><Minus size={16} /></button>

@@ -26,7 +26,7 @@ beforeAll(async () => {
   writeFileSync(join(dir, 'secret.txt'), 'top secret')
   devices = new DeviceStore(join(dir, 'devices.json'))
   const hub = new RemoteHub({
-    terminals: { onOutput: () => () => undefined, setRemoteSize: () => undefined, write: (_id, data) => { writes.push(data) }, getBuffer: () => 'PS C:\\> ', size: () => null },
+    terminals: { onOutput: () => () => undefined, setRemoteSize: () => undefined, write: (_id, data) => { writes.push(data) }, getBuffer: () => 'PS C:\\> ', size: () => null, onSizeChange: () => () => undefined },
     devices,
     invokeIpc: async () => null,
     getSettings: () => DEFAULT_SETTINGS,

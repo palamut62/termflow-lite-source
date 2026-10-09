@@ -37,6 +37,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 - Duzeltme (surum 1.21.1 kaldi, yerel kurulum): telefon ikonlari `.gitignore` *.png yuzunden CI paketine girmiyordu (logo kirik); `public/` icin git-ignore guard testi. iPhone ana ekran uygulamasi Safari deposunu goremedigi icin eslesme kayboluyordu: QR altinda 10 karakterlik elle yazilabilir kod + telefonda kod alani
 
+- Duzeltme (surum 1.21.1, yerel kurulum): telefon artik varsayilan olarak masaustu boyutunu AYNALAR (masaustu daralmaz, Claude Code bozulmaz); "Fit" ile telefon boyutuna gecis, ayna modunda Zoom 1x-3x
+
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.21.1 yayinda (2026-10-09): Release + verify-release yesil. Bu PC'de 1.21.0 kurulu (Remote Access 47321'de acik); 1.21.1 guncellemesi kurulup telefonla denenmeli

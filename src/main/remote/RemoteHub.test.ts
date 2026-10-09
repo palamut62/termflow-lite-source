@@ -8,6 +8,7 @@ const TOKEN = 'a'.repeat(43)
 
 function setup() {
   let output: (event: PtyEvent) => void = () => undefined
+  let sizeChange: (id: string, size: { cols: number; rows: number }) => void = () => undefined
   const sizes: [string, { cols: number; rows: number } | null][] = []
   const writes: [string, string][] = []
   const commands: RemoteTabCommand[] = []
@@ -19,10 +20,11 @@ function setup() {
   const hub = new RemoteHub({
     terminals: {
       onOutput: (listener) => { output = listener; return () => undefined },
-      setRemoteSize: (id, size) => { sizes.push([id, size]) },
+      setRemoteSize: (id, size) => { sizes.push([id, size]); if (size) termSizes.set(id, size) },
       write: (id, data) => { writes.push([id, data]) },
       getBuffer: (id) => `history of ${id}`,
-      size: (id) => termSizes.get(id) ?? null
+      size: (id) => termSizes.get(id) ?? null,
+      onSizeChange: (listener) => { sizeChange = listener; return () => undefined }
     },
     devices: {
       authenticate: (token) => (token === TOKEN ? { id: 'dev1', name: 'Pixel', createdAt: 0, lastSeenAt: 0 } : null),
@@ -65,7 +67,7 @@ function setup() {
     return { conn, sent, send, closed: () => closed, setBuffered: (n: number) => { buffered = n } }
   }
 
-  return { hub, phone, sizes, writes, commands, ipcCalls, remoteSettings, revoked, emit: (e: PtyEvent) => output(e) }
+  return { hub, phone, sizes, writes, commands, ipcCalls, remoteSettings, revoked, emit: (e: PtyEvent) => output(e), resizePty: (id: string, size: { cols: number; rows: number }) => { termSizes.set(id, size); sizeChange(id, size) } }
 }
 
 beforeEach(() => { vi.useFakeTimers() })
@@ -97,9 +99,9 @@ describe('RemoteHub', () => {
     const { phone, sizes, emit } = setup()
     const p = phone()
     await p.send({ t: 'auth', token: TOKEN })
-    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: true })
     expect(sizes).toEqual([['tab1', { cols: 40, rows: 20 }]])
-    expect(p.sent.at(-1)).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'history of tab1', repaint: true })
+    expect(p.sent.at(-1)).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'history of tab1', repaint: true, cols: 40, rows: 20 })
     emit({ kind: 'data', ptyId: 'tab1', data: 'a' })
     emit({ kind: 'data', ptyId: 'tab1', data: 'b' })
     emit({ kind: 'data', ptyId: 'other', data: 'x' })
@@ -115,8 +117,8 @@ describe('RemoteHub', () => {
     const b = phone()
     await a.send({ t: 'auth', token: TOKEN })
     await b.send({ t: 'auth', token: TOKEN })
-    await a.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 })
-    await b.send({ t: 'sub', tabId: 'tab1', cols: 60, rows: 30 })
+    await a.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: true })
+    await b.send({ t: 'sub', tabId: 'tab1', cols: 60, rows: 30, fit: true })
     hub.disconnect(b.conn)
     expect(sizes.at(-1)).toEqual(['tab1', { cols: 40, rows: 20 }])
     hub.disconnect(a.conn)
@@ -136,8 +138,31 @@ describe('RemoteHub', () => {
     const { phone } = setup()
     const p = phone()
     await p.send({ t: 'auth', token: TOKEN })
-    await p.send({ t: 'sub', tabId: 'tab1', cols: 120, rows: 30 })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 120, rows: 30, fit: true })
     expect(p.sent.at(-1)).toMatchObject({ t: 'snapshot', repaint: false })
+  })
+
+  it('by default mirrors the desktop size and leaves the PTY alone', async () => {
+    const { phone, sizes, resizePty } = setup()
+    const p = phone()
+    await p.send({ t: 'auth', token: TOKEN })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: false })
+    expect(sizes).toEqual([])
+    expect(p.sent.at(-1)).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'history of tab1', repaint: false, cols: 120, rows: 30 })
+    // The phone cannot resize a mirrored tab, and follows desktop resizes.
+    await p.send({ t: 'resize', tabId: 'tab1', cols: 30, rows: 10 })
+    expect(sizes).toEqual([])
+    resizePty('tab1', { cols: 150, rows: 40 })
+    expect(p.sent.at(-1)).toEqual({ t: 'size', tabId: 'tab1', cols: 150, rows: 40 })
+  })
+
+  it('switching a tab from fit back to mirror gives the desktop its size back', async () => {
+    const { phone, sizes } = setup()
+    const p = phone()
+    await p.send({ t: 'auth', token: TOKEN })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: true })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: false })
+    expect(sizes).toEqual([['tab1', { cols: 40, rows: 20 }], ['tab1', null]])
   })
 
   it('writes input only to known tabs', async () => {
@@ -213,7 +238,7 @@ describe('RemoteHub', () => {
     const { hub, phone, sizes } = setup()
     const p = phone()
     await p.send({ t: 'auth', token: TOKEN })
-    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: true })
     hub.setTabs({ tabs: [], activeTabId: null })
     expect(sizes.at(-1)).toEqual(['tab1', null])
     expect(p.sent.at(-1)).toEqual({ t: 'tabs', tabs: [], activeTabId: null })
@@ -223,7 +248,7 @@ describe('RemoteHub', () => {
     const { phone, emit } = setup()
     const p = phone()
     await p.send({ t: 'auth', token: TOKEN })
-    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 })
+    await p.send({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20, fit: true })
     p.setBuffered(5 * 1024 * 1024)
     emit({ kind: 'data', ptyId: 'tab1', data: 'lost' })
     p.setBuffered(0)

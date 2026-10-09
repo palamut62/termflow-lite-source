@@ -89,7 +89,8 @@ export interface RemoteCommandReply {
 export type ClientMessage =
   | { t: 'auth'; token: string }
   | { t: 'call'; id: number; method: string; params?: unknown }
-  | { t: 'sub'; tabId: string; cols: number; rows: number }
+  /** fit: the phone takes over the PTY size; otherwise it mirrors the desktop size. */
+  | { t: 'sub'; tabId: string; cols: number; rows: number; fit: boolean }
   | { t: 'unsub'; tabId: string }
   | { t: 'input'; tabId: string; data: string }
   | { t: 'resize'; tabId: string; cols: number; rows: number }
@@ -110,7 +111,9 @@ export type ServerMessage =
   | ({ t: 'tabs' } & RemoteTabsState)
   | { t: 'settings'; settings: RemoteSettingsView }
   /** repaint: the PTY was just resized for this phone and a full repaint follows (ConPTY). */
-  | { t: 'snapshot'; tabId: string; data: string; repaint?: boolean }
+  | { t: 'snapshot'; tabId: string; data: string; repaint?: boolean; cols?: number; rows?: number }
+  /** The PTY size changed (desktop window resized); mirroring phones follow it. */
+  | { t: 'size'; tabId: string; cols: number; rows: number }
   | { t: 'data'; tabId: string; data: string }
   | { t: 'exit'; tabId: string; exitCode: number }
   | { t: 'revoked' }
@@ -148,7 +151,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       const cols = size(m.cols, 2, 1000)
       const rows = size(m.rows, 1, 500)
       if (typeof m.tabId !== 'string' || !TAB_ID.test(m.tabId) || cols === null || rows === null) return null
-      return { t: m.t, tabId: m.tabId, cols, rows }
+      return m.t === 'sub' ? { t: 'sub', tabId: m.tabId, cols, rows, fit: m.fit === true } : { t: 'resize', tabId: m.tabId, cols, rows }
     }
     case 'unsub':
       return typeof m.tabId === 'string' && TAB_ID.test(m.tabId) ? { t: 'unsub', tabId: m.tabId } : null

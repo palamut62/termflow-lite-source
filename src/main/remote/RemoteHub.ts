@@ -78,6 +78,7 @@ export interface RemoteTerminals {
   write(id: string, data: string): void
   getBuffer(id: string): string
   size(id: string): { cols: number; rows: number } | null
+  onSizeChange(listener: (id: string, size: { cols: number; rows: number }) => void): () => void
 }
 
 export interface RemoteHubDeps {
@@ -101,8 +102,8 @@ interface Client {
   conn: RemoteConnection
   device: PairedDevice | null
   authTimer: NodeJS.Timeout | null
-  /** Subscribed tabs and the size this phone shows them at. */
-  subs: Map<string, { cols: number; rows: number }>
+  /** Subscribed tabs, the phone's own size and whether it takes over the PTY size (fit). */
+  subs: Map<string, { cols: number; rows: number; fit: boolean }>
   pending: Map<string, string>
   pendingBytes: number
   flushTimer: NodeJS.Timeout | null
@@ -140,13 +141,20 @@ export class RemoteHub {
   /** Which client currently dictates each tab's PTY size. */
   private sizeOwner = new Map<string, Client>()
   private offOutput: () => void
+  private offSize: () => void
 
   constructor(private readonly deps: RemoteHubDeps) {
     this.offOutput = deps.terminals.onOutput((event) => this.onOutput(event))
+    this.offSize = deps.terminals.onSizeChange((tabId, size) => {
+      for (const client of this.clients) {
+        if (client.device && client.subs.get(tabId)?.fit === false) client.conn.send({ t: 'size', tabId, ...size })
+      }
+    })
   }
 
   dispose(): void {
     this.offOutput()
+    this.offSize()
     for (const client of [...this.clients]) client.conn.close(1001, 'Server stopped')
     this.clients.clear()
   }
@@ -242,12 +250,15 @@ export class RemoteHub {
         if (!this.knownTab(message.tabId)) return
         const size = { cols: message.cols, rows: message.rows }
         const before = this.deps.terminals.size(message.tabId)
-        client.subs.set(message.tabId, size)
+        client.subs.set(message.tabId, { ...size, fit: message.fit })
         client.pending.delete(message.tabId)
         client.stalled.delete(message.tabId)
-        this.takeSize(client, message.tabId, size)
-        const repaint = !!before && (before.cols !== size.cols || before.rows !== size.rows)
-        client.conn.send({ t: 'snapshot', tabId: message.tabId, data: tailSnapshot(this.deps.terminals.getBuffer(message.tabId)), repaint })
+        // Mirroring (the default) leaves the desktop alone; only "fit to phone" resizes the PTY.
+        if (message.fit) this.takeSize(client, message.tabId, size)
+        else this.releaseSize(client, message.tabId)
+        const repaint = message.fit && !!before && (before.cols !== size.cols || before.rows !== size.rows)
+        const now = this.deps.terminals.size(message.tabId)
+        client.conn.send({ t: 'snapshot', tabId: message.tabId, data: tailSnapshot(this.deps.terminals.getBuffer(message.tabId)), repaint, ...(now ?? {}) })
         return
       }
       case 'unsub':
@@ -255,9 +266,10 @@ export class RemoteHub {
         client.pending.delete(message.tabId)
         return
       case 'resize': {
-        if (!client.subs.has(message.tabId)) return
+        const sub = client.subs.get(message.tabId)
+        if (!sub?.fit) return
         const size = { cols: message.cols, rows: message.rows }
-        client.subs.set(message.tabId, size)
+        client.subs.set(message.tabId, { ...size, fit: true })
         this.takeSize(client, message.tabId, size)
         return
       }
@@ -348,7 +360,7 @@ export class RemoteHub {
     const rows = params.rows
     if (!isValidTabId(tabId) || typeof cols !== 'number' || typeof rows !== 'number') return tabId
     if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > 1000 || rows < 1 || rows > 500) return tabId
-    client.subs.set(tabId, { cols, rows })
+    client.subs.set(tabId, { cols, rows, fit: true })
     this.takeSize(client, tabId, { cols, rows })
     return tabId
   }
@@ -362,8 +374,9 @@ export class RemoteHub {
   private releaseSize(client: Client, tabId: string): void {
     if (this.sizeOwner.get(tabId) !== client) return
     this.sizeOwner.delete(tabId)
-    const next = [...this.clients].find((c) => c !== client && c.subs.has(tabId))
-    if (next) this.takeSize(next, tabId, next.subs.get(tabId)!)
+    const next = [...this.clients].find((c) => c !== client && c.subs.get(tabId)?.fit)
+    const nextSize = next?.subs.get(tabId)
+    if (next && nextSize) this.takeSize(next, tabId, { cols: nextSize.cols, rows: nextSize.rows })
     else this.deps.terminals.setRemoteSize(tabId, null)
   }
 

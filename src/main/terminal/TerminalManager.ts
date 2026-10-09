@@ -41,6 +41,9 @@ export class TerminalManager {
   private remoteSizes = new Map<string, Size>()
   /** Last size the desktop asked for, restored when the phone lets go. */
   private desktopSizes = new Map<string, Size>()
+  /** Phones that mirror the desktop width follow every real PTY size change. */
+  private sizeListeners = new Set<(id: string, size: Size) => void>()
+  private reportedSizes = new Map<string, Size>()
 
   constructor(
     private readonly getWindow: () => BrowserWindow | null,
@@ -78,12 +81,32 @@ export class TerminalManager {
   setRemoteSize(id: string, size: Size | null): void {
     if (size) {
       this.remoteSizes.set(id, size)
-      this.core.resize(id, size.cols, size.rows)
+      this.resizeCore(id, size.cols, size.rows)
       return
     }
     if (!this.remoteSizes.delete(id)) return
     const desktop = this.desktopSizes.get(id)
-    if (desktop) this.core.resize(id, desktop.cols, desktop.rows)
+    if (desktop) this.resizeCore(id, desktop.cols, desktop.rows)
+  }
+
+  /** Subscribe to PTY size changes; returns the unsubscribe function. */
+  onSizeChange(listener: (id: string, size: Size) => void): () => void {
+    this.sizeListeners.add(listener)
+    return () => this.sizeListeners.delete(listener)
+  }
+
+  private resizeCore(id: string, cols: number, rows: number): void {
+    this.core.resize(id, cols, rows)
+    this.reportSize(id)
+  }
+
+  private reportSize(id: string): void {
+    const size = this.core.size(id)
+    if (!size) return
+    const last = this.reportedSizes.get(id)
+    if (last && last.cols === size.cols && last.rows === size.rows) return
+    this.reportedSizes.set(id, size)
+    for (const listener of this.sizeListeners) listener(id, size)
   }
 
   hasRemoteSize(id: string): boolean {
@@ -115,6 +138,8 @@ export class TerminalManager {
     const remote = this.remoteSizes.get(tabId)
     const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input)
     const result = this.core.create(tabId, launch)
+    this.reportedSizes.delete(tabId)
+    this.reportSize(tabId)
     const agent = agentForProfile(settings, resolvedId)
     if (agent) this.onAgentLaunch({ agent, profileId: resolvedId, cwd: input.cwd, startedAt: Date.now(), resumeSession })
     return result
@@ -127,13 +152,14 @@ export class TerminalManager {
   resize(id: string, cols: number, rows: number): void {
     this.desktopSizes.set(id, { cols, rows })
     if (this.remoteSizes.has(id)) return
-    this.core.resize(id, cols, rows)
+    this.resizeCore(id, cols, rows)
   }
 
   kill(id: string): void {
     this.core.kill(id)
     this.desktopSizes.delete(id)
     this.remoteSizes.delete(id)
+    this.reportedSizes.delete(id)
   }
 
   /** Current PTY size, or null when the terminal does not exist. */
@@ -156,7 +182,8 @@ export class TerminalManager {
   /** A restarted process spawns at its original size; a phone viewing it keeps its own. */
   private keepRemoteSize<T>(id: string, result: T): T {
     const remote = this.remoteSizes.get(id)
-    if (result && remote) this.core.resize(id, remote.cols, remote.rows)
+    if (result && remote) this.resizeCore(id, remote.cols, remote.rows)
+    if (result) this.reportSize(id)
     return result
   }
 

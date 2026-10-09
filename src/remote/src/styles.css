@@ -232,3 +232,6 @@ textarea.input { resize: vertical; }
 .pair-code label { color: var(--muted); font-size: 13px; }
 .pair-code-row { display: flex; gap: 8px; }
 .pair-code-row .input { flex: 1; font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* Mirror mode: the desktop-sized terminal is scaled to the width; zooming in pans. */
+.term-wrap.mirror { overflow: auto; -webkit-overflow-scrolling: touch; }
