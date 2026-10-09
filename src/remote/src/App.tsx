@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Bot, FolderGit2, QrCode, Settings as SettingsIcon, SquareTerminal, WifiOff } from 'lucide-react'
 import { isLightColor } from '../../renderer/src/backdrop'
 import { resolveTheme } from '../../renderer/src/themes/themes'
@@ -19,13 +19,18 @@ const NAV: { id: Screen; label: string; icon: React.JSX.Element }[] = [
 
 /** Reads a one-time code from #pair=..., removing it from the address bar right away. */
 function takePairCode(): string | null {
-  const match = /(?:^#|&)pair=([A-Za-z0-9_-]{20,100})/.exec(location.hash)
+  const match = /(?:^#|&)pair=([A-Za-z0-9_-]{6,100})/.exec(location.hash)
   if (!match) return null
   history.replaceState(null, '', location.pathname)
   return match[1]
 }
 
-function PairScreen({ error, busy }: { error: string | null; busy: boolean }): React.JSX.Element {
+/** Started from the home screen: iOS gives it storage separate from Safari. */
+const standalone = (): boolean =>
+  window.matchMedia?.('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+function PairScreen({ error, busy, onCode }: { error: string | null; busy: boolean; onCode(code: string): void }): React.JSX.Element {
+  const [code, setCode] = useState('')
   return (
     <main className="pair">
       <img src="/icon-192.png" alt="" className="pair-logo" />
@@ -41,6 +46,25 @@ function PairScreen({ error, busy }: { error: string | null; busy: boolean }): R
               <li>Scan the code with this phone's camera.</li>
             </ol>
             <div className="pair-hint"><QrCode size={16} /> Both devices must be on the same Tailscale network.</div>
+            <form className="pair-code" onSubmit={(e) => { e.preventDefault(); if (code.trim()) onCode(code) }}>
+              <label htmlFor="pair-code">{standalone() ? 'From the home screen the camera cannot hand the QR to this app. Type the code shown under the QR instead:' : 'Or type the code shown under the QR:'}</label>
+              <div className="pair-code-row">
+                <input
+                  id="pair-code"
+                  className="input mono"
+                  placeholder="XXXXX-XXXXX"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  autoComplete="one-time-code"
+                  spellCheck={false}
+                  inputMode="text"
+                  maxLength={20}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
+                <button className="btn primary" type="submit" disabled={!code.trim()}>Pair</button>
+              </div>
+            </form>
           </>
         )}
       {error && <p className="pair-error">{error}</p>}
@@ -88,25 +112,29 @@ export function App(): React.JSX.Element {
   useViewportHeight()
   useDesktopTone()
 
+  const pairCode = useCallback((code: string): void => {
+    setPairing(true)
+    pairWithCode(code)
+      .then((next) => {
+        saveToken(next)
+        setToken(next)
+        setPairError(null)
+      })
+      .catch((error: Error) => setPairError(error.message))
+      .finally(() => setPairing(false))
+  }, [])
+
   // A QR scanned while this page is already open only changes the hash.
   useEffect(() => {
     const tryPair = (): void => {
       const code = takePairCode()
       if (!code) return
-      setPairing(true)
-      pairWithCode(code)
-        .then((next) => {
-          saveToken(next)
-          setToken(next)
-          setPairError(null)
-        })
-        .catch((error: Error) => setPairError(error.message))
-        .finally(() => setPairing(false))
+      pairCode(code)
     }
     tryPair()
     window.addEventListener('hashchange', tryPair)
     return () => window.removeEventListener('hashchange', tryPair)
-  }, [])
+  }, [pairCode])
 
   useEffect(() => {
     if (!token) return
@@ -125,7 +153,7 @@ export function App(): React.JSX.Element {
     setPairError('This phone was disconnected from the computer. Scan a new QR code to pair again.')
   }, [connection])
 
-  if (!token || connection === 'revoked') return <PairScreen error={pairError} busy={pairing} />
+  if (!token || connection === 'revoked') return <PairScreen error={pairError} busy={pairing} onCode={pairCode} />
 
   if (!device) {
     return (

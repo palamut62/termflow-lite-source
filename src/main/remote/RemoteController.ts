@@ -3,7 +3,7 @@ import { homedir } from 'os'
 import QRCode from 'qrcode'
 import type { AppSettings, ShellInfo } from '../../shared/types'
 import type { RemoteCommandReply, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabCommand, RemoteTabsState } from '../../shared/remote'
-import { DeviceStore } from './devices'
+import { DeviceStore, formatPairingCode } from './devices'
 import { RemoteHub, type RemoteTerminals } from './RemoteHub'
 import { RemoteServer } from './RemoteServer'
 import { findTailscaleAddress } from './tailscale'
@@ -145,7 +145,7 @@ export class RemoteController {
     const { code, expiresAt } = this.devices.startPairing()
     const url = `${this.state.url}/#pair=${code}`
     const svg = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 1 })
-    return { url, svg, expiresAt }
+    return { url, svg, expiresAt, code: formatPairingCode(code) }
   }
 
   cancelPairing(): void {

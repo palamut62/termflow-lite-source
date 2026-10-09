@@ -53,8 +53,9 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   await win.locator('.settings-nav-item', { hasText: 'Remote Access' }).click()
   await win.getByRole('button', { name: 'Show QR code' }).click()
   await expect(win.locator('.remote-qr')).toBeVisible()
-  const pairUrl = await win.locator('.remote-pairing-info span', { hasText: 'Opens' }).textContent()
+  const pairUrl = await win.locator('.remote-pairing-info span', { hasText: 'type this code' }).textContent()
   expect(pairUrl).toContain(`127.0.0.1:${port}`)
+  await expect(win.locator('.remote-code')).toHaveText(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/)
   await win.screenshot({ path: 'test-results/remote-desktop-qr.png' })
   // Closing Settings voids the shown code on purpose; take a fresh one for the phone.
   await win.keyboard.press('Escape')
@@ -120,6 +121,20 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   await expect(phone.getByText('This phone was disconnected from the computer')).toBeVisible()
   await expect(win.locator('.status-remote')).toHaveCount(0)
   await expect(win.locator('.remote-indicator')).toHaveCount(0)
+})
+
+test('a home-screen app pairs by typing the code shown under the QR', async () => {
+  await expect.poll(() => win.evaluate(() => window.termflow.remote.status().then((s) => s.state))).toBe('running')
+  const pairing = await win.evaluate(() => window.termflow.remote.pair())
+  expect(pairing.code).toMatch(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/)
+  await phone.goto(`http://127.0.0.1:${port}/`)
+  await expect(phone.locator('.pair-logo')).toHaveJSProperty('complete', true)
+  expect(await phone.locator('.pair-logo').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+  // Typed the way people do: lower case, without the dash.
+  await phone.locator('#pair-code').fill(pairing.code.replace('-', '').toLowerCase())
+  await phone.screenshot({ path: 'test-results/remote-phone-pair.png' })
+  await phone.getByRole('button', { name: 'Pair' }).click()
+  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
 })
 
 test('the server refuses foreign origins and unknown tokens', async () => {

@@ -35,6 +35,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - 1.21.1: telefonda terminale dokununca klavye acilmiyordu. `src/remote/src/phoneInput.ts` (alan farki -> tus vurusu); telefondaki xterm onData'si artik gonderilmiyor (masaustuyle cift terminal cevabi ajan inputunu bozabiliyordu)
 - Telefondan acilan sekme telefon boyutunda dogar; abonelikte Windows'ta temiz ekran + ConPTY yeniden cizimi (Claude Code'da kayma yok). Sekme cubugu sag ustte bagli telefon simgesi (`RemoteIndicator`). Gercek Claude Code 2.1.289 ile telefon gorunumunde canli denendi
 
+- Duzeltme (surum 1.21.1 kaldi, yerel kurulum): telefon ikonlari `.gitignore` *.png yuzunden CI paketine girmiyordu (logo kirik); `public/` icin git-ignore guard testi. iPhone ana ekran uygulamasi Safari deposunu goremedigi icin eslesme kayboluyordu: QR altinda 10 karakterlik elle yazilabilir kod + telefonda kod alani
+
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.21.1 yayinda (2026-10-09): Release + verify-release yesil. Bu PC'de 1.21.0 kurulu (Remote Access 47321'de acik); 1.21.1 guncellemesi kurulup telefonla denenmeli
@@ -59,4 +61,5 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Karakter durumu cikti metninden tahmin edilmez; yalniz ajan spinner'i ve acik zaman kurallari
 - Hava durumu: IP ile konum yok; yalniz yuvarlanmis koordinat gider
 - Yayin yalniz CI uzerinden; lokal exe release'e yuklenmez; public repo adi degismez
+- Surum kurali (kullanici, 2026-10-09): mevcut ozellik duzeltmesinde surum ARTMAZ; ayni surum yerelde derlenip (`npm run build && npm run dist:win`) bu PC'ye sessiz kurulur (`dist/TermFlow-Lite-<v>-x64.exe /S --force-run`). Yeni ozellikte surum artar ve CI ile yayinlanir
 - Site dili: `website/i18n.js`; uygulama arayuzu yalniz Ingilizce

@@ -126,7 +126,8 @@ export function RemoteSettings(): React.JSX.Element {
             : <div className="remote-qr remote-qr-expired">Expired</div>}
           <div className="remote-pairing-info">
             <span>{secondsLeft > 0 ? `One-time code, valid for ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : 'This code expired.'}</span>
-            <span>Opens {status?.url}</span>
+            {secondsLeft > 0 && <span className="remote-code" aria-label="Pairing code">{pairing.code}</span>}
+            <span>No camera, or using the app from the home screen? Open {status?.url} on the phone and type this code.</span>
             {secondsLeft === 0 && <button className="settings-btn settings-btn-small" onClick={() => void showQr()}>New code</button>}
           </div>
         </div>

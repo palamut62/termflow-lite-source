@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'crypto'
+import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto'
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
 
@@ -25,6 +25,31 @@ export interface PairedDevice {
 }
 
 const token = (): string => randomBytes(32).toString('base64url')
+
+/** Crockford base32: no I, L, O or U, so a code read off the screen is typed right. */
+const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+const CODE_LENGTH = 10
+
+/**
+ * Pairing codes are short enough to type (a home-screen web app on iPhone has
+ * its own storage and cannot open the QR link): 50 bits, single use, five
+ * minutes, and the server allows ten attempts a minute per address.
+ */
+function pairingCode(): string {
+  let code = ''
+  for (let i = 0; i < CODE_LENGTH; i++) code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
+  return code
+}
+
+/** Accepts the code as typed: any case, spaces or dashes, O for 0 and I/L for 1. */
+export function normalizePairingCode(value: string): string {
+  return value.toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1')
+}
+
+/** "7KQ2MX9HDA" -> "7KQ2M-X9HDA" for display. */
+export function formatPairingCode(code: string): string {
+  return `${code.slice(0, 5)}-${code.slice(5)}`
+}
 const hash = (value: string): string => createHash('sha256').update(value).digest('hex')
 
 function cleanName(value: unknown): string {
@@ -74,7 +99,7 @@ export class DeviceStore {
 
   /** New pairing code; any previous, unused code stops working. */
   startPairing(): { code: string; expiresAt: number } {
-    const code = token()
+    const code = pairingCode()
     const expiresAt = this.now() + PAIRING_TTL_MS
     this.pairing = { codeHash: hash(code), expiresAt }
     return { code, expiresAt }
@@ -86,9 +111,9 @@ export class DeviceStore {
 
   /** Exchange a pairing code for a device token. The code is consumed on success. */
   pair(code: unknown, name: unknown): { device: PairedDevice; token: string } | null {
-    if (typeof code !== 'string' || !this.pairing || this.pairing.expiresAt < this.now()) return null
+    if (typeof code !== 'string' || code.length > 100 || !this.pairing || this.pairing.expiresAt < this.now()) return null
     const expected = Buffer.from(this.pairing.codeHash, 'hex')
-    const actual = Buffer.from(hash(code), 'hex')
+    const actual = Buffer.from(hash(normalizePairingCode(code)), 'hex')
     if (!timingSafeEqual(expected, actual)) return null
     this.pairing = null
     const deviceToken = token()

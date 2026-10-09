@@ -734,4 +734,5 @@
 .remote-pairing { display:flex; align-items:center; gap:16px; margin:6px 0 14px; padding:12px; border:1px solid var(--widget-border); background:var(--side-bar-background); }
 .remote-qr { width:180px; height:180px; background:#fff; padding:6px; border-radius:6px; flex:none; }
 .remote-qr-expired { display:flex; align-items:center; justify-content:center; color:#555; font-size:12px; }
-.remote-pairing-info { display:flex; flex-direction:column; gap:6px; color:var(--tab-inactive-foreground); font-size:11px; line-height:1.45; word-break:break-all; }
+.remote-pairing-info { display:flex; flex-direction:column; gap:6px; color:var(--tab-inactive-foreground); font-size:11px; line-height:1.45; overflow-wrap:anywhere; }
+.remote-code { font-family: var(--terminal-font, ui-monospace, Consolas, monospace); font-size: 22px; letter-spacing: 2px; color: var(--tab-active-foreground, #fff); user-select: all; }

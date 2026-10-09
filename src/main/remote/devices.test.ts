@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { DeviceStore, PAIRING_TTL_MS } from './devices'
+import { DeviceStore, PAIRING_TTL_MS, formatPairingCode, normalizePairingCode } from './devices'
 
 const dirs: string[] = []
 function storePath(): string {
@@ -62,6 +62,18 @@ describe('DeviceStore', () => {
     store.revokeAll()
     expect(store.list()).toEqual([])
     expect(store.authenticate(b.token)).toBeNull()
+  })
+
+  it('issues short typeable codes and accepts them as people type them', () => {
+    const store = new DeviceStore(storePath())
+    const { code } = store.startPairing()
+    expect(code).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/)
+    const typed = ` ${formatPairingCode(code).toLowerCase()} `
+    expect(store.pair(typed, 'iPhone')?.device.name).toBe('iPhone')
+  })
+
+  it('reads O as 0 and I or L as 1', () => {
+    expect(normalizePairingCode('o1-il 2')).toBe('01112')
   })
 
   it('ignores malformed tokens', () => {

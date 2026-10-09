@@ -87,3 +87,6 @@ ORCHESTRA.md
 
 # Local AI-workflow project guide
 PROJE-REHBER.md
+
+# Phone client icons (Remote Access) ship with the app
+!src/remote/public/*.png

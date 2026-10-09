@@ -46,6 +46,8 @@ export interface RemoteStatus {
 
 export interface RemotePairing {
   url: string
+  /** The same one-time code, for typing on the phone ("7KQ2M-X9HDA"). */
+  code: string
   /** QR code of `url` as an SVG string. */
   svg: string
   expiresAt: number
