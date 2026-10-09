@@ -36,7 +36,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
-- 1.21.0 yayini: `feature/remote-access` main'e birlestirildi, etiket CI'a gitti; Release + verify-release sonucu kontrol edilmeli. Site Remote Access bolumu (f8, `assets/remote.webp`) Vercel prod
+- 1.21.0 yayinda (2026-10-09): Release + verify-release yesil; site Remote Access bolumu (f8, `assets/remote.webp`) Vercel prod. Bu PC'ye 1.21.0 henuz kurulmadi
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
