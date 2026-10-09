@@ -722,3 +722,4 @@ body {
 @media (max-width: 720px) {
   .file-panel { flex-basis: 200px; }
 }
+.status-remote { color: var(--success-foreground, #3fb950); gap: 3px; }

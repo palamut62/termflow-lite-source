@@ -15,6 +15,8 @@ import { buildTiledPane, closePane, isValidPaneTree, movePane, paneTerminalIds, 
  */
 export const dataHandlers = new Map<string, (data: string) => void>()
 export const exitHandlers = new Map<string, (exitCode: number, durationMs: number) => void>()
+/** Per-tab "Restart" action of the mounted TerminalView (used by Remote Access). */
+export const restartHandlers = new Map<string, () => void>()
 
 /**
  * Per-tab SearchAddon instances (registered by TerminalView on mount, same

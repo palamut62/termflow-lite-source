@@ -8,7 +8,7 @@ import { WebglAddon } from '@xterm/addon-webgl'
 import { ImageAddon } from '@xterm/addon-image'
 import { ligatureJoiner } from './ligatures'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
-import { broadcastTargetIds, dataHandlers, exitHandlers, searchAddons, useTerminalStore } from '../store/terminalStore'
+import { broadcastTargetIds, dataHandlers, exitHandlers, restartHandlers, searchAddons, useTerminalStore } from '../store/terminalStore'
 import { useCommandHistoryStore } from '../store/commandHistoryStore'
 import { resolveTheme } from '../themes/themes'
 import { backdropActive, isLightColor, terminalTheme } from '../backdrop'
@@ -722,6 +722,13 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.fontLigatures])
 
+  // Remote Access restarts through the same path as the in-pane button.
+  const restartRef = useRef<() => void>(() => undefined)
+  useEffect(() => {
+    restartHandlers.set(tabId, () => restartRef.current())
+    return () => { restartHandlers.delete(tabId) }
+  }, [tabId])
+
   const handleRestart = (): void => {
     setStartError('')
     if (!createdPtys.has(tabId)) { setRetryNonce(value => value + 1); return }
@@ -734,6 +741,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       window.termflow.pty.resize(tabId, lastSizeRef.current.cols, lastSizeRef.current.rows)
     }).catch(error => setStartError(redactApiKeys(error instanceof Error ? error.message : 'Restart failed.')))
   }
+  restartRef.current = handleRestart
 
   const handleChangeCwd = async (cwd: string): Promise<boolean> => {
     try {

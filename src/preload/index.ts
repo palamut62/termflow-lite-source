@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
+import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, UpdateStatus } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
@@ -80,7 +81,34 @@ const api = {
   // ---- Settings ----
   settings: {
     get: (): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS_GET),
-    set: (patch: Partial<AppSettings>): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS_SET, patch)
+    set: (patch: Partial<AppSettings>): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS_SET, patch),
+    /** Settings changed from a paired phone. */
+    onChanged: (cb: (settings: AppSettings) => void): (() => void) => {
+      const h = (_e: unknown, settings: AppSettings): void => cb(settings)
+      ipcRenderer.on(IPC.SETTINGS_CHANGED, h)
+      return () => ipcRenderer.removeListener(IPC.SETTINGS_CHANGED, h)
+    }
+  },
+  /** Remote Access: phones paired over Tailscale (docs/remote-access.md). */
+  remote: {
+    status: (): Promise<RemoteStatus> => ipcRenderer.invoke(IPC.REMOTE_STATUS),
+    pair: (): Promise<RemotePairing> => ipcRenderer.invoke(IPC.REMOTE_PAIR),
+    cancelPair: (): Promise<void> => ipcRenderer.invoke(IPC.REMOTE_PAIR_CANCEL),
+    devices: (): Promise<RemoteDeviceInfo[]> => ipcRenderer.invoke(IPC.REMOTE_DEVICES),
+    /** null disconnects every device. */
+    revoke: (deviceId: string | null): Promise<void> => ipcRenderer.invoke(IPC.REMOTE_REVOKE, deviceId),
+    publishTabs: (state: RemoteTabsState): void => ipcRenderer.send(IPC.REMOTE_TABS, state),
+    reply: (reply: RemoteCommandReply): void => ipcRenderer.send(IPC.REMOTE_COMMAND_REPLY, reply),
+    onCommand: (cb: (request: RemoteCommandRequest) => void): (() => void) => {
+      const h = (_e: unknown, request: RemoteCommandRequest): void => cb(request)
+      ipcRenderer.on(IPC.REMOTE_COMMAND, h)
+      return () => ipcRenderer.removeListener(IPC.REMOTE_COMMAND, h)
+    },
+    onStatus: (cb: (status: RemoteStatus) => void): (() => void) => {
+      const h = (_e: unknown, status: RemoteStatus): void => cb(status)
+      ipcRenderer.on(IPC.REMOTE_STATUS_EVENT, h)
+      return () => ipcRenderer.removeListener(IPC.REMOTE_STATUS_EVENT, h)
+    }
   },
   providerSecrets: {
     status: (id: string): Promise<'missing' | 'ready' | 'unavailable' | 'recovery-required'> => ipcRenderer.invoke(IPC.PROVIDER_SECRET_HEALTH, id),

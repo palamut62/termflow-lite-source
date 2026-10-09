@@ -37,6 +37,7 @@ import { useToastStore } from './store/toastStore'
 import { listenForKonami } from './fun/konami'
 import { WidgetView } from './widget/WidgetView'
 import { useWidgetStore } from './widget/widgetStore'
+import { startRemoteBridge } from './remoteBridge'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -299,6 +300,11 @@ export default function App(): React.JSX.Element {
       unCwd()
     }
   }, [])
+
+  // Remote Access: phones see the tab list and drive tabs through this bridge.
+  useEffect(() => {
+    if (loaded) return startRemoteBridge()
+  }, [loaded])
 
   // NOT: Pencere boyutu persistency'sinin tek sahibi main process'tir
   // (BrowserWindow 'resize' -> settings.json); renderer boyut yazmaz.
