@@ -17,6 +17,16 @@ export const IPC = {
   SHELLS_DISCOVER: 'shells:discover', // -> ShellInfo[]
   SETTINGS_GET: 'settings:get', // -> AppSettings
   SETTINGS_SET: 'settings:set', // (patch) -> AppSettings
+  SETTINGS_CHANGED: 'settings:changed', // main -> renderer AppSettings (a phone changed them)
+  REMOTE_STATUS: 'remote:status', // -> RemoteStatus
+  REMOTE_STATUS_EVENT: 'remote:status-event', // main -> renderer RemoteStatus (state, pairing, connections)
+  REMOTE_PAIR: 'remote:pair', // -> RemotePairing (QR with a one-time code)
+  REMOTE_PAIR_CANCEL: 'remote:pair-cancel', // ()
+  REMOTE_DEVICES: 'remote:devices', // -> RemoteDeviceInfo[]
+  REMOTE_REVOKE: 'remote:revoke', // (deviceId | null = all)
+  REMOTE_TABS: 'remote:tabs', // renderer -> main RemoteTabsState
+  REMOTE_COMMAND: 'remote:command', // main -> renderer RemoteCommandRequest
+  REMOTE_COMMAND_REPLY: 'remote:command-reply', // renderer -> main RemoteCommandReply
   PROVIDER_SECRET_STATUS: 'provider-secret:status', // (providerId) -> boolean
   PROVIDER_SECRET_HEALTH: 'provider-secret:health',
   PROFILE_HEALTH: 'profile:health',

@@ -28,17 +28,66 @@ export function applyProviderSecret(
  * renderer over Electron IPC. The manager is transport-agnostic: the only
  * Electron touchpoint is the getWindow() sink used for event delivery.
  */
+type CoreFactory = (emit: (event: PtyEvent) => void, tap: (id: string, data: string) => void) => PtyCore
+
+type Size = { cols: number; rows: number }
+
 export class TerminalManager {
   private core: PtyCore
   private shells: ShellInfo[] = []
+  /** Remote viewers (phones): raw output plus exit/cwd, independent of the desktop render mode. */
+  private outputListeners = new Set<(event: PtyEvent) => void>()
+  /** Size a phone has taken over; while set, desktop resizes are only remembered. */
+  private remoteSizes = new Map<string, Size>()
+  /** Last size the desktop asked for, restored when the phone lets go. */
+  private desktopSizes = new Map<string, Size>()
 
   constructor(
     private readonly getWindow: () => BrowserWindow | null,
     private readonly getSettings: () => AppSettings,
     private readonly getProviderSecret: (providerId: string) => string | undefined = () => undefined,
-    private readonly onAgentLaunch: (record: { agent: AgentSessionRef['agent']; profileId: string; cwd?: string; startedAt: number; resumeSession?: AgentSessionRef }) => void = () => undefined
+    private readonly onAgentLaunch: (record: { agent: AgentSessionRef['agent']; profileId: string; cwd?: string; startedAt: number; resumeSession?: AgentSessionRef }) => void = () => undefined,
+    createCore: CoreFactory = (emit, tap) => new PtyCore(emit, tap)
   ) {
-    this.core = new PtyCore((event) => this.handleEvent(event))
+    this.core = createCore(
+      (event) => this.handleEvent(event),
+      (ptyId, data) => this.notify({ kind: 'data', ptyId, data })
+    )
+  }
+
+  /** Subscribe to every terminal's output; returns the unsubscribe function. */
+  onOutput(listener: (event: PtyEvent) => void): () => void {
+    this.outputListeners.add(listener)
+    return () => this.outputListeners.delete(listener)
+  }
+
+  private notify(event: PtyEvent): void {
+    for (const listener of this.outputListeners) {
+      try {
+        listener(event)
+      } catch (error) {
+        console.warn('[terminal] output listener failed:', error)
+      }
+    }
+  }
+
+  /**
+   * A phone takes over (size) or releases (null) a terminal's size. On release
+   * the size the desktop last asked for is applied again.
+   */
+  setRemoteSize(id: string, size: Size | null): void {
+    if (size) {
+      this.remoteSizes.set(id, size)
+      this.core.resize(id, size.cols, size.rows)
+      return
+    }
+    if (!this.remoteSizes.delete(id)) return
+    const desktop = this.desktopSizes.get(id)
+    if (desktop) this.core.resize(id, desktop.cols, desktop.rows)
+  }
+
+  hasRemoteSize(id: string): boolean {
+    return this.remoteSizes.has(id)
   }
 
   /** Initial discovery result — shells can change later via SETTINGS/reboot. */
@@ -62,7 +111,10 @@ export class TerminalManager {
     // Keep the ring buffer limit in sync with the current setting on every
     // spawn so a settings change applies even to terminals created later.
     this.core.setScrollback(settings.scrollback)
-    const result = this.core.create(tabId, prepareLaunch(input))
+    this.desktopSizes.set(tabId, { cols, rows })
+    const remote = this.remoteSizes.get(tabId)
+    const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input)
+    const result = this.core.create(tabId, launch)
     const agent = agentForProfile(settings, resolvedId)
     if (agent) this.onAgentLaunch({ agent, profileId: resolvedId, cwd: input.cwd, startedAt: Date.now(), resumeSession })
     return result
@@ -73,11 +125,20 @@ export class TerminalManager {
   }
 
   resize(id: string, cols: number, rows: number): void {
+    this.desktopSizes.set(id, { cols, rows })
+    if (this.remoteSizes.has(id)) return
     this.core.resize(id, cols, rows)
   }
 
   kill(id: string): void {
     this.core.kill(id)
+    this.desktopSizes.delete(id)
+    this.remoteSizes.delete(id)
+  }
+
+  /** Current PTY size, or null when the terminal does not exist. */
+  size(id: string): Size | null {
+    return this.core.size(id)
   }
 
   setMode(id: string, mode: RenderMode): void {
@@ -85,11 +146,18 @@ export class TerminalManager {
   }
 
   restart(id: string): { pid: number } | null {
-    return this.core.restart(id)
+    return this.keepRemoteSize(id, this.core.restart(id))
   }
 
   restartAt(id: string, cwd: string): { pid: number } | null {
-    return this.core.restartAt(id, cwd)
+    return this.keepRemoteSize(id, this.core.restartAt(id, cwd))
+  }
+
+  /** A restarted process spawns at its original size; a phone viewing it keeps its own. */
+  private keepRemoteSize<T>(id: string, result: T): T {
+    const remote = this.remoteSizes.get(id)
+    if (result && remote) this.core.resize(id, remote.cols, remote.rows)
+    return result
   }
 
   getBuffer(id: string): string {
@@ -106,6 +174,8 @@ export class TerminalManager {
   }
 
   private handleEvent(event: PtyEvent): void {
+    // Output reaches remote viewers through the tap; exit/cwd come from here.
+    if (event.kind !== 'data') this.notify(event)
     const sender = this.getSender()
     if (!sender) return
     switch (event.kind) {

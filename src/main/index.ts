@@ -44,6 +44,10 @@ import { parseLaunchRequest } from './launchPath'
 import { resolvePathCandidate } from './pathResolver'
 import { explorerMenuSignature, syncExplorerContextMenu } from './explorerContextMenu'
 import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
+import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
+import { RemoteController } from './remote/RemoteController'
+import { registerRemoteIpc } from './ipc/remote'
+import type { ShellInfo } from '../shared/types'
 
 // Dev: project resources/. Packaged: extraResources under process.resourcesPath.
 const APP_ICON = app.isPackaged
@@ -71,6 +75,12 @@ let widget: WidgetController | null = null
 let sessionStore: SessionStore | null = null
 let stopMemoryScheduler: (() => void) | null = null
 let manager: TerminalManager | null = null
+let remoteController: RemoteController | null = null
+
+/** The live main window, or null while it is closed/destroyed. */
+function liveWindow(): BrowserWindow | null {
+  return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
+}
 
 // ---- Sistem tepsisi durumu ----
 /**
@@ -307,6 +317,8 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  // Remote Access reuses the validated IPC handlers; record them before any registration.
+  recordIpcHandlers()
   // Windows bildirimleri kısayoldaki AppUserModelID ile eşleşmeli (electron-builder appId).
   if (process.platform === 'win32') app.setAppUserModelId('com.palamut62.termflowlite')
   configureShellIntegration(app.isPackaged
@@ -383,6 +395,7 @@ app.whenReady().then(() => {
     applyTrayConfig(settings)
     if (settings.memory.enabled && !memoryWasEnabled) void memoryEngine.run().catch(() => undefined)
     memoryWasEnabled = settings.memory.enabled
+    remoteController?.settingsChanged(settings)
   }
 
   registerTerminalIpc(manager)
@@ -491,7 +504,34 @@ app.whenReady().then(() => {
     flushLaunchRequests()
   })
 
+  // Remote Access: phone control over Tailscale (docs/remote-access.md).
+  const store = settingsStore
+  remoteController = new RemoteController({
+    devicesFile: join(app.getPath('userData'), 'remote-devices.json'),
+    staticDir: join(__dirname, '../remote'),
+    terminals: mgr,
+    invokeIpc: invokeRecorded,
+    getSettings: () => store.get(),
+    getShells: async () => (await invokeRecorded(IPC.SHELLS_DISCOVER, [])) as ShellInfo[],
+    sendToRenderer: (request) => {
+      const win = liveWindow()
+      if (!win) return false
+      win.webContents.send(IPC.REMOTE_COMMAND, request)
+      return true
+    },
+    pushSettings: (settings) => liveWindow()?.webContents.send(IPC.SETTINGS_CHANGED, settings),
+    pushStatus: (status) => liveWindow()?.webContents.send(IPC.REMOTE_STATUS_EVENT, status),
+    platform: process.platform,
+    version: app.getVersion(),
+    // E2E only: bind to a loopback address instead of requiring Tailscale.
+    findAddress: process.env.TERMFLOW_E2E === '1' && process.env.TERMFLOW_E2E_REMOTE_HOST
+      ? () => process.env.TERMFLOW_E2E_REMOTE_HOST ?? null
+      : undefined
+  })
+  registerRemoteIpc(remoteController)
+
   createWindow()
+  void remoteController.apply(settingsStore.get())
   applyQuakeConfig(settingsStore.get())
   applyTrayConfig(settingsStore.get())
 
@@ -522,6 +562,7 @@ app.on('before-quit', () => {
   manager?.shutdown() // kill every live PTY
   unwatchAllMedia()
   stopMemoryScheduler?.()
+  void remoteController?.shutdown()
 })
 
 app.on('will-quit', () => {

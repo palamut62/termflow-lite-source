@@ -54,7 +54,14 @@ export class PtyCore {
   private maxLines = DEFAULT_SCROLLBACK_LINES
   private passiveIntervalMs = 250
 
-  constructor(private readonly emit: (event: PtyEvent) => void) {}
+  /**
+   * `tap` sees every (redacted) output chunk as it arrives, independent of the
+   * render mode, so remote viewers stay live while the desktop pane is hidden.
+   */
+  constructor(
+    private readonly emit: (event: PtyEvent) => void,
+    private readonly tap: (id: string, data: string) => void = () => undefined
+  ) {}
 
   /**
    * Spawn a terminal. The renderer measures its pane BEFORE calling create,
@@ -156,6 +163,7 @@ export class PtyCore {
 
   private onData(managed: ManagedPty, data: string): void {
     const safeData = managed.secretRedactor.redact(data)
+    if (safeData) this.tap(managed.id, safeData)
     // Ring buffer (single-pass newline count, also cap chunk count). PRD §11.8
     managed.buffer.push(safeData)
     managed.bufferLines += this.countNewlines(safeData)
@@ -247,6 +255,12 @@ export class PtyCore {
         /* pty may have exited between checks */
       }
     }
+  }
+
+  /** Current PTY size, or null when the terminal does not exist. */
+  size(id: string): { cols: number; rows: number } | null {
+    const t = this.terminals.get(id)
+    return t ? { cols: t.cols, rows: t.rows } : null
   }
 
   getBuffer(id: string): string {

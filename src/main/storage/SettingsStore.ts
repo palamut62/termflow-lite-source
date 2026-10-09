@@ -14,6 +14,13 @@ function normalizeMemorySettings(value: unknown): AppSettings['memory'] {
     : []
   return { enabled: input.enabled === true, model, excludedProjects: excluded }
 }
+function normalizeRemoteSettings(value: unknown): AppSettings['remote'] {
+  const input = value && typeof value === 'object' ? value as Partial<AppSettings['remote']> : {}
+  const port = typeof input.port === 'number' && Number.isInteger(input.port) && input.port >= 1024 && input.port <= 65535
+    ? input.port
+    : DEFAULT_SETTINGS.remote.port
+  return { enabled: input.enabled === true, port }
+}
 const BACKDROPS: AppSettings['backdrop'][] = ['none', 'mica', 'acrylic', 'tabbed']
 
 /**
@@ -54,6 +61,7 @@ export class SettingsStore {
     if (!BACKDROPS.includes(merged.backdrop)) merged.backdrop = 'none'
     merged.asciiBackgrounds = normalizeAsciiBackgrounds(settings.asciiBackgrounds)
     merged.memory = normalizeMemorySettings(settings.memory)
+    merged.remote = normalizeRemoteSettings(settings.remote)
     return merged
   }
 

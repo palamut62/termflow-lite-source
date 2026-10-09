@@ -1,0 +1,137 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import WebSocket from 'ws'
+import { DEFAULT_SETTINGS } from '../../shared/types'
+import type { ServerMessage } from '../../shared/remote'
+import { DeviceStore } from './devices'
+import { RemoteHub } from './RemoteHub'
+import { RateLimiter, RemoteServer, allowedHost, sameOrigin } from './RemoteServer'
+
+const HOST = '127.0.0.1'
+let dir: string
+let server: RemoteServer
+let devices: DeviceStore
+let port: number
+let base: string
+const writes: string[] = []
+
+beforeAll(async () => {
+  dir = mkdtempSync(join(tmpdir(), 'tfl-remote-srv-'))
+  const web = join(dir, 'web')
+  mkdirSync(join(web, 'assets'), { recursive: true })
+  writeFileSync(join(web, 'index.html'), '<!doctype html><title>TermFlow Remote</title>')
+  writeFileSync(join(web, 'assets', 'app.js'), 'console.log(1)')
+  writeFileSync(join(dir, 'secret.txt'), 'top secret')
+  devices = new DeviceStore(join(dir, 'devices.json'))
+  const hub = new RemoteHub({
+    terminals: { onOutput: () => () => undefined, setRemoteSize: () => undefined, write: (_id, data) => { writes.push(data) }, getBuffer: () => 'PS C:\\> ' },
+    devices,
+    invokeIpc: async () => null,
+    getSettings: () => DEFAULT_SETTINGS,
+    getShells: async () => [],
+    runTabCommand: async () => true,
+    onRemoteSettings: () => undefined,
+    onClientsChanged: () => undefined,
+    platform: 'win32',
+    version: 'test',
+    home: '/home/me'
+  })
+  hub.setTabs({ tabs: [{ id: 'tab1', title: 'pwsh', profileId: 'pwsh', running: true, activity: 'running', visible: true }], activeTabId: 'tab1' })
+  server = new RemoteServer({ staticDir: web, hub, devices, onPaired: () => undefined })
+  port = 40000 + Math.floor(Math.random() * 20000)
+  await server.start(HOST, port)
+  base = `http://${HOST}:${port}`
+})
+
+afterAll(async () => {
+  await server.stop()
+  rmSync(dir, { recursive: true, force: true })
+})
+
+function pair(code: string, origin = base): Promise<Response> {
+  return fetch(`${base}/api/pair`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ code, name: 'Test phone' }) })
+}
+
+function open(origin = base): Promise<WebSocket> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`ws://${HOST}:${port}/ws`, { headers: { Origin: origin } })
+    ws.once('open', () => resolve(ws))
+    ws.once('error', reject)
+    ws.once('unexpected-response', (_req, res) => reject(new Error(`HTTP ${res.statusCode}`)))
+  })
+}
+
+function next(ws: WebSocket): Promise<ServerMessage> {
+  return new Promise((resolve) => ws.once('message', (data) => resolve(JSON.parse(data.toString()) as ServerMessage)))
+}
+
+describe('RemoteServer', () => {
+  it('serves the client with security headers and blocks path traversal', async () => {
+    const index = await fetch(`${base}/`)
+    expect(index.status).toBe(200)
+    expect(index.headers.get('content-security-policy')).toContain("default-src 'self'")
+    expect(index.headers.get('x-frame-options')).toBe('DENY')
+    const asset = await fetch(`${base}/assets/app.js`, { headers: { 'Accept-Encoding': 'gzip' } })
+    expect(asset.headers.get('cache-control')).toContain('immutable')
+    expect(asset.headers.get('content-encoding')).toBe('gzip')
+    expect(await asset.text()).toBe('console.log(1)')
+    expect((await fetch(`${base}/some/route`)).status).toBe(200)
+    expect((await fetch(`${base}/%2e%2e%2fsecret.txt`)).status).toBe(403)
+    expect((await fetch(`${base}/missing.js`)).status).toBe(404)
+  })
+
+  it('pairs with a QR code once, then streams over an authenticated socket', async () => {
+    const { code } = devices.startPairing()
+    expect((await pair(code, 'http://evil.example')).status).toBe(403)
+    const res = await pair(code)
+    expect(res.status).toBe(200)
+    const { token } = await res.json() as { token: string }
+    expect((await pair(code)).status).toBe(401)
+
+    const ws = await open()
+    const hello = next(ws)
+    ws.send(JSON.stringify({ t: 'auth', token }))
+    expect(await hello).toMatchObject({ t: 'hello', device: { name: 'Test phone' } })
+    const snapshot = next(ws)
+    ws.send(JSON.stringify({ t: 'sub', tabId: 'tab1', cols: 40, rows: 20 }))
+    expect(await snapshot).toEqual({ t: 'snapshot', tabId: 'tab1', data: 'PS C:\\> ' })
+    ws.send(JSON.stringify({ t: 'input', tabId: 'tab1', data: 'echo hi\r' }))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(writes).toContain('echo hi\r')
+    ws.close()
+  })
+
+  it('refuses sockets from a foreign origin', async () => {
+    await expect(open('http://evil.example')).rejects.toThrow('403')
+  })
+})
+
+describe('host and origin checks', () => {
+  it('accepts the bound IP and MagicDNS names only', () => {
+    expect(allowedHost('100.89.62.116:47321', '100.89.62.116', 47321)).toBe(true)
+    expect(allowedHost('desktop-1.tail1ea60f.ts.net:47321', '100.89.62.116', 47321)).toBe(true)
+    expect(allowedHost('desktop-1:47321', '100.89.62.116', 47321)).toBe(true)
+    expect(allowedHost('evil.example:47321', '100.89.62.116', 47321)).toBe(false)
+    expect(allowedHost('100.89.62.116:80', '100.89.62.116', 47321)).toBe(false)
+    expect(allowedHost(undefined, '100.89.62.116', 47321)).toBe(false)
+  })
+
+  it('requires a same-host http origin', () => {
+    expect(sameOrigin('http://100.89.62.116:47321', '100.89.62.116:47321')).toBe(true)
+    expect(sameOrigin('http://evil.example', '100.89.62.116:47321')).toBe(false)
+    expect(sameOrigin(undefined, '100.89.62.116:47321')).toBe(false)
+  })
+
+  it('rate limits per address', () => {
+    let now = 0
+    const limiter = new RateLimiter(2, () => now)
+    expect(limiter.allow('a')).toBe(true)
+    expect(limiter.allow('a')).toBe(true)
+    expect(limiter.allow('a')).toBe(false)
+    expect(limiter.allow('b')).toBe(true)
+    now = 61_000
+    expect(limiter.allow('a')).toBe(true)
+  })
+})

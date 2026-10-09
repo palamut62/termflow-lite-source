@@ -373,6 +373,8 @@ export interface AppSettings {
   asciiBackgrounds: Record<string, AsciiBackground>
   /** Agent Memory: 30-day per-project memory built from local agent sessions (opt-in). */
   memory: MemorySettings
+  /** Remote Access: phone control over Tailscale (docs/remote-access.md). Off by default. */
+  remote: RemoteSettings
   /** Widget görünümünün son konumu (null = sağ üst köşe), daraltılmış ve üstte tutma durumu. */
   widgetX: number | null
   widgetY: number | null
@@ -389,6 +391,12 @@ export type SoundTheme = 'off' | 'mechanical' | 'soft'
 export type AgentAnimationStyle = 'face' | 'scenes'
 export type AgentCharacter = 'auto' | 'ember' | 'miso' | 'piko'
 export type AgentWeather = 'off' | 'cycle' | 'live'
+
+export interface RemoteSettings {
+  enabled: boolean
+  /** TCP port on the Tailscale address. */
+  port: number
+}
 
 export interface MemorySettings {
   enabled: boolean
@@ -619,6 +627,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   weatherPlace: null,
   asciiBackgrounds: {},
   memory: { enabled: false, model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
+  remote: { enabled: false, port: 47321 },
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,
