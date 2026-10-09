@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-08 | son arac: Claude Code | dal: `main` | surum 1.20.1
+guncel: 2026-10-09 | son arac: Claude Code | dal: `feature/remote-access` | surum 1.20.1 (+ yayinlanmamis Remote Access)
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -26,18 +26,18 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.20.0 Secim duzeltmesi: Claude Code caret'i, tum input secilip Delete ile temizleme
 - [x] 1.20.0 Memory model katalogu: OpenRouter'dan tum modeller, 24 saat cache, Refresh + Test
 - [x] 1.20.1 Model secici: datalist yerine `settings/ModelPicker.tsx`; acilinca tum modeller, All/Free filtresi, ucretsizler yesil
+- [x] Remote Access (yayinlanmadi, `feature/remote-access`): Tailscale + QR ile telefondan tam kontrol; spec `docs/remote-access.md`, 3/3 faz
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
-## Son oturum (2026-10-08)
-- 1.19.1, 1.20.0, 1.20.1 yayinlandi; bu PC'ye 1.20.x henuz kurulmadi (TermFlow'da Claude oturumu acikti)
-- Secimin uzerine yazma Claude Code'da bozuktu: Claude gercek imleci gizleyip cizdigi caret'in 1 sutun sagina park ediyor, yanlis harf siliniyordu. `SelectionEdit` sinifi DECTCEM (?25) takip eder; imlec gizliyken secim satirindaki tek inverse hucre caret sayilir
-- Secim imlecin mantiksal satirina kirpilir: uc tik / Select All + Delete inputu temizler. Gercek Claude Code 2.1.289 ve Codex 0.160 ile probe'la dogrulandi; E2E'ye uc tik + Delete eklendi
-- Memory > Model: `main/memory/models.ts` (`ModelCatalog` + `testModel`), IPC `memory:models` / `memory:test-model`; canli denendi (467 model, cache 68 KB, deepseek-v4-flash testi 1.4 sn, $0.0000074). Global kural BRAIN-POLICY'ye eklendi
+## Son oturum (2026-10-09)
+- Remote Access: ana surecte Tailscale IP'sine bagli HTTP+WS sunucusu (`src/main/remote/`), QR ile tek kullanimlik eslestirme, kalici cihaz anahtari (hash), masaustunden kesme; Ayarlar > Remote Access + durum cubugu rozeti
+- Telefon istemcisi `src/remote/` (Vite -> `out/remote`): canli terminal + tus cubugu + yazma kutusu, sekme ac/kapat/yeniden adlandir/yeniden baslat, ayarlar/profil/provider (anahtar yazma)/SSH/Memory, ajan oturumu surdurme, kayitli komut, proje (git, gorev, dosya, worktree, PR)
+- PTY boyutu telefon izlerken telefona gecer, ayrilinca masaustune doner; cikti `PtyCore` tap'inden. Dogrulama: 591 birim test, `e2e/remote.spec.ts` 2/2, gercek Tailscale IP'sinde (100.89.62.116) yerlesik tarayiciyla canli deneme
 
 ## Yarim kalan / siradaki adim
-- 1.20.1 yayinda (2026-10-08): Release + verify-release yesil, exe/zip/AppImage/deb + latest*.yml
-- Site: Agent Memory (f2), secimin uzerine yazma + tum satiri silme (f4), resim yapistirma (f5) EN/TR; Vercel prod
-- Gercek ajan kaydi (Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
+- Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
+- Sonra: surum 1.21.0, CHANGELOG "Unreleased" -> surum, siteye Remote Access maddesi (EN/TR), PR -> main
+- Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
 ## Acik sorunlar / bilinen sinirlar

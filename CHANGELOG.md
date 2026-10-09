@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Remote Access (Settings > Remote Access, off until you turn it on): control TermFlow Lite from your phone over Tailscale. Scan a QR code once and the phone stays connected until you disconnect it on the computer.
+- The phone sees every tab live, line by line, and can type into it, with keys that are hard on a phone keyboard (Esc, Tab, Shift+Tab, Ctrl, Alt, arrows, Ctrl+C) and a message box for longer prompts. While you look at a tab on the phone it fits the phone screen; the computer gets its size back when you leave.
+- Open, rename, restart and close tabs; pick any shell, agent, provider or SSH connection; resume Claude Code, Codex and OpenCode sessions; start saved commands and project tasks; browse folders; see git status, worktrees and pull requests.
+- Change settings, profiles, providers (including writing a new API key), SSH connections and Agent Memory from the phone. Changes show up on the computer right away, and the other way round.
+- The server listens only on the computer's Tailscale address, never on the local network or the internet. Pairing codes work once and expire after five minutes; device keys are stored only as hashes, and stored API keys never leave the computer.
+
 ## 1.20.1 - 2026-10-08
 
 - The Memory model picker now shows every OpenRouter model when you open it, not only the ones matching the current model. Search by name or id, switch to Free to see only free models, and spot free models at a glance by their green Free badge. You can still type any model id that is not in the list.
