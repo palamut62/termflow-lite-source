@@ -37,7 +37,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
-- 1.21.1 yayini (2026-10-09): etiket CI'a gitti; Release + verify-release sonucu kontrol edilmeli. Bu PC'de 1.21.0 kurulu, Remote Access 47321'de acik
+- 1.21.1 yayinda (2026-10-09): Release + verify-release yesil. Bu PC'de 1.21.0 kurulu (Remote Access 47321'de acik); 1.21.1 guncellemesi kurulup telefonla denenmeli
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
