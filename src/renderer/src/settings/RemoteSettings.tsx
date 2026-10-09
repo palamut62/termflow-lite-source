@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Smartphone, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { QrCode, Smartphone, Trash2 } from 'lucide-react'
 import type { RemoteDeviceInfo, RemotePairing, RemoteStatus } from '../../../shared/remote'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
@@ -44,11 +44,16 @@ export function RemoteSettings(): React.JSX.Element {
 
   useEffect(() => setPort(remote.port), [remote.port])
 
-  // A paired device consumes the code: close the QR once the device list grows.
-  const deviceCount = devices.length
+  // A phone used the code (new pairing or renewal): close the QR.
+  const shownAt = useRef(0)
+  const lastPairedAt = status?.lastPairedAt ?? null
   useEffect(() => {
+    if (!pairing || lastPairedAt === null || lastPairedAt < shownAt.current) return
+    const renewed = pairing.deviceId ? devices.find((d) => d.id === pairing.deviceId)?.name : null
     setPairing(null)
-  }, [deviceCount])
+    toast(renewed ? `${renewed} reconnected with a new key.` : 'Phone paired.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastPairedAt])
 
   useEffect(() => {
     if (!pairing) return
@@ -69,9 +74,11 @@ export function RemoteSettings(): React.JSX.Element {
     toast(`Remote Access now uses port ${port}. Pair phones again if they cannot connect.`)
   }
 
-  const showQr = async (): Promise<void> => {
+  /** deviceId: a QR that renews that paired phone (same entry, new key). */
+  const showQr = async (deviceId?: string): Promise<void> => {
     try {
-      setPairing(await window.termflow.remote.pair())
+      shownAt.current = Date.now()
+      setPairing(await window.termflow.remote.pair(deviceId))
       setNow(Date.now())
     } catch (error) {
       toast(error instanceof Error ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'Could not create a pairing code.')
@@ -92,6 +99,25 @@ export function RemoteSettings(): React.JSX.Element {
 
   const secondsLeft = pairing ? Math.max(0, Math.round((pairing.expiresAt - now) / 1000)) : 0
   const running = status?.state === 'running'
+
+  const pairingPanel = pairing && (
+    <div className="remote-pairing">
+      {secondsLeft > 0
+        ? <img className="remote-qr" alt="Pairing QR code" src={`data:image/svg+xml;utf8,${encodeURIComponent(pairing.svg)}`} />
+        : <div className="remote-qr remote-qr-expired">Expired</div>}
+      <div className="remote-pairing-info">
+        <span>{secondsLeft > 0 ? `One-time code, valid for ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : 'This code expired.'}</span>
+        {secondsLeft > 0 && <span className="remote-code" aria-label="Pairing code">{pairing.code}</span>}
+        <span>
+          {pairing.deviceId
+            ? 'Scan with "Scan QR code" on the phone (or type the code). The phone keeps its place in this list with a new key; the old key stops working.'
+            : 'Scan it with the phone camera, or with "Scan QR code" in the TermFlow app on the phone.'}
+          {' '}No camera? Open {status?.url} on the phone and type the code.
+        </span>
+        {secondsLeft === 0 && <button className="settings-btn settings-btn-small" onClick={() => void showQr(pairing.deviceId)}>New code</button>}
+      </div>
+    </div>
+  )
 
   return (
     <div className="settings-section">
@@ -114,33 +140,33 @@ export function RemoteSettings(): React.JSX.Element {
 
       {remote.enabled && (
         <Field label="Pair a phone" hint="Scan the code with the phone's camera. Both devices must be signed in to the same tailnet.">
-          {pairing
+          {pairing && !pairing.deviceId
             ? <button className="settings-btn settings-btn-small" onClick={hideQr}>Hide code</button>
             : <button className="settings-btn settings-btn-small settings-btn-primary" disabled={!running} onClick={() => void showQr()}>Show QR code</button>}
         </Field>
       )}
-      {pairing && (
-        <div className="remote-pairing">
-          {secondsLeft > 0
-            ? <img className="remote-qr" alt="Pairing QR code" src={`data:image/svg+xml;utf8,${encodeURIComponent(pairing.svg)}`} />
-            : <div className="remote-qr remote-qr-expired">Expired</div>}
-          <div className="remote-pairing-info">
-            <span>{secondsLeft > 0 ? `One-time code, valid for ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : 'This code expired.'}</span>
-            {secondsLeft > 0 && <span className="remote-code" aria-label="Pairing code">{pairing.code}</span>}
-            <span>No camera, or using the app from the home screen? Open {status?.url} on the phone and type this code.</span>
-            {secondsLeft === 0 && <button className="settings-btn settings-btn-small" onClick={() => void showQr()}>New code</button>}
-          </div>
-        </div>
-      )}
+      {pairing && !pairing.deviceId && pairingPanel}
 
       <div className="settings-section-title">Paired devices</div>
       {devices.length === 0 && <p className="settings-note">No phone is paired yet.</p>}
       {devices.map((device) => (
-        <Field key={device.id} label={device.name} hint={`${device.connected ? 'Connected now' : `Last seen ${date(device.lastSeenAt)}`} · paired ${date(device.createdAt)}`}>
-          <button className="settings-btn settings-btn-small settings-btn-danger" onClick={() => void revoke(device.id)} aria-label={`Disconnect ${device.name}`}>
-            <Trash2 size={12} /> Disconnect
-          </button>
-        </Field>
+        <div key={device.id}>
+          <Field label={device.name} hint={`${device.connected ? 'Connected now' : `Last seen ${date(device.lastSeenAt)}`} · paired ${date(device.createdAt)}`}>
+            <span className="memory-inline">
+              {pairing?.deviceId === device.id
+                ? <button className="settings-btn settings-btn-small" onClick={hideQr}>Hide code</button>
+                : (
+                  <button className="settings-btn settings-btn-small" disabled={!running} onClick={() => void showQr(device.id)} aria-label={`Reconnect ${device.name}`} title="Show a QR that gives this phone a new key, e.g. after adding the app to the home screen">
+                    <QrCode size={12} /> Reconnect
+                  </button>
+                )}
+              <button className="settings-btn settings-btn-small settings-btn-danger" onClick={() => void revoke(device.id)} aria-label={`Disconnect ${device.name}`}>
+                <Trash2 size={12} /> Disconnect
+              </button>
+            </span>
+          </Field>
+          {pairing?.deviceId === device.id && pairingPanel}
+        </div>
       ))}
       {devices.length > 1 && (confirmAll
         ? (

@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { request } from 'http'
+import QRCode from 'qrcode'
 
 /**
  * Remote Access end to end: the real app serves the phone client on a
@@ -53,7 +54,7 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
   await win.locator('.settings-nav-item', { hasText: 'Remote Access' }).click()
   await win.getByRole('button', { name: 'Show QR code' }).click()
   await expect(win.locator('.remote-qr')).toBeVisible()
-  const pairUrl = await win.locator('.remote-pairing-info span', { hasText: 'type this code' }).textContent()
+  const pairUrl = await win.locator('.remote-pairing-info span', { hasText: 'type the code' }).textContent()
   expect(pairUrl).toContain(`127.0.0.1:${port}`)
   await expect(win.locator('.remote-code')).toHaveText(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/)
   await win.screenshot({ path: 'test-results/remote-desktop-qr.png' })
@@ -157,8 +158,48 @@ test('a home-screen app pairs by typing the code shown under the QR', async () =
   // Typed the way people do: lower case, without the dash.
   await phone.locator('#pair-code').fill(pairing.code.replace('-', '').toLowerCase())
   await phone.screenshot({ path: 'test-results/remote-phone-pair.png' })
-  await phone.getByRole('button', { name: 'Pair' }).click()
+  await phone.getByRole('button', { name: 'Pair', exact: true }).click()
   await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+})
+
+test('the pairing screen reads the QR from a photo', async () => {
+  await expect.poll(() => win.evaluate(() => window.termflow.remote.status().then((s) => s.state))).toBe('running')
+  const pairing = await win.evaluate(() => window.termflow.remote.pair())
+  await phone.goto(`http://127.0.0.1:${port}/`)
+  // The camera hands the page a photo; a rendered QR stands in for it.
+  const photo = await QRCode.toBuffer(pairing.url, { type: 'png', width: 900, margin: 6 })
+  await phone.locator('.pair-photo').setInputFiles({ name: 'IMG_0001.png', mimeType: 'image/png', buffer: photo })
+  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+})
+
+test('Reconnect on the desktop gives the same phone a new key', async () => {
+  await expect.poll(() => win.evaluate(() => window.termflow.remote.status().then((s) => s.state))).toBe('running')
+  // First pairing: the browser.
+  const first = await win.evaluate(() => window.termflow.remote.pair())
+  await phone.goto(first.url)
+  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  const [device] = await win.evaluate(() => window.termflow.remote.devices())
+
+  // The desktop shows a renewal QR from the device row.
+  await win.keyboard.press('Control+,')
+  await win.locator('.settings-nav-item', { hasText: 'Remote Access' }).click()
+  await win.getByRole('button', { name: `Reconnect ${device.name}` }).click()
+  await expect(win.locator('.remote-code')).toBeVisible()
+  const code = await win.locator('.remote-code').textContent()
+  await win.screenshot({ path: 'test-results/remote-desktop-reconnect.png' })
+
+  // The home-screen app has its own storage: a fresh context pairs with the code.
+  const homeScreen = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+  await homeScreen.goto(`http://127.0.0.1:${port}/`)
+  await homeScreen.locator('#pair-code').fill(code!)
+  await homeScreen.getByRole('button', { name: 'Pair', exact: true }).click()
+  await expect(homeScreen.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+
+  // Same entry, new key: the old browser session is retired and the QR closes.
+  await expect(phone.getByText('This phone was disconnected from the computer')).toBeVisible()
+  const devices = await win.evaluate(() => window.termflow.remote.devices())
+  expect(devices.map((d) => d.id)).toEqual([device.id])
+  await expect(win.locator('.remote-qr')).toHaveCount(0)
 })
 
 test('the server refuses foreign origins and unknown tokens', async () => {

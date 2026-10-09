@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Bot, FolderGit2, QrCode, Settings as SettingsIcon, SquareTerminal, WifiOff } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Bot, Camera, FolderGit2, QrCode, Settings as SettingsIcon, SquareTerminal, WifiOff } from 'lucide-react'
 import { isLightColor } from '../../renderer/src/backdrop'
 import { resolveTheme } from '../../renderer/src/themes/themes'
 import { RemoteClient, loadToken, pairWithCode, saveToken } from './client'
+import { extractPairCode, readQrFromPhoto } from './qr'
 import { useRemote, type Screen } from './store'
 import { Toasts } from './ui'
 import { TerminalScreen } from './views/TerminalScreen'
@@ -25,29 +26,55 @@ function takePairCode(): string | null {
   return match[1]
 }
 
-/** Started from the home screen: iOS gives it storage separate from Safari. */
-const standalone = (): boolean =>
-  window.matchMedia?.('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
-
 function PairScreen({ error, busy, onCode }: { error: string | null; busy: boolean; onCode(code: string): void }): React.JSX.Element {
   const [code, setCode] = useState('')
+  const [scanError, setScanError] = useState<string | null>(null)
+  const [reading, setReading] = useState(false)
+  const photoRef = useRef<HTMLInputElement>(null)
+
+  // The camera takes a photo of the QR on the computer; the code is read from it here.
+  const onPhoto = async (file: File | undefined): Promise<void> => {
+    if (!file) return
+    setScanError(null)
+    setReading(true)
+    try {
+      const text = await readQrFromPhoto(file)
+      const found = text ? extractPairCode(text) : null
+      if (found) onCode(found)
+      else setScanError('No pairing QR code found in the photo. Hold the phone closer so the code fills most of the picture.')
+    } catch (failure) {
+      setScanError(failure instanceof Error ? failure.message : 'The photo could not be read.')
+    } finally {
+      setReading(false)
+      if (photoRef.current) photoRef.current.value = ''
+    }
+  }
+
   return (
     <main className="pair">
       <img src="/icon-192.png" alt="" className="pair-logo" />
       <h1>TermFlow Remote</h1>
-      {busy
-        ? <p>Pairing with your computer...</p>
+      {busy || reading
+        ? <p>{reading ? 'Reading the QR code...' : 'Pairing with your computer...'}</p>
         : (
           <>
-            <p>Control TermFlow Lite on your computer from this phone.</p>
-            <ol>
-              <li>On the computer open <strong>Settings &gt; Remote Access</strong> and turn it on.</li>
-              <li>Press <strong>Show QR code</strong>.</li>
-              <li>Scan the code with this phone's camera.</li>
-            </ol>
-            <div className="pair-hint"><QrCode size={16} /> Both devices must be on the same Tailscale network.</div>
+            <p>On the computer open <strong>Settings &gt; Remote Access</strong> and press <strong>Show QR code</strong>, then scan it here.</p>
+            <button className="btn primary pair-scan" onClick={() => photoRef.current?.click()}>
+              <Camera size={20} /> Scan QR code
+            </button>
+            <input
+              ref={photoRef}
+              className="pair-photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={(e) => void onPhoto(e.target.files?.[0])}
+            />
+            {scanError && <p className="pair-error">{scanError}</p>}
             <form className="pair-code" onSubmit={(e) => { e.preventDefault(); if (code.trim()) onCode(code) }}>
-              <label htmlFor="pair-code">{standalone() ? 'From the home screen the camera cannot hand the QR to this app. Type the code shown under the QR instead:' : 'Or type the code shown under the QR:'}</label>
+              <label htmlFor="pair-code">Or type the code shown next to the QR:</label>
               <div className="pair-code-row">
                 <input
                   id="pair-code"
@@ -62,9 +89,10 @@ function PairScreen({ error, busy, onCode }: { error: string | null; busy: boole
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                 />
-                <button className="btn primary" type="submit" disabled={!code.trim()}>Pair</button>
+                <button className="btn" type="submit" disabled={!code.trim()}>Pair</button>
               </div>
             </form>
+            <div className="pair-hint"><QrCode size={16} /> Both devices must be on the same Tailscale network.</div>
           </>
         )}
       {error && <p className="pair-error">{error}</p>}

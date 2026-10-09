@@ -92,7 +92,8 @@ const api = {
   /** Remote Access: phones paired over Tailscale (docs/remote-access.md). */
   remote: {
     status: (): Promise<RemoteStatus> => ipcRenderer.invoke(IPC.REMOTE_STATUS),
-    pair: (): Promise<RemotePairing> => ipcRenderer.invoke(IPC.REMOTE_PAIR),
+    /** deviceId: a QR that renews that paired phone instead of adding a new one. */
+    pair: (deviceId?: string): Promise<RemotePairing> => ipcRenderer.invoke(IPC.REMOTE_PAIR, deviceId),
     cancelPair: (): Promise<void> => ipcRenderer.invoke(IPC.REMOTE_PAIR_CANCEL),
     devices: (): Promise<RemoteDeviceInfo[]> => ipcRenderer.invoke(IPC.REMOTE_DEVICES),
     /** null disconnects every device. */

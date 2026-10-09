@@ -64,7 +64,8 @@ function cleanName(value: unknown): string {
  */
 export class DeviceStore {
   private devices: StoredDevice[]
-  private pairing: { codeHash: string; expiresAt: number } | null = null
+  /** forDevice: the code renews this paired device instead of adding a new one. */
+  private pairing: { codeHash: string; expiresAt: number; forDevice?: string } | null = null
   private lastSeenWrite = new Map<string, number>()
 
   constructor(private readonly filePath: string, private readonly now: () => number = Date.now) {
@@ -97,11 +98,16 @@ export class DeviceStore {
     }
   }
 
-  /** New pairing code; any previous, unused code stops working. */
-  startPairing(): { code: string; expiresAt: number } {
+  /**
+   * New pairing code; any previous, unused code stops working. With
+   * `forDevice` the code renews that device: same entry, new key, the old key
+   * stops working (e.g. moving from the browser to the home-screen app).
+   */
+  startPairing(forDevice?: string): { code: string; expiresAt: number } {
+    if (forDevice !== undefined && !this.devices.some((d) => d.id === forDevice)) throw new Error('That device is no longer paired.')
     const code = pairingCode()
     const expiresAt = this.now() + PAIRING_TTL_MS
-    this.pairing = { codeHash: hash(code), expiresAt }
+    this.pairing = { codeHash: hash(code), expiresAt, forDevice }
     return { code, expiresAt }
   }
 
@@ -110,19 +116,27 @@ export class DeviceStore {
   }
 
   /** Exchange a pairing code for a device token. The code is consumed on success. */
-  pair(code: unknown, name: unknown): { device: PairedDevice; token: string } | null {
+  pair(code: unknown, name: unknown): { device: PairedDevice; token: string; renewed: boolean } | null {
     if (typeof code !== 'string' || code.length > 100 || !this.pairing || this.pairing.expiresAt < this.now()) return null
     const expected = Buffer.from(this.pairing.codeHash, 'hex')
     const actual = Buffer.from(hash(normalizePairingCode(code)), 'hex')
     if (!timingSafeEqual(expected, actual)) return null
+    const forDevice = this.pairing.forDevice
     this.pairing = null
     const deviceToken = token()
     const now = this.now()
+    const existing = forDevice ? this.devices.find((d) => d.id === forDevice) : undefined
+    if (existing) {
+      existing.tokenHash = hash(deviceToken)
+      existing.lastSeenAt = now
+      this.save()
+      return { device: this.public(existing), token: deviceToken, renewed: true }
+    }
     const device: StoredDevice = { id: randomBytes(8).toString('hex'), name: cleanName(name), tokenHash: hash(deviceToken), createdAt: now, lastSeenAt: now }
     // Oldest devices make room once the cap is reached.
     this.devices = [...this.devices, device].slice(-MAX_DEVICES)
     this.save()
-    return { device: this.public(device), token: deviceToken }
+    return { device: this.public(device), token: deviceToken, renewed: false }
   }
 
   /** Resolve a device token; marks the device as seen. */

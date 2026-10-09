@@ -39,7 +39,8 @@ export function sanitizeTabs(value: unknown): RemoteTabsState | null {
 
 export function registerRemoteIpc(controller: RemoteController): void {
   ipcMain.handle(IPC.REMOTE_STATUS, () => controller.status())
-  ipcMain.handle(IPC.REMOTE_PAIR, () => controller.startPairing())
+  ipcMain.handle(IPC.REMOTE_PAIR, (_event, deviceId: unknown) =>
+    controller.startPairing(typeof deviceId === 'string' && /^[0-9a-f]{16}$/.test(deviceId) ? deviceId : undefined))
   ipcMain.handle(IPC.REMOTE_PAIR_CANCEL, () => controller.cancelPairing())
   ipcMain.handle(IPC.REMOTE_DEVICES, () => controller.listDevices())
   ipcMain.handle(IPC.REMOTE_REVOKE, (_event, deviceId: unknown) => {

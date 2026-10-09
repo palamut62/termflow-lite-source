@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.22.0 - 2026-10-09
+
+- Scan the pairing QR from inside the phone app: the sign-in screen has a Scan QR code button that opens the camera and reads the code from the photo. It also works in the app you added to the iPhone home screen, which cannot take over a pairing from Safari or Edge.
+- Next to every QR the computer now shows a short code you can type instead (for example 7KQ2M-X9HDA).
+- Reconnect a paired phone: in Settings > Remote Access each phone has a Reconnect button with its own QR. Scanning it gives that phone a new key in the same place in the list, and the old key stops working, so moving from the browser to the home-screen app does not leave a second entry behind.
+- The phone no longer squeezes the desktop: by default it mirrors the desktop terminal at its own size, scaled to the phone, with a Zoom of up to 3x. Tap Fit to have a tab take the phone's size while you watch it.
+- Fixed: the app added to the iPhone home screen could open to a blank page after TermFlow Lite was updated, and the TermFlow logo was missing on the phone.
+
 ## 1.21.1 - 2026-10-09
 
 - Typing on the phone: tap the terminal and the keyboard opens; every key reaches the shell or agent as you type, including in Claude Code, Codex and OpenCode input boxes. Word suggestions, autocorrect and Backspace on an empty line now work, and the special-key bar no longer closes the keyboard.

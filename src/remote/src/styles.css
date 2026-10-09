@@ -235,3 +235,6 @@ textarea.input { resize: vertical; }
 
 /* Mirror mode: the desktop-sized terminal is scaled to the width; zooming in pans. */
 .term-wrap.mirror { overflow: auto; -webkit-overflow-scrolling: touch; }
+.pair-scan { width: 100%; max-width: 340px; min-height: 52px; font-size: 17px; margin-top: 14px; }
+.pair-photo { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.pair > .pair-hint { margin-top: 14px; }

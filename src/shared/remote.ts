@@ -42,12 +42,16 @@ export interface RemoteStatus {
   url: string | null
   error: string | null
   connectedDevices: number
+  /** When a phone last paired or renewed its key (closes the QR on the desktop). */
+  lastPairedAt: number | null
 }
 
 export interface RemotePairing {
   url: string
   /** The same one-time code, for typing on the phone ("7KQ2M-X9HDA"). */
   code: string
+  /** Set when the code renews this paired device. */
+  deviceId?: string
   /** QR code of `url` as an SVG string. */
   svg: string
   expiresAt: number

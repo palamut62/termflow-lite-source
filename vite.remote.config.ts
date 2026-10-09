@@ -16,6 +16,16 @@ export default defineConfig({
     outDir: resolve(__dirname, 'out/remote'),
     emptyOutDir: true,
     sourcemap: false,
-    chunkSizeWarningLimit: 1200
+    chunkSizeWarningLimit: 1200,
+    // Stable names: an iPhone home-screen app may start from an old cached
+    // index.html, which must still find its scripts after an update. The
+    // server revalidates every file (ETag), so stable names never go stale.
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/app.js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]'
+      }
+    }
   }
 })

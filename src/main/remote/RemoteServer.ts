@@ -73,7 +73,8 @@ function securityHeaders(res: ServerResponse, host: string): void {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
+    // blob: lets the pairing screen read a photo of the QR code.
+    "img-src 'self' data: blob:",
     "font-src 'self' data:",
     `connect-src 'self' ws://${host}`,
     "base-uri 'none'",
@@ -109,8 +110,8 @@ export interface RemoteServerOptions {
   staticDir: string
   hub: RemoteHub
   devices: Pick<DeviceStore, 'pair'>
-  /** A device paired; the desktop closes its QR. */
-  onPaired(): void
+  /** A device paired; the desktop closes its QR. renewed: an existing device got a new key. */
+  onPaired(deviceId: string, renewed: boolean): void
 }
 
 /**
@@ -241,7 +242,7 @@ export class RemoteServer {
     }
     const paired = this.options.devices.pair(body.code, body.name)
     if (!paired) return json(401, { error: 'This QR code has expired or was already used. Show a new one on the desktop.' })
-    this.options.onPaired()
+    this.options.onPaired(paired.device.id, paired.renewed)
     json(200, { token: paired.token, device: paired.device })
   }
 
@@ -259,12 +260,8 @@ export class RemoteServer {
       res.writeHead(403).end()
       return
     }
-    let isFile = false
-    try {
-      isFile = (await stat(file)).isFile()
-    } catch {
-      isFile = false
-    }
+    let info = await stat(file).catch(() => null)
+    const isFile = info?.isFile() ?? false
     // Single-page app: unknown paths without an extension get index.html.
     if (!isFile) {
       if (extname(decoded)) {
@@ -272,24 +269,30 @@ export class RemoteServer {
         return
       }
       file = join(root, 'index.html')
+      info = await stat(file)
     }
     const ext = extname(file).toLowerCase()
-    const isIndex = file.endsWith(`${sep}index.html`)
+    // File names are stable (no content hash) so a cached index.html still finds
+    // its scripts after an update; every response is revalidated instead, and an
+    // unchanged file costs a 304.
+    const etag = `"${info!.size.toString(36)}-${Math.floor(info!.mtimeMs).toString(36)}"`
+    const headers = { 'Cache-Control': 'no-cache', ETag: etag, Vary: 'Accept-Encoding' }
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, headers).end()
+      return
+    }
     const gzip = COMPRESSIBLE.has(ext) && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))
     let body: Buffer
     if (gzip) {
-      // index.html is small and must reflect a rebuilt client immediately.
-      const cached = isIndex ? undefined : this.gzipCache.get(file)
-      body = cached ?? gzipSync(await readFile(file))
-      if (!isIndex) this.gzipCache.set(file, body)
+      const key = `${file}|${etag}`
+      body = this.gzipCache.get(key) ?? gzipSync(await readFile(file))
+      this.gzipCache.set(key, body)
     } else {
       body = await readFile(file)
     }
     res.writeHead(200, {
+      ...headers,
       'Content-Type': MIME[ext] ?? 'application/octet-stream',
-      // Hashed assets never change; the shell is always revalidated so updates land.
-      'Cache-Control': isIndex || ext === '.webmanifest' ? 'no-cache' : 'public, max-age=31536000, immutable',
-      Vary: 'Accept-Encoding',
       ...(gzip ? { 'Content-Encoding': 'gzip' } : {})
     })
     res.end(req.method === 'HEAD' ? undefined : body)

@@ -76,6 +76,23 @@ describe('DeviceStore', () => {
     expect(normalizePairingCode('o1-il 2')).toBe('01112')
   })
 
+  it('a renewal code gives the same device a new key and retires the old one', () => {
+    const store = new DeviceStore(storePath())
+    const first = store.pair(store.startPairing().code, 'iPhone')!
+    const renewal = store.startPairing(first.device.id)
+    const renewed = store.pair(renewal.code, 'iPhone')!
+    expect(renewed.renewed).toBe(true)
+    expect(renewed.device.id).toBe(first.device.id)
+    expect(store.list()).toHaveLength(1)
+    expect(store.authenticate(first.token)).toBeNull()
+    expect(store.authenticate(renewed.token)?.id).toBe(first.device.id)
+  })
+
+  it('refuses a renewal code for a device that is gone', () => {
+    const store = new DeviceStore(storePath())
+    expect(() => store.startPairing('0123456789abcdef')).toThrow('no longer paired')
+  })
+
   it('ignores malformed tokens', () => {
     const store = new DeviceStore(storePath())
     expect(store.authenticate(undefined)).toBeNull()

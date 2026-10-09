@@ -38,7 +38,8 @@ export class RemoteController {
   readonly devices: DeviceStore
   readonly hub: RemoteHub
   private server: RemoteServer
-  private state: RemoteStatus = { state: 'off', url: null, error: null, connectedDevices: 0 }
+  private state: Omit<RemoteStatus, 'connectedDevices' | 'lastPairedAt'> = { state: 'off', url: null, error: null }
+  private lastPairedAt: number | null = null
   private address: string | null = null
   private port = 0
   private poll: NodeJS.Timeout | null = null
@@ -64,12 +65,17 @@ export class RemoteController {
       staticDir: deps.staticDir,
       hub: this.hub,
       devices: this.devices,
-      onPaired: () => this.publish()
+      onPaired: (deviceId, renewed) => {
+        // Sockets still on the retired key are closed; the new key connects next.
+        if (renewed) this.hub.revokeDevice(deviceId)
+        this.lastPairedAt = Date.now()
+        this.publish()
+      }
     })
   }
 
   status(): RemoteStatus {
-    return { ...this.state, connectedDevices: this.hub.connectedDeviceIds().size }
+    return { ...this.state, connectedDevices: this.hub.connectedDeviceIds().size, lastPairedAt: this.lastPairedAt }
   }
 
   /** Apply the current settings; serialized so quick toggles cannot race. */
@@ -140,12 +146,13 @@ export class RemoteController {
     await this.server.stop()
   }
 
-  async startPairing(): Promise<RemotePairing> {
+  /** deviceId: renew that paired device instead of adding a new one. */
+  async startPairing(deviceId?: string): Promise<RemotePairing> {
     if (this.state.state !== 'running' || !this.state.url) throw new Error('Turn on Remote Access first.')
-    const { code, expiresAt } = this.devices.startPairing()
+    const { code, expiresAt } = this.devices.startPairing(deviceId)
     const url = `${this.state.url}/#pair=${code}`
     const svg = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 1 })
-    return { url, svg, expiresAt, code: formatPairingCode(code) }
+    return { url, svg, expiresAt, code: formatPairingCode(code), deviceId }
   }
 
   cancelPairing(): void {
@@ -199,8 +206,8 @@ export class RemoteController {
     })
   }
 
-  private setState(next: Omit<RemoteStatus, 'connectedDevices'>): void {
-    this.state = { ...next, connectedDevices: 0 }
+  private setState(next: Omit<RemoteStatus, 'connectedDevices' | 'lastPairedAt'>): void {
+    this.state = next
     this.publish()
   }
 

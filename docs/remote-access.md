@@ -17,6 +17,13 @@ Telefon ayri bir kopya degil, masaustunun uzaktan kumandasidir: iki ekran ayni d
   5 dk gecerli, tek kullanimlik. Telefon kodu `POST /api/pair` ile uzun omurlu cihaz anahtarina
   cevirir (32 bayt); anahtar tarayicida (localStorage) saklanir, masaustunde yalnizca SHA-256'si
   (`userData/remote-devices.json`, atomik yazim).
+- Eslestirme kodu 10 karakter Crockford base32 (QR yaninda elle yazilabilir, 50 bit, tek kullanim,
+  5 dk, IP basina dakikada 10 deneme). Telefonda "Scan QR code": HTTP'de canli kamera yok, fotograf
+  (`input capture`) + jsQR ile okunur (CSP `img-src blob:`). Masaustunde cihaz satirinda "Reconnect":
+  o cihaza bagli kod; okutulunca ayni kayit yeni anahtar alir, eski anahtar ve soketleri kapanir
+  (iPhone ana ekran uygulamasi Safari/Edge deposunu goremez).
+- Telefon istemcisi sabit dosya adlariyla derlenir (`assets/app.js`) ve her dosya ETag ile yeniden
+  dogrulanir: ana ekran uygulamasinin onbellekteki eski index.html'i guncellemeden sonra da calisir.
 - Oturum suresizdir; yalnizca masaustu "Disconnect" / "Disconnect all" ile biter. Iptal edilen
   cihazin soketleri aninda kapanir.
 - WebSocket: ilk mesaj `auth` olmali (anahtar URL'de tasinmaz), Origin = Host kontrolu,
