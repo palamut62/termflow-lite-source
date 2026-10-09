@@ -63,5 +63,5 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Karakter durumu cikti metninden tahmin edilmez; yalniz ajan spinner'i ve acik zaman kurallari
 - Hava durumu: IP ile konum yok; yalniz yuvarlanmis koordinat gider
 - Yayin yalniz CI uzerinden; lokal exe release'e yuklenmez; public repo adi degismez
-- Surum kurali (kullanici, 2026-10-09): mevcut ozellik duzeltmesinde surum ARTMAZ; ayni surum yerelde derlenip (`npm run build && npm run dist:win`) bu PC'ye sessiz kurulur (`dist/TermFlow-Lite-<v>-x64.exe /S --force-run`). Yeni ozellikte surum artar ve CI ile yayinlanir
+- Surum kurali (kullanici, 2026-10-09): mevcut ozellik duzeltmesinde surum ARTMAZ; ayni surum yerelde derlenip (`npm run build && npm run dist:win`) bu PC'ye sessiz kurulur (Git Bash'te `MSYS_NO_PATHCONV=1 ./dist/TermFlow-Lite-<v>-x64.exe /S --force-run`; yoksa /S `S:/` olur ve sihirbaz acilir). Yeni ozellikte surum artar ve CI ile yayinlanir
 - Site dili: `website/i18n.js`; uygulama arayuzu yalniz Ingilizce
