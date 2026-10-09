@@ -73,6 +73,14 @@
     'f2.li4': 'Agent Memory son 30 günün oturumlarından her proje için kısa bir hafıza tutar; sıradaki ajan bir öncekinin kaldığı yerden devam eder',
     'f2.alt': 'Yan yana iki bölme: npm test çalıştıran PowerShell ve git diff ile git log gösteren Git Bash',
 
+    'f8.title': 'Terminalini telefonuna taşı',
+    'f8.text': "Remote Access'i aç, bir kez QR kodu okut; telefonun Tailscale üzerinden bilgisayarındaki TermFlow Lite'ı yönetsin. Bir ajan çalışırken masadan kalk, işi her yerden takip et.",
+    'f8.li1': 'Her sekme satır satır canlı akar; Esc, Tab, Ctrl ve ok tuşlarıyla ya da uzun istemler için mesaj kutusuyla içine yaz',
+    'f8.li2': 'Sekme aç ve kapat; herhangi bir kabuğu, ajanı, sağlayıcıyı ya da SSH bağlantısını başlat, ajan oturumlarını sürdür, kayıtlı komutları çalıştır',
+    'f8.li3': 'Ayarları, profilleri, sağlayıcıları ve SSH bağlantılarını telefondan değiştir; bilgisayar hemen uygular',
+    'f8.li4': 'Yalnızca Tailscale adresini dinler, yerel ağa ya da internete açılmaz; sen bağlantıyı kesene kadar eşli kalır',
+    'f8.alt': 'Eşleştirme QR kodu gösteren Ayarlar > Remote Access ve yanında aynı PowerShell sekmesini çalıştıran bir telefon',
+
     'f3.title': 'Ajanının ne yaptığını gör',
     'f3.text': 'Ember, Miso ya da Piko her ajan terminalinin yanında oturur ve gerçek oturumu canlandırır: ajan düzenleme yaparken yazar, düşünür, onayını bekler, iş bitince sevinir.',
     'f3.li1': 'İfadesi oturumun kendisini izler, çıktıdan tahmin yürütmez; altyazı da yapılan işi söyler, örneğin "upload.ts düzenleniyor"',

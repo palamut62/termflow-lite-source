@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-09 | son arac: Claude Code | dal: `feature/remote-access` | surum 1.20.1 (+ yayinlanmamis Remote Access)
+guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.21.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -26,7 +26,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.20.0 Secim duzeltmesi: Claude Code caret'i, tum input secilip Delete ile temizleme
 - [x] 1.20.0 Memory model katalogu: OpenRouter'dan tum modeller, 24 saat cache, Refresh + Test
 - [x] 1.20.1 Model secici: datalist yerine `settings/ModelPicker.tsx`; acilinca tum modeller, All/Free filtresi, ucretsizler yesil
-- [x] Remote Access (yayinlanmadi, `feature/remote-access`): Tailscale + QR ile telefondan tam kontrol; spec `docs/remote-access.md`, 3/3 faz
+- [x] 1.21.0 Remote Access: Tailscale + QR ile telefondan tam kontrol; spec `docs/remote-access.md`, 3/3 faz; site f8 (EN/TR)
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-09)
@@ -36,7 +36,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
-- Sonra: surum 1.21.0, CHANGELOG "Unreleased" -> surum, siteye Remote Access maddesi (EN/TR), PR -> main
+- 1.21.0 yayini: `feature/remote-access` main'e birlestirildi, etiket CI'a gitti; Release + verify-release sonucu kontrol edilmeli. Site Remote Access bolumu (f8, `assets/remote.webp`) Vercel prod
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 

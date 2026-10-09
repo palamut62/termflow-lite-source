@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.21.0 - 2026-10-09
 
 - Remote Access (Settings > Remote Access, off until you turn it on): control TermFlow Lite from your phone over Tailscale. Scan a QR code once and the phone stays connected until you disconnect it on the computer.
 - The phone sees every tab live, line by line, and can type into it, with keys that are hard on a phone keyboard (Esc, Tab, Shift+Tab, Ctrl, Alt, arrows, Ctrl+C) and a message box for longer prompts. While you look at a tab on the phone it fits the phone screen; the computer gets its size back when you leave.
