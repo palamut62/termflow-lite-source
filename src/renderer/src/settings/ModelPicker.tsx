@@ -24,6 +24,8 @@ interface Props {
   models: OpenRouterModel[]
   value: string
   onChange: (id: string) => void
+  /** Show the "no JSON" note (structured output matters for Memory, not for voice). */
+  showStructured?: boolean
 }
 
 /**
@@ -31,7 +33,7 @@ interface Props {
  * (datalist gibi mevcut değere göre süzmez); ücretsiz modeller ayrı renkte.
  * Listede olmayan bir id de yazılıp seçilebilir.
  */
-export function ModelPicker({ models, value, onChange }: Props): React.JSX.Element {
+export function ModelPicker({ models, value, onChange, showStructured = true }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
@@ -158,7 +160,7 @@ export function ModelPicker({ models, value, onChange }: Props): React.JSX.Eleme
                 </span>
                 <span className="model-option-meta">
                   {isFree(m) ? <span className="model-badge-free">Free</span> : <span>{priceText(m)}</span>}
-                  <span>{contextText(m.contextLength)}{m.structured ? '' : ' · no JSON'}</span>
+                  <span>{contextText(m.contextLength)}{showStructured && !m.structured ? ' · no JSON' : ''}</span>
                 </span>
               </div>
             ))}

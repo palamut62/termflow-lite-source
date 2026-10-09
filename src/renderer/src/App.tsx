@@ -38,6 +38,7 @@ import { listenForKonami } from './fun/konami'
 import { WidgetView } from './widget/WidgetView'
 import { useWidgetStore } from './widget/widgetStore'
 import { startRemoteBridge } from './remoteBridge'
+import { VoiceIndicator } from './components/VoiceIndicator'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -360,6 +361,7 @@ export default function App(): React.JSX.Element {
       {loaded && <TipCard />}
       <MediaViewer />
       <Toasts />
+      <VoiceIndicator />
       <WorktreeCleanupDialog />
     </div>
     {widgetActive && <WidgetView />}

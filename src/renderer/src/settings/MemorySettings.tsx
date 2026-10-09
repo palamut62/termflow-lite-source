@@ -9,7 +9,7 @@ import { Field, TextInput, Toggle } from './Settings'
 const SECRET_ID = 'termflow-memory'
 /** Model listesi hiç çekilemediyse (ilk açılış, çevrimdışı) gösterilen yedek öneriler. */
 const MODEL_SUGGESTIONS: OpenRouterModel[] = ['deepseek/deepseek-v4-flash', 'google/gemini-3.5-flash-lite', 'openai/gpt-6-luna', 'anthropic/claude-haiku-4.5']
-  .map((id) => ({ id, name: id, contextLength: 0, inputPrice: null, outputPrice: null, structured: true }))
+  .map((id) => ({ id, name: id, contextLength: 0, inputPrice: null, outputPrice: null, structured: true, audio: false }))
 const AGENT_LABEL: Record<MemoryAgent, string> = { claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode' }
 const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
   missing: 'CLI not installed',

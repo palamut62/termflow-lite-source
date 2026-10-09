@@ -2,9 +2,13 @@
 
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
+export type ChatContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'input_audio'; input_audio: { data: string; format: 'wav' } }
+
 export interface ChatMessage {
   role: 'system' | 'user'
-  content: string
+  content: string | ChatContentPart[]
 }
 
 export interface ChatUsage {
@@ -28,6 +32,11 @@ export interface ChatRequest {
   jsonSchema?: { name: string; schema: Record<string, unknown> }
   maxTokens?: number
   signal?: AbortSignal
+  temperature?: number
+  /** Chat completions endpoint; E2E points it at a local fake. */
+  url?: string
+  /** An empty answer is a valid result (dictation of silence), not an error. */
+  allowEmpty?: boolean
 }
 
 export class OpenRouterError extends Error {
@@ -56,7 +65,7 @@ export async function chat(request: ChatRequest, fetchImpl: FetchLike = fetch, r
   const body: Record<string, unknown> = {
     model: request.model,
     messages: request.messages,
-    temperature: 0.2,
+    temperature: request.temperature ?? 0.2,
     max_tokens: request.maxTokens ?? 2_000,
     // Akıl yürüten modellerde düşünme maliyetini düşük tut, çıktıya katma.
     reasoning: { effort: 'low', exclude: true }
@@ -67,7 +76,7 @@ export async function chat(request: ChatRequest, fetchImpl: FetchLike = fetch, r
   for (let attempt = 0; ; attempt++) {
     let response: Response
     try {
-      response = await fetchImpl(OPENROUTER_URL, {
+      response = await fetchImpl(request.url ?? OPENROUTER_URL, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${request.apiKey}`,
@@ -96,8 +105,9 @@ export async function chat(request: ChatRequest, fetchImpl: FetchLike = fetch, r
     let parsed: { choices?: Array<{ message?: { content?: unknown }; finish_reason?: string }>; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number }; error?: { message?: string } }
     try { parsed = JSON.parse(text) } catch { throw new OpenRouterError('OpenRouter returned an invalid response.') }
     if (parsed.error) throw new OpenRouterError(`OpenRouter error: ${String(parsed.error.message ?? 'unknown').slice(0, 200)}`)
-    const content = parsed.choices?.[0]?.message?.content
-    if (typeof content !== 'string' || !content.trim()) throw new OpenRouterError('OpenRouter returned an empty answer.')
+    const raw = parsed.choices?.[0]?.message?.content
+    const content = request.allowEmpty && (raw === null || raw === undefined) ? '' : raw
+    if (typeof content !== 'string' || (!content.trim() && !request.allowEmpty)) throw new OpenRouterError('OpenRouter returned an empty answer.')
     const cost = parsed.usage?.cost
     return {
       content,

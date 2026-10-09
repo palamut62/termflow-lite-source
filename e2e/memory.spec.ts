@@ -78,9 +78,9 @@ test('memory model picker lists every cached OpenRouter model and marks free one
   writeFileSync(join(cache, 'openrouter-models.json'), JSON.stringify({
     fetchedAt: Date.now(),
     models: [
-      { id: 'anthropic/claude-haiku-4.5', name: 'Claude Haiku 4.5', contextLength: 200000, inputPrice: 1, outputPrice: 5, structured: true },
-      { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', contextLength: 1048576, inputPrice: 0.0228, outputPrice: 1.28, structured: true },
-      { id: 'plain/no-schema:free', name: 'Plain', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false }
+      { id: 'anthropic/claude-haiku-4.5', name: 'Claude Haiku 4.5', contextLength: 200000, inputPrice: 1, outputPrice: 5, structured: true, audio: false },
+      { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash', contextLength: 1048576, inputPrice: 0.0228, outputPrice: 1.28, structured: true, audio: false },
+      { id: 'plain/no-schema:free', name: 'Plain', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false, audio: false }
     ]
   }))
 

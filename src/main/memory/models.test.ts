@@ -37,9 +37,9 @@ function cacheFile(): string {
 describe('parseModels', () => {
   it('keeps text models, sorts by id and converts prices to USD per 1M tokens', () => {
     expect(parseModels(RAW)).toEqual([
-      { id: 'a/alpha', name: 'a/alpha', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false },
-      { id: 'openrouter/auto', name: 'Auto', contextLength: 0, inputPrice: null, outputPrice: null, structured: false },
-      { id: 'z/beta', name: 'Beta', contextLength: 1_048_576, inputPrice: 0.0228, outputPrice: 1.28, structured: true }
+      { id: 'a/alpha', name: 'a/alpha', contextLength: 8192, inputPrice: 0, outputPrice: 0, structured: false, audio: false },
+      { id: 'openrouter/auto', name: 'Auto', contextLength: 0, inputPrice: null, outputPrice: null, structured: false, audio: false },
+      { id: 'z/beta', name: 'Beta', contextLength: 1_048_576, inputPrice: 0.0228, outputPrice: 1.28, structured: true, audio: false }
     ])
   })
 

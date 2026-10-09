@@ -37,6 +37,7 @@ import { mergeProfiles, providerFromProfileId } from '../../../shared/profiles'
 import { useAgentEventStore } from '../store/agentEventStore'
 import { useSavedCommandStore } from '../store/savedCommandStore'
 import { useHandoverStore } from '../store/handoverStore'
+import { createVoiceInput } from '../voice/voiceInput'
 
 interface Props {
   tabId: string
@@ -509,7 +510,13 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
 
     // Ctrl+C / Ctrl+Shift+C: seçim varsa kopyala; seçim yoksa Ctrl+C normal
     // şekilde PTY'ye gider. Ctrl+V / Ctrl+Shift+V preload üzerinden yapıştırır.
+    // Voice input: hold Space to dictate (docs/voice-input.md). It sees keyups too.
+    const voice = createVoiceInput(tabId, term)
+    const onVoiceBlur = (): void => voice.blur()
+    term.textarea?.addEventListener('blur', onVoiceBlur)
+    window.addEventListener('blur', onVoiceBlur)
     term.attachCustomKeyEventHandler((e) => {
+      if (voice.handle(e)) return false
       if (e.type !== 'keydown') return true
       if (inlineSuggest.handleKey(e)) return false
       // Ctrl+Up/Down: önceki/sonraki komuta git (yalnızca shell integration varken).
@@ -609,6 +616,9 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       dataSub.dispose()
       selSub.dispose()
       bellSub.dispose()
+      voice.blur()
+      term.textarea?.removeEventListener('blur', onVoiceBlur)
+      window.removeEventListener('blur', onVoiceBlur)
       pathLinksDisposable.dispose()
       cursorFx.dispose()
       inlineSuggest.dispose()

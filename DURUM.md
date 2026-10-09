@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.22.0
+guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.23.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -29,6 +29,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.21.0 Remote Access: Tailscale + QR ile telefondan tam kontrol; spec `docs/remote-access.md`, 3/3 faz; site f8 (EN/TR)
 - [x] 1.21.1 Telefon klavyesi (dokununca acilir, canli yazma, IME uyumlu), cift terminal cevabi giderildi, sekme cubugunda bagli telefon simgesi
 - [x] 1.22.0 Telefon: eslestirme ekraninda QR tarama (fotograf + jsQR), elle yazilabilir kod, masaustunde cihaz basina Reconnect QR (ayni kayit, yeni anahtar), ana ekran uygulamasi icin sabit dosya adlari + ETag
+- [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
 ## Son oturum (2026-10-09)
@@ -40,6 +41,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 - Duzeltme (surum 1.21.1, yerel kurulum): telefon artik varsayilan olarak masaustu boyutunu AYNALAR (masaustu daralmaz, Claude Code bozulmaz); "Fit" ile telefon boyutuna gecis, ayna modunda Zoom 1x-3x
 
+- 1.23.0 Voice Input: Space uzun basis -> kayit -> OpenRouter (tek istek, WAV) -> temiz metin `term.paste`. Canli deneme yapilamadi: OpenRouter hesabinda kredi yok (402), ucretsiz ses modelleri kredi ya da listelenmis uygulama istiyor; E2E sahte mikrofon + sahte sunucuyla gecti
+
 ## Yarim kalan / siradaki adim
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.22.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye yerel derleme sessiz kuruldu. iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect gercek telefonla denenmeli
@@ -47,6 +50,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ertelenen aday: `tab.activity` 'Running' sorunu
 
 ## Acik sorunlar / bilinen sinirlar
+- E2E `session-rail` 'a collapsed group hides its sessions' 2026-10-09'da 1.22.0 kodunda da kiriliyor (grup basligi tiklamasi daraltmiyor); Voice'tan bagimsiz, incelenmeli
 - Durum cubugu/sekme durumu Claude Code ve Codex bostayken de 'Running' gosteriyor (karakter artik spinner'a bakiyor, sekme degil)
 - E2E `app.spec` "pastes ..." iki testi gercek OS panosuna yazar; pano kilitliyken (2026-10-07) degisiklikten bagimsiz kirilir
 - CI E2E `afterEach app.close()` 60 sn teardown zaman asimi (1.6.1'den beri, kararsiz)

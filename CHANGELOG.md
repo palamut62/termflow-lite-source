@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.23.0 - 2026-10-09
+
+- Voice input (Settings > Voice Input, off until you turn it on): hold Space in a terminal and speak, release it and the text is typed where the cursor is. A short press still types a space, and fast typing never starts a recording. Esc while recording cancels.
+- The recording is turned into text by an OpenRouter model of your choice with your own key (the one Memory uses): punctuation and spelling fixed, filler words removed, commands, tool names and file names written the way you type them, in Turkish or English. The text is not sent with Enter, so you can check it first.
+- It knows where you type: at a shell prompt it writes commands, in Claude Code, Codex or OpenCode it writes requests.
+- Only models that accept audio are listed, with their audio price and the cost of ten seconds of speech. Test sends a short sound with your key and shows whether it works, how long it took and what it cost.
+
 ## 1.22.0 - 2026-10-09
 
 - Scan the pairing QR from inside the phone app: the sign-in screen has a Scan QR code button that opens the camera and reads the code from the photo. It also works in the app you added to the iPhone home screen, which cannot take over a pairing from Safari or Edge.

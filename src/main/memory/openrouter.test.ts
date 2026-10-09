@@ -88,7 +88,7 @@ describe('prompts', () => {
   it('orders sessions oldest first and keeps the newest when over budget', () => {
     const long = 'x'.repeat(250)
     const sessions = Array.from({ length: 400 }, (_, index) => stored(`s${index}`, Date.UTC(2026, 9, 1) + index * 60_000, { done: [long, long] }))
-    const [, user] = mergeMessages('/repo', sessions)
+    const [, user] = mergeMessages('/repo', sessions) as [unknown, { content: string }]
     expect(user.content.startsWith('Project: /repo')).toBe(true)
     expect(user.content).toContain('goal s399')
     expect(user.content).not.toContain('goal s0\n')

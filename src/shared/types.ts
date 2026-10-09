@@ -375,6 +375,8 @@ export interface AppSettings {
   memory: MemorySettings
   /** Remote Access: phone control over Tailscale (docs/remote-access.md). Off by default. */
   remote: RemoteSettings
+  /** Voice input: hold Space and speak (docs/voice-input.md). Off by default. */
+  voice: VoiceSettings
   /** Widget görünümünün son konumu (null = sağ üst köşe), daraltılmış ve üstte tutma durumu. */
   widgetX: number | null
   widgetY: number | null
@@ -391,6 +393,29 @@ export type SoundTheme = 'off' | 'mechanical' | 'soft'
 export type AgentAnimationStyle = 'face' | 'scenes'
 export type AgentCharacter = 'auto' | 'ember' | 'miso' | 'piko'
 export type AgentWeather = 'off' | 'cycle' | 'live'
+
+export type VoiceLanguage = 'auto' | 'tr' | 'en'
+
+export interface VoiceSettings {
+  enabled: boolean
+  /** OpenRouter model that accepts audio input. */
+  model: string
+  /** How long Space is held before recording starts (ms). */
+  holdMs: number
+  /** Fix punctuation, drop filler words and spell technical terms; off keeps the words as spoken. */
+  cleanup: boolean
+  language: VoiceLanguage
+}
+
+/** Result of one dictation or of a model test. */
+export interface VoiceResult {
+  ok: boolean
+  text: string
+  model: string
+  latencyMs: number
+  cost?: number
+  error?: string
+}
 
 export interface RemoteSettings {
   enabled: boolean
@@ -435,6 +460,10 @@ export interface OpenRouterModel {
   outputPrice: number | null
   /** json_schema structured output destekler (memory özeti buna dayanır). */
   structured: boolean
+  /** Accepts audio input (voice dictation needs it). */
+  audio: boolean
+  /** USD per 1M audio input tokens, when OpenRouter reports it. */
+  audioPrice?: number | null
 }
 
 export interface OpenRouterModelList {
@@ -628,6 +657,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   asciiBackgrounds: {},
   memory: { enabled: false, model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
   remote: { enabled: false, port: 47321 },
+  voice: { enabled: false, model: 'google/gemini-2.5-flash-lite', holdMs: 400, cleanup: true, language: 'auto' },
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,

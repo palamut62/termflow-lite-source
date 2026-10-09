@@ -15,8 +15,8 @@ interface RawModel {
   id?: unknown
   name?: unknown
   context_length?: unknown
-  pricing?: { prompt?: unknown; completion?: unknown }
-  architecture?: { output_modalities?: unknown }
+  pricing?: { prompt?: unknown; completion?: unknown; audio?: unknown }
+  architecture?: { output_modalities?: unknown; input_modalities?: unknown }
   supported_parameters?: unknown
 }
 
@@ -37,13 +37,17 @@ export function parseModels(json: unknown): OpenRouterModel[] {
     const outputs = raw.architecture?.output_modalities
     if (Array.isArray(outputs) && !outputs.includes('text')) continue
     const params = Array.isArray(raw.supported_parameters) ? raw.supported_parameters : []
+    const inputs = raw.architecture?.input_modalities
+    const audio = Array.isArray(inputs) && inputs.includes('audio')
     models.push({
       id: raw.id,
       name: typeof raw.name === 'string' && raw.name ? raw.name : raw.id,
       contextLength: typeof raw.context_length === 'number' ? raw.context_length : 0,
       inputPrice: perMillion(raw.pricing?.prompt),
       outputPrice: perMillion(raw.pricing?.completion),
-      structured: params.includes('structured_outputs')
+      structured: params.includes('structured_outputs'),
+      audio,
+      ...(audio ? { audioPrice: perMillion(raw.pricing?.audio) } : {})
     })
   }
   return models.sort((a, b) => a.id.localeCompare(b.id))
@@ -102,6 +106,8 @@ export class ModelCatalog {
     try {
       const parsed = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<CacheFile>
       if (typeof parsed.fetchedAt !== 'number' || !Array.isArray(parsed.models)) return null
+      // Caches written before the audio flag existed are refreshed once.
+      if (parsed.models.length > 0 && typeof (parsed.models[0] as Partial<OpenRouterModel>).audio !== 'boolean') return null
       return { fetchedAt: parsed.fetchedAt, models: parsed.models }
     } catch {
       return null

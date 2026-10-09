@@ -47,6 +47,7 @@ import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
 import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
 import { RemoteController } from './remote/RemoteController'
 import { registerRemoteIpc } from './ipc/remote'
+import { registerVoiceIpc } from './ipc/voice'
 import type { ShellInfo } from '../shared/types'
 
 // Dev: project resources/. Packaged: extraResources under process.resourcesPath.
@@ -386,6 +387,12 @@ app.whenReady().then(() => {
     getApiKey: () => providerSecrets.get(MEMORY_SECRET_ID)
   })
   stopMemoryScheduler = startMemoryScheduler(memoryEngine)
+  // Voice input shares the OpenRouter key with Memory (docs/voice-input.md).
+  registerVoiceIpc({
+    getSettings: () => (settingsStore ? settingsStore.get() : DEFAULT_SETTINGS),
+    getApiKey: () => providerSecrets.get(MEMORY_SECRET_ID),
+    url: process.env.TERMFLOW_E2E === '1' ? process.env.TERMFLOW_E2E_OPENROUTER_URL : undefined
+  })
   let memoryWasEnabled = settingsStore.get().memory.enabled
 
   // Ayar değişince main tarafında uygulanacaklar: explorer menüsü + quake.

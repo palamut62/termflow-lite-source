@@ -21,6 +21,14 @@ function normalizeRemoteSettings(value: unknown): AppSettings['remote'] {
     : DEFAULT_SETTINGS.remote.port
   return { enabled: input.enabled === true, port }
 }
+function normalizeVoiceSettings(value: unknown): AppSettings['voice'] {
+  const input = value && typeof value === 'object' ? value as Partial<AppSettings['voice']> : {}
+  const defaults = DEFAULT_SETTINGS.voice
+  const model = typeof input.model === 'string' && input.model.trim() ? input.model.trim().slice(0, 200) : defaults.model
+  const holdMs = typeof input.holdMs === 'number' && Number.isFinite(input.holdMs) ? Math.min(1000, Math.max(250, Math.round(input.holdMs))) : defaults.holdMs
+  const language = input.language === 'tr' || input.language === 'en' ? input.language : 'auto'
+  return { enabled: input.enabled === true, model, holdMs, cleanup: input.cleanup !== false, language }
+}
 const BACKDROPS: AppSettings['backdrop'][] = ['none', 'mica', 'acrylic', 'tabbed']
 
 /**
@@ -62,6 +70,7 @@ export class SettingsStore {
     merged.asciiBackgrounds = normalizeAsciiBackgrounds(settings.asciiBackgrounds)
     merged.memory = normalizeMemorySettings(settings.memory)
     merged.remote = normalizeRemoteSettings(settings.remote)
+    merged.voice = normalizeVoiceSettings(settings.voice)
     return merged
   }
 
