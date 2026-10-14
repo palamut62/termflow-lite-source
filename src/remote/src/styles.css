@@ -95,6 +95,8 @@ a { color: inherit; text-decoration: none; }
 .term-host { position: absolute; inset: 6px 4px 6px 8px; }
 .term-host .xterm { height: 100%; }
 .term-host .xterm-viewport { overscroll-behavior: contain; background-color: transparent !important; }
+/* Vertical swipes scroll the history (TerminalScreen); only horizontal panning stays native. */
+.term-wrap, .term-host, .term-host .xterm, .term-host .xterm-screen, .term-host .xterm-viewport { touch-action: pan-x; }
 .term-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--term-bg); }
 .term-banner { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--border); font-size: 13px; }
 .term-banner.exit { color: var(--text); }

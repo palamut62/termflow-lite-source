@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-09 | son arac: Claude Code | dal: `main` | surum 1.23.0
+guncel: 2026-10-14 | son arac: Claude Code | dal: `main` | surum 1.23.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -32,7 +32,10 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
 - [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
 
-## Son oturum (2026-10-09)
+## Son oturum (2026-10-14)
+- Telefon: terminalde dokunarak dikey kaydirma (gecmis yazilar) yoktu. `TerminalScreen.tsx` icinde `.term-wrap` uzerinde touchmove -> `term.scrollLines`; CSS `touch-action: pan-x` (yatay pan kalir). E2E `e2e/remote-scroll.spec.ts` (CDP dokunma). Push edildi; exe/surum yok (diger oturumda yapilacak)
+
+## Onceki oturum (2026-10-09)
 - 1.21.0 Remote Access yayinlandi (Tailscale + QR, canli terminal, ayarlar/profil/provider/SSH/Memory, ajan oturumu, proje); site f8 bolumu
 - 1.21.1: telefonda terminale dokununca klavye acilmiyordu. `src/remote/src/phoneInput.ts` (alan farki -> tus vurusu); telefondaki xterm onData'si artik gonderilmiyor (masaustuyle cift terminal cevabi ajan inputunu bozabiliyordu)
 - Telefondan acilan sekme telefon boyutunda dogar; abonelikte Windows'ta temiz ekran + ConPTY yeniden cizimi (Claude Code'da kayma yok). Sekme cubugu sag ustte bagli telefon simgesi (`RemoteIndicator`). Gercek Claude Code 2.1.289 ile telefon gorunumunde canli denendi

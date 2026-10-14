@@ -135,6 +135,30 @@ export function TerminalScreen(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Swipe up/down scrolls the history. xterm 6's own touch handling does not survive the
+  // mirror-mode scale transform, so the vertical drag is turned into scrollLines here.
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    let lastY: number | null = null
+    let rest = 0
+    const onStart = (e: TouchEvent): void => { lastY = e.touches.length === 1 ? e.touches[0].clientY : null; rest = 0 }
+    const onMove = (e: TouchEvent): void => {
+      const term = termRef.current
+      const screen = term?.element?.querySelector<HTMLElement>('.xterm-screen')
+      if (!term || !screen || lastY === null || e.touches.length !== 1) return
+      const y = e.touches[0].clientY
+      const lineHeight = screen.getBoundingClientRect().height / term.rows
+      rest += (lastY - y) / lineHeight
+      lastY = y
+      const lines = Math.trunc(rest)
+      if (lines) { term.scrollLines(lines); rest -= lines }
+    }
+    wrap.addEventListener('touchstart', onStart, { passive: true })
+    wrap.addEventListener('touchmove', onMove, { passive: true })
+    return () => { wrap.removeEventListener('touchstart', onStart); wrap.removeEventListener('touchmove', onMove) }
+  }, [])
+
   // Desktop theme and cursor settings follow along.
   useEffect(() => {
     const term = termRef.current
