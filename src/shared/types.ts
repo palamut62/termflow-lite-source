@@ -393,6 +393,8 @@ export interface AppSettings {
   usageDisplay: 'off' | 'used' | 'remaining'
   /** Claude limitleri icin status line yardimcisi (Claude'un alt bilgi ipuclarini gizler; istege bagli). */
   claudeUsage: boolean
+  /** Limit gostergesi varsayilanlari (Claude acik, kalan %) bir kez uygulandi; sonraki secimler korunur. */
+  limitDefaultsApplied: boolean
   /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
   osc52Clipboard: boolean
   /** Ajan sekmesinde Shift+Enter gondermek yerine yeni satir ekler. */
@@ -718,8 +720,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentHooks: true,
   restoreScrollback: true,
   resumeAgentsOnRestore: true,
-  usageDisplay: 'used',
-  claudeUsage: false,
+  usageDisplay: 'remaining',
+  claudeUsage: true,
+  limitDefaultsApplied: true,
   osc52Clipboard: true,
   shiftEnterNewline: true,
   minimumContrastRatio: 1,

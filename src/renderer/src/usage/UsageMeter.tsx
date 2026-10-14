@@ -57,9 +57,10 @@ export function UsageMeter(): React.JSX.Element | null {
   const agent = activeProfile ? agentForProfile(settings, activeProfile) : null
   const current = usage.find((u) => u.agent === agent)
   const windows = current ? liveWindows(current.windows, now) : []
-  if (!agent || windows.length === 0) return null
-  const level = usageLevel(windows[0].usedPercent)
-  const title = windows.map((w) => `${w.label}: ${Math.round(w.usedPercent)}% used, resets in ${formatResetIn(w.resetsAt, now)}`).join('\n')
+  // Limit kaynagi olan ajanlar (Claude, Codex) veri gelmeden de gorunur; yoksa neden belli olmaz.
+  if (!agent || (windows.length === 0 && agent !== 'claude' && agent !== 'codex')) return null
+  const level = windows.length ? usageLevel(windows[0].usedPercent) : 'ok'
+  const title = windows.length === 0 ? (agent === 'claude' && !settings.claudeUsage ? 'Turn on "Claude limits" in Settings > Agent Security' : 'Appears after the first reply of this session') : windows.map((w) => `${w.label}: ${Math.round(w.usedPercent)}% used, resets in ${formatResetIn(w.resetsAt, now)}`).join('\n')
 
   return (
     <span className="usage-meter" ref={rootRef}>
@@ -75,7 +76,7 @@ export function UsageMeter(): React.JSX.Element | null {
         }}
       >
         <Gauge size={12} />
-        {windows.map((w) => `${w.label} ${percentText(w, mode)}`).join(' · ')}
+        {windows.length ? windows.map((w) => `${w.label} ${percentText(w, mode)}`).join(' · ') : 'Limits'}
       </button>
       {open && (
         <div className="usage-popover" role="dialog" aria-label="Agent usage" style={{ bottom: open.bottom, right: open.right }}>

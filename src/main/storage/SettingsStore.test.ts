@@ -48,6 +48,13 @@ describe('SettingsStore', () => {
     expect(new SettingsStore(file()).get().worktreeSetup).toEqual({ 'c:/app': { copyFiles: ['.env'], commands: ['npm ci'], enabled: true } })
   })
 
+  it('moves existing installs to Claude limits on and remaining % once, then keeps their choice', () => {
+    writeFileSync(file(), JSON.stringify({ claudeUsage: false, usageDisplay: 'used' }))
+    const store = new SettingsStore(file())
+    expect(store.get()).toMatchObject({ claudeUsage: true, usageDisplay: 'remaining', limitDefaultsApplied: true })
+    expect(store.update({ usageDisplay: 'used', claudeUsage: false })).toMatchObject({ claudeUsage: false, usageDisplay: 'used' })
+  })
+
   it('rejects an unknown backdrop material', () => {
     writeFileSync(file(), JSON.stringify({ ...DEFAULT_SETTINGS, backdrop: 'glass' }), 'utf-8')
     expect(new SettingsStore(file()).get().backdrop).toBe('none')

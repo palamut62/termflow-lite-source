@@ -99,6 +99,12 @@ export class SettingsStore {
       const steps = normalizeSetupSteps(value)
       return steps ? [[key, steps]] : []
     }))
+    // 1.24.0 ilk surumunde Claude limitleri kapali ve % kullanilan geliyordu; mevcut kurulumlar bir kez yeni varsayilana gecer.
+    if (!settings.limitDefaultsApplied) {
+      merged.claudeUsage = true
+      merged.usageDisplay = 'remaining'
+    }
+    merged.limitDefaultsApplied = true
     const contrast = Number(merged.minimumContrastRatio)
     merged.minimumContrastRatio = Number.isFinite(contrast) ? Math.min(21, Math.max(1, contrast)) : 1
     return merged

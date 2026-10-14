@@ -24,7 +24,7 @@ export function AgentSecuritySettings(): React.JSX.Element {
     <Field label="Agent status from the agent" hint="New Claude Code and Codex tabs report working, needs approval and done themselves. Passed as launch arguments only; your Claude and Codex config files are never changed">
       <Toggle checked={agentHooks} onChange={(value) => { void update({ agentHooks: value }) }} label="Agent status hooks" />
     </Field>
-    <Field label="Usage limits in the status bar" hint="5-hour and weekly limits of the active Claude Code or Codex tab, read from local files. Amber at 80%, red at 95%">
+    <Field label="Usage limits in the status bar" hint="5-hour and weekly limits of the active Claude Code or Codex tab, shown like Codex does. Other agents (Gemini, OpenCode, ...) publish no limit data, so nothing is shown for them. Amber at 80%, red at 95%">
       <Select value={usageDisplay} options={[{ value: 'used', label: 'Show % used' }, { value: 'remaining', label: 'Show % remaining' }, { value: 'off', label: 'Off' }]} onChange={(value) => { void update({ usageDisplay: value as 'off' | 'used' | 'remaining' }) }} />
     </Field>
     <Field label="Claude limits" hint="Claude Pro/Max only. New Claude Code tabs get a small status line helper that hands the limits to TermFlow. Your own status line keeps showing as before; without one, Claude hides footer hints such as 'esc to interrupt'. Needs Git Bash on Windows">
