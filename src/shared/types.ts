@@ -1,3 +1,4 @@
+import type { AgentHookState } from './agentHooks'
 // Shared data models between main and renderer (TermFlow Lite, PRD §14)
 
 export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'custom'
@@ -71,6 +72,8 @@ export interface TerminalTab {
   busyUntil?: number
   /** Shell integration'ın bildirdiği son biten komut (sekme parıltısı için). */
   lastCommand?: { exitCode: number; durationMs: number; finishedAt: number }
+  /** Ajanin kendi bildirdigi durum (agent-hooks); varken cikti tahmini sekme durumunu degistirmez. */
+  agentHook?: { state: AgentHookState; sessionId?: string; detail?: string; at: number }
 }
 
 export interface TerminalProfile {
@@ -359,6 +362,8 @@ export interface AppSettings {
   mediaPreviews: MediaPreviewMode
   /** Arka planda uzun süren bir komut bitince sistem bildirimi göster. */
   commandNotifications: boolean
+  /** Ajan durumunu ajanin kendisinden oku: Claude HTTP hook'lari (--settings), Codex OSC 9. Kullanici dosyalarina yazilmaz. */
+  agentHooks: boolean
   /** Ajan sekmelerinin sağında, ajan durumuna göre değişen karakter animasyonu. */
   agentCompanion: boolean
   /** Animasyon stili: gözleriyle tepki veren ASCII yüz ya da piksel-art sahneler. */
@@ -669,6 +674,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   inlineSuggestions: true,
   mediaPreviews: 'all',
   commandNotifications: true,
+  agentHooks: true,
   agentCompanion: true,
   agentAnimationStyle: 'face',
   agentCharacter: 'auto',

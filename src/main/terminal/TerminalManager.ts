@@ -5,6 +5,7 @@ import { PtyCore } from './PtyCore'
 import { agentForProfile, mergeProfiles } from '../../shared/profiles'
 import { profileToInput, resolveProfileId } from './profileResolver'
 import { prepareLaunch } from './cli'
+import type { HookLaunch } from '../agentHooks/hookServer'
 
 export function applyProviderSecret(
   input: CreateTerminalInput,
@@ -44,6 +45,8 @@ export class TerminalManager {
   /** Phones that mirror the desktop width follow every real PTY size change. */
   private sizeListeners = new Set<(id: string, size: Size) => void>()
   private reportedSizes = new Map<string, Size>()
+  /** Ajan hook sunucusu (agent-hooks); hazir degilse ajanlar hook'suz baslar. */
+  private hookLaunch: () => HookLaunch | null = () => null
 
   constructor(
     private readonly getWindow: () => BrowserWindow | null,
@@ -113,6 +116,10 @@ export class TerminalManager {
     return this.remoteSizes.has(id)
   }
 
+  setAgentHooks(launch: () => HookLaunch | null): void {
+    this.hookLaunch = launch
+  }
+
   /** Initial discovery result — shells can change later via SETTINGS/reboot. */
   setShells(shells: ShellInfo[]): void {
     this.shells = shells
@@ -136,7 +143,8 @@ export class TerminalManager {
     this.core.setScrollback(settings.scrollback)
     this.desktopSizes.set(tabId, { cols, rows })
     const remote = this.remoteSizes.get(tabId)
-    const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input)
+    const hooks = settings.agentHooks === false ? null : this.hookLaunch()
+    const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input, hooks ? { tabId, launch: hooks } : undefined)
     const result = this.core.create(tabId, launch)
     this.reportedSizes.delete(tabId)
     this.reportSize(tabId)

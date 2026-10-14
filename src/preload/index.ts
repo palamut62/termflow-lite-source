@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing } from '../shared/ipc'
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
+import type { AgentHookEvent } from '../shared/agentHooks'
 import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, SpeakResult, UpdateStatus, VoiceResult } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
@@ -212,6 +213,13 @@ const api = {
     list: (limit = 500): Promise<AgentEvent[]> => ipcRenderer.invoke(IPC.AGENT_EVENTS_LIST, limit),
     append: (event: AgentEvent): void => ipcRenderer.send(IPC.AGENT_EVENTS_APPEND, event),
     clear: (): void => ipcRenderer.send(IPC.AGENT_EVENTS_CLEAR)
+  },
+  agentHooks: {
+    onEvent: (callback: (tabId: string, event: AgentHookEvent) => void): (() => void) => {
+      const handler = (_event: unknown, tabId: string, hookEvent: AgentHookEvent): void => callback(tabId, hookEvent)
+      ipcRenderer.on(IPC.AGENT_HOOK_EVENT, handler)
+      return () => ipcRenderer.removeListener(IPC.AGENT_HOOK_EVENT, handler)
+    }
   },
   appLaunch: {
     request: (): Promise<AppLaunchRequest | null> => ipcRenderer.invoke(IPC.APP_LAUNCH_CWD),

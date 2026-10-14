@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { nanoid } from 'nanoid'
 import type { SearchAddon } from '@xterm/addon-search'
 import type { AgentPermissionMode, AgentSessionRef, PersistedSession, TabActivity, TabWorktree, TerminalTab } from '../../../shared/types'
+import { hookActivity, type AgentHookEvent } from '../../../shared/agentHooks'
 import { mergeProfiles, providerFromProfileId, sshFromProfileId } from '../../../shared/profiles'
 import { resolveDefaultProfileId, useSettingsStore } from './settingsStore'
 import { useSavedCommandStore } from './savedCommandStore'
@@ -99,6 +100,9 @@ interface TerminalState {
   setTabRunning(id: string, running: boolean): void
   setTabActivity(id: string, activity: TabActivity): void
   setTabLastCommand(id: string, exitCode: number, durationMs: number): void
+  /** Ajanin kendi bildirdigi olay; `running` (surec canli) degismez. */
+  applyAgentHook(id: string, event: AgentHookEvent): void
+  clearAgentHook(id: string): void
   /** Reorder (Faz 7'de sürükleme; store şimdi hazır). */
   moveTab(id: string, toIndex: number): void
   setTabCwd(id: string, cwd: string): void
@@ -295,6 +299,27 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
 
   renameTab(id, title) {
     set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, title } : t)) }))
+  },
+
+  applyAgentHook(id, event) {
+    set((s) => ({
+      tabs: s.tabs.map((tab) => {
+        if (tab.id !== id) return tab
+        const previous = tab.agentHook
+        const state = event.state ?? previous?.state ?? 'idle'
+        const agentHook = {
+          state,
+          sessionId: event.sessionId ?? previous?.sessionId,
+          detail: event.state ? event.detail : previous?.detail,
+          at: Date.now()
+        }
+        return withBusyPeriod({ ...tab, agentHook, activity: hookActivity(state) }, tab.activity)
+      })
+    }))
+  },
+
+  clearAgentHook(id) {
+    set((s) => ({ tabs: s.tabs.map((tab) => (tab.id === id && tab.agentHook ? { ...tab, agentHook: undefined } : tab)) }))
   },
 
   setTabRunning(id, running) {

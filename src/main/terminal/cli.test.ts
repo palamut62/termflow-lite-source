@@ -20,6 +20,19 @@ describe('CLI launch safety', () => {
     expect(input.args).toEqual(['--sandbox', 'read-only', '--', prompt])
     expect(input.launchCommand).toBeUndefined(); expect(input.startupCommand).toBeUndefined()
   })
+  it('adds agent hook arguments before the prompt and the token only to claude env', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'termflow-cli-')); dirs.push(dir)
+    const ext = process.platform === 'win32' ? '.exe' : ''
+    const claude = join(dir, `claude${ext}`), codex = join(dir, `codex${ext}`)
+    writeFileSync(claude, fakeExecutable()); writeFileSync(codex, fakeExecutable())
+    const hooks = { tabId: 'tab1', launch: { claudeSettingsPath: 'C:\\App Data\\hooks.json', token: 't0k' } }
+    const c = prepareLaunch({ kind: 'custom', shell: claude, args: ['--resume', 'abc'], launchCommand: 'hi', env: { A: '1' } }, hooks)
+    expect(c.args).toEqual(['--resume', 'abc', '--settings', 'C:\\App Data\\hooks.json', '--', 'hi'])
+    expect(c.env).toEqual({ A: '1', TERMFLOW_TAB_ID: 'tab1', TERMFLOW_HOOK_TOKEN: 't0k' })
+    const x = prepareLaunch({ kind: 'custom', shell: codex, args: [] }, hooks)
+    expect(x.args).toContain('tui.notification_method=osc9')
+    expect(x.env?.TERMFLOW_HOOK_TOKEN).toBeUndefined()
+  })
   it('rejects unsupported startup plus prompt before either can run', () => {
     expect(() => prepareLaunch({ kind: 'cmd', startupCommand: 'missing_cli', launchCommand: 'echo injected' })).toThrow('supported agent')
   })

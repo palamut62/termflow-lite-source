@@ -1,7 +1,7 @@
 import { ShieldCheck } from 'lucide-react'
 import type { AgentPermissionMode } from '../../../shared/types'
 import { useSettingsStore } from '../store/settingsStore'
-import { Field, Select } from './Settings'
+import { Field, Select, Toggle } from './Settings'
 
 const OPTIONS = [
   { value: 'safe', label: 'Safe - read-only / plan mode' },
@@ -12,11 +12,15 @@ const OPTIONS = [
 export function AgentSecuritySettings(): React.JSX.Element {
   const mode = useSettingsStore((state) => state.settings.defaultAgentPermissionMode)
   const update = useSettingsStore((state) => state.update)
+  const agentHooks = useSettingsStore((state) => state.settings.agentHooks)
   return <div className="settings-section">
     <h2><ShieldCheck size={18} /> Agent Security</h2>
     <p className="settings-section-description">The selected policy is pinned when a new agent tab starts. Existing sessions are never silently elevated by a settings change.</p>
     <Field label="Default permission mode" hint="Workspace is recommended for normal development">
       <Select value={mode} options={OPTIONS} onChange={(value) => { void update({ defaultAgentPermissionMode: value as AgentPermissionMode }) }} />
+    </Field>
+    <Field label="Agent status from the agent" hint="New Claude Code and Codex tabs report working, needs approval and done themselves. Passed as launch arguments only; your Claude and Codex config files are never changed">
+      <Toggle checked={agentHooks} onChange={(value) => { void update({ agentHooks: value }) }} label="Agent status hooks" />
     </Field>
     <div className="agent-security-grid">
       <article><strong>Safe</strong><span>Codex read-only sandbox. Claude plan mode. No file modifications.</span></article>

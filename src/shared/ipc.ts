@@ -90,6 +90,8 @@ export const IPC = {
   AGENT_EVENTS_LIST: 'agent-events:list',
   AGENT_EVENTS_APPEND: 'agent-events:append',
   AGENT_EVENTS_CLEAR: 'agent-events:clear',
+  /** main -> renderer: ajanin kendi bildirdigi durum (tabId, AgentHookEvent). */
+  AGENT_HOOK_EVENT: 'agent-hooks:event',
   APP_LAUNCH_CWD: 'app:launch-cwd',
   APP_LAUNCH_READY: 'app:launch-ready',
   APP_OPEN_PATH: 'app:open-path',

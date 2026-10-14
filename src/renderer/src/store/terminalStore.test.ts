@@ -366,3 +366,17 @@ describe('renameTab / moveTab / setTabCwd', () => {
     expect(tabs.find((tab) => tab.id === second)).toMatchObject({ cwd: 'C:\\second', launchCwd: 'C:\\second' })
   })
 })
+
+describe('applyAgentHook', () => {
+  it('follows the agent state without touching the process running flag', () => {
+    const id = useTerminalStore.getState().addTab('bash')
+    useTerminalStore.getState().applyAgentHook(id, { state: 'working', sessionId: 's1' })
+    useTerminalStore.getState().applyAgentHook(id, { state: 'done', detail: 'Fixed it' })
+    const tab = useTerminalStore.getState().tabs[0]
+    expect(tab.activity).toBe('completed')
+    expect(tab.running).toBe(true)
+    expect(tab.agentHook).toMatchObject({ state: 'done', sessionId: 's1', detail: 'Fixed it' })
+    useTerminalStore.getState().clearAgentHook(id)
+    expect(useTerminalStore.getState().tabs[0].agentHook).toBeUndefined()
+  })
+})

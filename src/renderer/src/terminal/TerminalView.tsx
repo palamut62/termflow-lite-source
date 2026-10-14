@@ -33,6 +33,8 @@ import { MediaCards } from '../components/MediaCards'
 import { reportMedia } from '../store/mediaStore'
 import { redactApiKeys } from '../../../shared/secretRedaction'
 import { agentKindForCommand, parseAgentOutput } from '../../../shared/agentEvents'
+import { codexOscEvent, codexTitleWorking } from '../../../shared/agentHooks'
+import { applyHookEvent, hasAgentHook, HOOK_OWNED_KINDS } from './agentHookEvents'
 import { mergeProfiles, providerFromProfileId } from '../../../shared/profiles'
 import { useAgentEventStore } from '../store/agentEventStore'
 import { useSavedCommandStore } from '../store/savedCommandStore'
@@ -298,6 +300,28 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     let capturingCommand = false
     lastSizeRef.current = { cols: term.cols, rows: term.rows }
 
+    const tabProfile = mergeProfiles(settings.profiles).find((item) => item.id === profileId)
+    const tabAgent = agentKindForCommand(tabProfile?.startupCommand || tabProfile?.command || providerFromProfileId(settings, profileId)?.command)
+    // Codex durumunu kendisi bildirir: OSC 9 (tur sonu / onay) ve baslikta spinner (calisiyor).
+    let codexDoneAt = 0
+    const codexOsc = tabAgent === 'codex' && settings.agentHooks
+      ? term.parser.registerOscHandler(9, (payload) => {
+        if (/^\d+;/.test(payload)) return false // ConEmu ilerleme/cwd alt komutlari, bildirim degil
+        const event = codexOscEvent(payload)
+        if (event.state === 'done') codexDoneAt = Date.now()
+        applyHookEvent(tabId, 'codex', permissionMode, event)
+        return true
+      })
+      : null
+    const codexTitle = tabAgent === 'codex' && settings.agentHooks
+      ? term.onTitleChange((title) => {
+        // Tur sonundan hemen sonra gelen son spinner karesi isi yeniden baslatmaz.
+        if (!codexTitleWorking(title) || Date.now() - codexDoneAt < 1500) return
+        if (useTerminalStore.getState().tabs.find((tab) => tab.id === tabId)?.agentHook?.state === 'working') return
+        applyHookEvent(tabId, 'codex', permissionMode, { state: 'working' })
+      })
+      : null
+
     // Data stream: buffer rehydration + live chunks (queue pattern — race yok).
     const onDataHandler = (data: string): void => {
       if (ready) term.write(data)
@@ -306,20 +330,22 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       // Strip CSI and OSC sequences: shell integration ends every prompt with
       // OSC 133;B, which would otherwise hide the prompt from the check below.
       recentOutput = (recentOutput + data).replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]/g, '').slice(-256)
-      const activity = !activeRef.current
-        ? 'unread'
-        : /(?:[A-Za-z]:\\[^\r\n]*>|[$#>❯])\s*$/.test(recentOutput)
-          ? 'waiting'
-          : 'running'
-      useTerminalStore.getState().setTabActivity(tabId, activity)
-      const profile = mergeProfiles(settings.profiles).find((item) => item.id === profileId)
-      const provider = providerFromProfileId(settings, profileId)
-      const agent = agentKindForCommand(profile?.startupCommand || profile?.command || provider?.command)
-      if (agent) {
+      // Ajan kendi durumunu bildiriyorsa (agent-hooks) prompt sezgisi devre disi.
+      const hooked = hasAgentHook(tabId)
+      if (!hooked) {
+        const activity = !activeRef.current
+          ? 'unread'
+          : /(?:[A-Za-z]:\\[^\r\n]*>|[$#>❯])\s*$/.test(recentOutput)
+            ? 'waiting'
+            : 'running'
+        useTerminalStore.getState().setTabActivity(tabId, activity)
+      }
+      if (tabAgent) {
         // What the agent is doing right now, for the agent animation.
         noteAgentOutput(tabId, data)
-        for (const event of parseAgentOutput(agent, data)) {
-          useAgentEventStore.getState().append(tabId, agent, permissionMode, event)
+        for (const event of parseAgentOutput(tabAgent, data)) {
+          if (hooked && HOOK_OWNED_KINDS.has(event.kind)) continue
+          useAgentEventStore.getState().append(tabId, tabAgent, permissionMode, event)
         }
       }
     }
@@ -328,6 +354,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     const onExitHandler = (exitCode: number, durationMs: number): void => {
       // Sarımsı mesaj terminal içine, butonlar overlay'de (PRD §74).
       term.write(`\r\n\x1b[33mProcess exited with code ${exitCode}\x1b[0m\r\n`)
+      useTerminalStore.getState().clearAgentHook(tabId)
       setExited({ exitCode, durationMs })
       if (exitCode !== 0) useHandoverStore.getState().failed(tabId)
       useTerminalStore.getState().setTabActivity(tabId, exitCode === 0 ? 'completed' : 'error')
@@ -456,7 +483,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       }
       if (data.includes('\r')) shellIntegration.noteEnter()
       if (!data.startsWith('\x1b')) playCue(useSettingsStore.getState().settings.soundTheme, data.includes('\r') ? 'enter' : 'key')
-      useTerminalStore.getState().setTabActivity(tabId, 'running')
+      if (!hasAgentHook(tabId)) useTerminalStore.getState().setTabActivity(tabId, 'running')
       // Human keystrokes (not protocol replies) make the agent animation listen.
       if (!data.startsWith('\x1b')) recordInput(tabId)
       // Broadcast: yalnızca insan girdisi (ESC ile başlamayan) split'teki tüm
@@ -554,7 +581,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     // PRD: bell — ayar açıkken kısa görsel flash (ek dependency yok).
     let bellTimer: ReturnType<typeof setTimeout> | null = null
     const bellSub = term.onBell(() => {
-      useTerminalStore.getState().setTabActivity(tabId, activeRef.current ? 'waiting' : 'unread')
+      if (!hasAgentHook(tabId)) useTerminalStore.getState().setTabActivity(tabId, activeRef.current ? 'waiting' : 'unread')
       if (!useSettingsStore.getState().settings.bell) return
       if (activeRef.current) playCue(useSettingsStore.getState().settings.soundTheme, 'bell')
       host.classList.remove('bell-flash')
@@ -619,6 +646,8 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       dataSub.dispose()
       selSub.dispose()
       bellSub.dispose()
+      codexOsc?.dispose()
+      codexTitle?.dispose()
       voice.blur()
       term.textarea?.removeEventListener('blur', onVoiceBlur)
       window.removeEventListener('blur', onVoiceBlur)
@@ -749,6 +778,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     const term = termRef.current
     void window.termflow.pty.restart(tabId).then((res) => {
       if (!res) return
+      useTerminalStore.getState().clearAgentHook(tabId)
       useTerminalStore.getState().setTabActivity(tabId, 'running')
       term?.reset() // clear the view; fresh output streams through the handlers
       window.termflow.pty.resize(tabId, lastSizeRef.current.cols, lastSizeRef.current.rows)
@@ -763,6 +793,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       setExited(null)
       termRef.current?.reset()
       useTerminalStore.getState().setTabWorkingDirectory(tabId, cwd)
+      useTerminalStore.getState().clearAgentHook(tabId)
       useTerminalStore.getState().setTabActivity(tabId, 'running')
       window.termflow.pty.resize(tabId, lastSizeRef.current.cols, lastSizeRef.current.rows)
       termRef.current?.focus()

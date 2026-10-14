@@ -30,7 +30,7 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
   { id: 'memory', label: 'Memory', icon: <Brain size={14} />, keywords: 'agent memory session history summary openrouter model project unfinished mcp connect claude codex opencode exclude' },
   { id: 'voice', label: 'Voice Input', icon: <Mic size={14} />, keywords: 'voice input dictation microphone speech speak talk transcribe hold space push to talk openrouter audio model' },
   { id: 'remote', label: 'Remote Access', icon: <Smartphone size={14} />, keywords: 'remote access phone mobile tailscale qr pair pairing device disconnect web control' },
-  { id: 'agent-security', label: 'Agent Security', icon: <ShieldCheck size={14} />, keywords: 'agent security permission mode safe workspace full access' },
+  { id: 'agent-security', label: 'Agent Security', icon: <ShieldCheck size={14} />, keywords: 'agent security permission mode safe workspace full access status hooks' },
   { id: 'ssh', label: 'SSH', icon: <Server size={14} />, keywords: 'ssh connections host user port identity file key jump host proxyjump remote directory command persistent tmux screen multiplexer forward agent extra arguments' },
   { id: 'keyboard', label: 'Keyboard', icon: <Keyboard size={14} />, keywords: 'keyboard shortcuts keybindings hotkeys' },
   { id: 'about', label: 'About', icon: <Info size={14} />, keywords: 'about updates automatic update version license product owner' }

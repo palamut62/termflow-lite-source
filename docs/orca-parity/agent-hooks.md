@@ -1,65 +1,52 @@
 # agent-hooks - Ajan durumunu ajanin kendisinden okumak
 
-Durum: TASLAK 2026-10-14. Bagimli: yok. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: yok. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Sekme / durum cubugu / Agent Inbox ajanin gercek durumunu gostersin: `working`, `needs-input`
-(onay ya da soru), `done` (tur bitti), `error` (API hatasiyla bitti). Bugun durum spinner metninden
-okunuyor ve Claude Code / Codex bostayken de 'Running' kaliyor (DURUM.md acik sorun). Bu modul
-o sorunu kapatir ve agent-attention, agent-resume, usage-meter, worktree-note'un temelidir.
+(onay ya da soru), `done` (tur bitti), `error` (API hatasiyla bitti). Onceden durum prompt sezgisinden
+okunuyordu ve Claude Code / Codex bostayken de 'Running' kaliyordu. agent-attention, agent-resume,
+usage-meter ve worktree-note bunun uzerine kurulur.
 
-## Dogrulanmis kaynaklar (2026-10-14)
-- Claude Code hook olaylari: `UserPromptSubmit`, `Stop`, `StopFailure`, `Notification`
-  (matcher `notification_type`: `permission_prompt`, `idle_prompt`, `agent_needs_input`, `elicitation_dialog` ...),
-  `SessionStart` (`source`, `session_title`), `SessionEnd`. Her olayda stdin JSON: `session_id`, `transcript_path`,
-  `cwd`, `hook_event_name`; `Stop` ayrica `last_assistant_message`.
-- `claude --settings <dosya-ya-da-json>` kurulu surumde var; kullanici dosyasina dokunmadan hook verilebilir.
-- Codex: `-c key=value` ile her ayar baslatmada ezilebilir. `tui.notification_method="osc9"`,
-  `tui.notification_condition="always"`, `tui.notifications=["agent-turn-complete","approval-requested"]`
-  ile Codex terminale OSC 9 bildirimi yazar. `notify` programi `agent-turn-complete` ile `thread-id` verir.
+## Dogrulanan gercekler (2026-10-14, Claude Code 2.1.289, Codex 0.162.1)
+- `claude --settings <dosya>` ile verilen hook'lar proje/kullanici hook'lariyla BIRLESIR (canli denendi; dokuman da
+  "hook entries merge across settings levels" diyor).
+- Claude `type: "http"` hook'u destekler: olay JSON'u POST govdesi, basliklarda `$VAR` yalniz `allowedEnvVars` ile.
+  Bos 2xx = karar yok (PermissionRequest'te normal onay ekrani acilir). Baglanti hatasi bloklamaz.
+- `SessionStart` http hook DESTEKLEMEZ (yalniz command). Oturum kimligi ilk `UserPromptSubmit`'ten gelir;
+  ilk prompt'a kadar sekmede eski sezgi calisir. Konusma basligi (yalniz SessionStart'ta) bu yuzden yok.
+- `Notification/permission_prompt` ancak ~6 sn sessizlikten sonra gelir; aninda onay icin `PermissionRequest` kullanilir.
+- Electron-as-node command hook'u ~450 ms suruyor (hedef < 300 ms); bu yuzden command degil http hook.
+- Codex `-c` degerleri TOML olarak cozulemezse string sayilir: `tui.notifications=true`, `tui.notification_method=osc9`,
+  `tui.notification_condition=always` tirnaksiz gecer. OSC 9 icerigi: tur sonunda SON MESAJ (or. `ok`), onayda
+  `Approval requested: <komut>`. Codex calisirken pencere basligini braille spinner'la baslatir.
+- Codex'in "N warnings" sayaci bu argumanlardan degil, kendi limit uyarilarindan.
 
-## Verilen kararlar (oneri)
-- **Kullanici dosyasina yazilmaz.** Claude'a hook'lar TermFlow'un baslattigi her ajan sekmesinde
-  `--settings <userData/agent-hooks/claude-settings.json>` ile verilir. Codex'e `-c` argumanlariyla.
-  TermFlow disinda baslatilan ajanlar etkilenmez.
-- **Tasima: dosya, port yok.** Hook betigi (`out/hooks/agent-hook.cjs`, uygulama exe'si + `ELECTRON_RUN_AS_NODE=1`)
-  stdin JSON'unu okur, yalniz izinli alanlari (`hook_event_name`, `notification_type`, `session_id`, `cwd`,
-  `session_title`, `last_assistant_message` ilk 300 karakter, maskeli) tek satir olarak
-  `userData/agent-hooks/events/<tabId>.jsonl`'e ekler. Ana surec klasoru izler (`fs.watch` + 1 sn yoklama yedegi).
-  Sebep: ag yuzeyi yok, uygulama yeniden baslasa da olay kaybolmaz. Sekme kimligi ajana `TERMFLOW_TAB_ID` env'iyle gecer.
-- **Codex OSC 9 renderer'da okunur** (`term.parser.registerOscHandler(9, ...)`): `approval-requested` metni ->
-  `needs-input`, tur sonu -> `done`. `working` icin mevcut spinner okumasi (`fun/agentActivity.ts readPulse`) kalir.
-  Codex `thread-id` (oturum kimligi) `notify` betigiyle alinir; kullanicinin kendi `notify`'i varsa betik onu da cagirir.
-- **Oncelik:** hook/OSC olayi varsa spinner tahmini o sekmede yalniz `working` icin kullanilir; `done` ve
-  `needs-input` yalniz olaydan gelir. Hook alinmayan ajanlarda (OpenCode, ozel provider) bugunku davranis aynen kalir.
-- Durum `TabActivity`'ye eslenir: working->`running`, needs-input->`waiting`, done->`completed`, error->`error`.
-  Yeni alan `tab.agent = { sessionId?, title?, lastEvent, lastEventAt }`.
-- Ayar: `agentHooks: boolean` (varsayilan acik). Kapaliyken `--settings`/`-c` eklenmez.
-- Sekme basligi: `SessionStart.session_title` varsa ve kullanici sekmeyi elle adlandirmadiysa baslik olur.
+## Verilen kararlar
+- **Kullanici dosyasina yazilmaz.** Claude'a `--settings <userData/agent-hooks/claude-settings.json>`, Codex'e `-c`;
+  ikisi de yalniz TermFlow'un baslattigi sekmelerde (`prepareLaunch`, argumanlar prompt'tan `--` once).
+  Kullanici zaten `--settings` verdiyse eklenmez.
+- **Tasima: loopback HTTP.** `src/main/agentHooks/hookServer.ts` 127.0.0.1'de rastgele portta; her acilista yeni
+  32 baytlik token. Token ve sekme kimligi ajana env ile (`TERMFLOW_HOOK_TOKEN`, `TERMFLOW_TAB_ID`) gecer, ayar dosyasinda
+  sir yok. Host basligi 127.0.0.1 olmali (DNS rebinding), token sabit-zamanli karsilastirilir, govde en fazla 1 MB.
+- Claude olaylari: `UserPromptSubmit`/`PostToolUse` -> working, `PermissionRequest` ve dikkat isteyen `Notification`
+  -> needs-input, `Stop` -> done (`last_assistant_message` ilk satiri, maskeli), `StopFailure` -> error.
+- Codex: OSC 9 handler (yalniz Codex sekmesinde; `\d+;` ile baslayan ConEmu alt komutlari yok sayilir) ve `onTitleChange`
+  spinner'i -> working. Tur sonundan sonraki 1,5 sn icindeki son spinner karesi isi yeniden baslatmaz.
+  Codex oturum kimligi bu modulde alinmiyor (`notify` sarmalayicisi agent-resume'a birakildi).
+- Hook'lu sekmede (`tab.agentHook` varken) prompt sezgisi, bell ve tus vurusu sekme durumunu DEGISTIRMEZ; Agent Inbox'ta
+  approval/question/completed/error yalniz hook'tan gelir. `tab.running` (surec canli) hook'tan etkilenmez.
+- Esleme: working->`running`, needs-input/idle->`waiting`, done->`completed`, error->`error`.
+- Ayar `agentHooks` (varsayilan acik), Ayarlar > Agent Security. Kapaliyken ek arguman/env yok.
 
-## Basari olcutleri
-- Gercek Claude Code'da: prompt gonderilince sekme `running`; izin sorusunda 1 sn icinde `waiting`;
-  tur bitince 1 sn icinde `completed`; bostayken bir daha `running`'e donmez.
-- Gercek Codex'te ayni uc gecis (approval ve turn-complete OSC 9 ile).
-- `~/.claude/settings.json` ve `~/.codex/config.toml` degismez (test oncesi/sonrasi hash ayni).
-- Kullanicinin kendi hook'lari ve `notify` programi calismaya devam eder.
-- Ayar kapatilinca yeni sekmelerde ek arguman yok.
+## Dogrulama
+- Birim: `src/shared/agentHooks.test.ts` (gercek Stop govdesi ve Codex metinleriyle), `hookServer.test.ts`
+  (token, sekme kimligi, Host, token dosyada yok), `cli.test.ts` (arguman sirasi, env yalniz Claude), store testleri.
+- E2E: `e2e/agent-hooks.spec.ts` sahte `claude` `--settings` dosyasini okuyup http hook'larini cagirir.
+- Canli (output/agent-hooks-live.cjs): gercek Claude'da working -> done("ok") -> working -> needs-input("Approve Write"),
+  reddedince waiting kalir. Gercek Codex'te uygulama icinde tur sonu OSC 9 -> completed; onay OSC 9 ham PTY probunda.
 
-## Test
-- Birim: hook JSON -> olay ayristirma ve alan izin listesi (`hookEvents.test.ts`), olay -> TabActivity durum makinesi,
-  OSC 9 metin ayristirma, Codex `-c` arguman uretimi (kullanicinin `notify`'i varken ve yokken).
-- Entegrasyon: betik gecici userData'ya JSONL yazar, izleyici olayi sekmeye ulastirir.
-- E2E: sahte "claude" betigi `--settings` dosyasini okuyup hook komutunu kendi cagirir; sekme durum gecisleri dogrulanir.
-- Canli: Claude Code 2.1.x ve Codex ile bir tur + bir izin istegi (DURUM.md'ye not).
-
-## Dilimler
-0. Dogrulama: Claude `--settings` ile verilen hook'lar kullanici hook'lariyla BIRLESIYOR mu (ezilmiyor mu);
-   Windows'ta Electron-as-node hook suresi (hedef p95 < 300 ms). Olumsuzsa bu spec guncellenir.
-1. Hook betigi + esbuild girisi + JSONL izleyici + IPC `agent-hooks:event`.
-2. Claude baslatma argumani (`profileResolver.ts`), `TERMFLOW_TAB_ID` env, renderer durum eslemesi.
-3. Codex OSC 9 + `notify` sarmalayici, `-c` argumanlari.
-4. Ayar + sekme basligi + Agent Inbox'a olay yazimi; PROJE-REHBER karar satiri; spinner kararinin guncellenmesi.
-
-## Acik sorular
-- `--settings` hook'lari kullanicinin hook'larini eziyorsa: kullanici hook'larini okuyup birlestirilmis gecici dosya
-  mi uretelim, yoksa yalniz Codex'teki gibi bildirim kanalina (`preferredNotifChannel`) mi dusulsun?
+## Bilinen sinirlar
+- Kullanici `allowedHttpHookUrls` tanimladiysa ve 127.0.0.1 listede yoksa Claude hook'lari calismaz; sekme eski sezgiye duser.
+- Codex'te "working" baslik spinner'iyla uygulama icinde ayrica gozlenmedi (ilk tur zaten sezgiyle running'di); limit dolu oldugu icin tekrar denenmedi.
+- OpenCode kapsam disi; eski sezgi devam ediyor.

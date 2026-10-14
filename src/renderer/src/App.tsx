@@ -39,6 +39,7 @@ import { WidgetView } from './widget/WidgetView'
 import { useWidgetStore } from './widget/widgetStore'
 import { startRemoteBridge } from './remoteBridge'
 import { VoiceIndicator } from './components/VoiceIndicator'
+import { subscribeAgentHooks } from './terminal/agentHookEvents'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -97,6 +98,9 @@ export default function App(): React.JSX.Element {
     void useSettingsStore.getState().update({ retroUnlocked: true, themeId: 'retro-matrix', terminalEffect: 'crt' })
     useToastStore.getState().show('Retro mode unlocked: Matrix and Amber CRT themes are now in Settings > Appearance.', 'success')
   }), [])
+
+  // Claude Code hook olaylari (agent-hooks): sekme durumunu ajanin kendisi bildirir.
+  useEffect(() => subscribeAgentHooks(), [])
 
   // Önizleme kartları: izlenen klasörlerde yeni beliren medya, sekme kapanınca temizlik.
   useEffect(() => window.termflow.media.onNew((tabIds, info) => {

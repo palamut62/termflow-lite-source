@@ -4,7 +4,9 @@ import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { agentKindForCommand } from '../../shared/agentEvents'
 import { splitCommandLine } from '../../shared/commandLine'
+import { agentHookArgs } from '../../shared/agentHooks'
 import type { CreateTerminalInput } from '../../shared/types'
+import type { HookLaunch } from '../agentHooks/hookServer'
 
 const exec = promisify(execFile)
 function isFile(path: string): boolean { try { return statSync(path).isFile() } catch { return false } }
@@ -51,14 +53,17 @@ export async function runCli(command: string, args: string[], maxBuffer = 2 * 10
   return stdout
 }
 
-export function prepareLaunch(input: CreateTerminalInput): CreateTerminalInput {
+export function prepareLaunch(input: CreateTerminalInput, hooks?: { tabId: string; launch: HookLaunch }): CreateTerminalInput {
   const command = input.startupCommand
   const agent = agentKindForCommand(command || input.shell)
   if (agent) {
     const [executable, ...args] = command ? splitCommandLine(command) : [input.shell!, ...(input.args ?? [])]
+    // Hook argumanlari prompt'tan ('--' sonrasi) once gelmeli.
+    if (hooks) args.push(...agentHookArgs(agent, args, hooks.launch.claudeSettingsPath))
     if (input.launchCommand) args.push(...(agent === 'opencode' ? ['--prompt', input.launchCommand] : ['--', input.launchCommand]))
     const resolved = cliInvocation(executable, args)
-    return { ...input, kind: 'custom', shell: resolved.file, args: resolved.args, startupCommand: undefined, launchCommand: undefined }
+    const env = hooks && agent === 'claude' ? { ...input.env, TERMFLOW_TAB_ID: hooks.tabId, TERMFLOW_HOOK_TOKEN: hooks.launch.token } : input.env
+    return { ...input, kind: 'custom', shell: resolved.file, args: resolved.args, env, startupCommand: undefined, launchCommand: undefined }
   }
   if (command && input.launchCommand) throw new Error('Automatic input requires a supported agent profile. Start this custom profile manually.')
   if (input.launchCommand) {

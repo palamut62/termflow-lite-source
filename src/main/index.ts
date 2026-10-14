@@ -46,6 +46,7 @@ import { explorerMenuSignature, syncExplorerContextMenu } from './explorerContex
 import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
 import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
 import { RemoteController } from './remote/RemoteController'
+import { AgentHookServer } from './agentHooks/hookServer'
 import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
 import { stopStudio } from './voice/speak'
@@ -78,6 +79,7 @@ let sessionStore: SessionStore | null = null
 let stopMemoryScheduler: (() => void) | null = null
 let manager: TerminalManager | null = null
 let remoteController: RemoteController | null = null
+let agentHookServer: AgentHookServer | null = null
 
 /** The live main window, or null while it is closed/destroyed. */
 function liveWindow(): BrowserWindow | null {
@@ -341,6 +343,13 @@ app.whenReady().then(() => {
     (record) => agentSessionOwnership.recordLaunch(record)
   )
   manager = mgr
+  // Ajan durum hook'lari (agent-hooks): pencere ilk sekmeyi acmadan hazir olur.
+  const hookServer = new AgentHookServer(join(app.getPath('userData'), 'agent-hooks', 'claude-settings.json'), (tabId, event) => {
+    liveWindow()?.webContents.send(IPC.AGENT_HOOK_EVENT, tabId, event)
+  })
+  agentHookServer = hookServer
+  mgr.setAgentHooks(() => hookServer.current())
+  hookServer.start().catch((error) => console.warn('[agent-hooks] server failed to start:', error))
   // WSL distro enumeration makes discovery async — the renderer re-queries
   // via SHELLS_DISCOVER anyway, so the warm value is only a fallback.
   let currentShells: Awaited<ReturnType<typeof discoverShells>> = []
@@ -572,6 +581,7 @@ app.on('before-quit', () => {
   stopMemoryScheduler?.()
   stopStudio()
   void remoteController?.shutdown()
+  agentHookServer?.stop()
 })
 
 app.on('will-quit', () => {
