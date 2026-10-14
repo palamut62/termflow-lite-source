@@ -774,3 +774,25 @@ body {
 
 /* Kurulu olmayan yerlesik ajan profili (agent detection). */
 .profile-row-missing { opacity: 0.5; }
+
+/* Terminalin sag ustunde limit kartlari (renk: yesil / %80 amber / %95 kirmizi). */
+.usage-cards { position: absolute; top: 10px; right: 18px; z-index: 5; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.usage-card {
+  width: 168px;
+  padding: 7px 10px 8px;
+  border: 1px solid var(--usage-color, var(--term-green));
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel-background) 88%, var(--usage-color, var(--term-green)) 12%);
+  color: var(--menu-foreground);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  font-size: 11px;
+  opacity: 0.94;
+}
+.usage-card-ok { --usage-color: var(--term-green); }
+.usage-card-warn { --usage-color: var(--term-yellow); }
+.usage-card-critical { --usage-color: var(--term-red); }
+.usage-card-head { display: flex; align-items: center; gap: 4px; opacity: 0.8; }
+.usage-card-value { margin: 2px 0 4px; font-size: 18px; font-weight: 600; color: var(--usage-color); }
+.usage-card-reset { margin-top: 4px; opacity: 0.7; }
+.usage-card .usage-bar { display: block; }

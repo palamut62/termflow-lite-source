@@ -10,7 +10,7 @@ const AGENT_NAMES: Record<AgentKind, string> = { claude: 'Claude Code', codex: '
 const REFRESH_MS = 30_000
 
 /** Yerel dosyalardan okunan limitler; 30 sn'de bir ve pencere odak alinca yenilenir. */
-function useAgentUsage(enabled: boolean): [AgentUsage[], () => void] {
+export function useAgentUsage(enabled: boolean): [AgentUsage[], () => void] {
   const [usage, setUsage] = useState<AgentUsage[]>([])
   const refresh = (): void => { void window.termflow.usage.get().then(setUsage).catch(() => undefined) }
   useEffect(() => {
@@ -26,7 +26,7 @@ function useAgentUsage(enabled: boolean): [AgentUsage[], () => void] {
   return [usage, refresh]
 }
 
-function percentText(w: UsageWindow, mode: 'used' | 'remaining'): string {
+export function percentText(w: UsageWindow, mode: 'used' | 'remaining'): string {
   return mode === 'used' ? `${Math.round(w.usedPercent)}%` : `${Math.round(100 - w.usedPercent)}% left`
 }
 
@@ -80,7 +80,8 @@ export function UsageMeter(): React.JSX.Element | null {
       </button>
       {open && (
         <div className="usage-popover" role="dialog" aria-label="Agent usage" style={{ bottom: open.bottom, right: open.right }}>
-          {usage.map((u) => {
+          {agent && !current && <div className="usage-agent"><div className="usage-agent-name">{AGENT_NAMES[agent]}</div><div className="usage-note">{agent === 'claude' && !settings.claudeUsage ? 'Turn on "Claude limits" in Settings > Agent Security (Pro/Max).' : 'No limit data yet. It appears after the first reply of a session.'}</div></div>}
+          {[...usage].sort((a, b) => Number(b.agent === agent) - Number(a.agent === agent)).map((u) => {
             const live = liveWindows(u.windows, now)
             return (
               <div key={u.agent} className="usage-agent">
@@ -98,7 +99,7 @@ export function UsageMeter(): React.JSX.Element | null {
               </div>
             )
           })}
-          {!usage.some((u) => u.agent === 'claude') && (
+          {agent !== 'claude' && !usage.some((u) => u.agent === 'claude') && (
             <div className="usage-note">
               {settings.claudeUsage
                 ? 'Claude limits appear after the first reply in a new Claude Code tab (Pro/Max).'

@@ -15,6 +15,7 @@ export function AgentSecuritySettings(): React.JSX.Element {
   const agentHooks = useSettingsStore((state) => state.settings.agentHooks)
   const usageDisplay = useSettingsStore((state) => state.settings.usageDisplay)
   const claudeUsage = useSettingsStore((state) => state.settings.claudeUsage)
+  const usageCard = useSettingsStore((state) => state.settings.usageCard)
   return <div className="settings-section">
     <h2><ShieldCheck size={18} /> Agent Security</h2>
     <p className="settings-section-description">The selected policy is pinned when a new agent tab starts. Existing sessions are never silently elevated by a settings change.</p>
@@ -26,6 +27,9 @@ export function AgentSecuritySettings(): React.JSX.Element {
     </Field>
     <Field label="Usage limits in the status bar" hint="5-hour and weekly limits of the active Claude Code or Codex tab, shown like Codex does. Other agents (Gemini, OpenCode, ...) publish no limit data, so nothing is shown for them. Amber at 80%, red at 95%">
       <Select value={usageDisplay} options={[{ value: 'used', label: 'Show % used' }, { value: 'remaining', label: 'Show % remaining' }, { value: 'off', label: 'Off' }]} onChange={(value) => { void update({ usageDisplay: value as 'off' | 'used' | 'remaining' }) }} />
+    </Field>
+    <Field label="Limit cards" hint="Show the active agent's limits as small cards in the top-right corner of the terminal; green, amber at 80%, red at 95%">
+      <Toggle checked={usageCard} disabled={usageDisplay === 'off'} onChange={(value) => { void update({ usageCard: value }) }} label="Limit cards" />
     </Field>
     <Field label="Claude limits" hint="Claude Pro/Max only. New Claude Code tabs get a small status line helper that hands the limits to TermFlow. Your own status line keeps showing as before; without one, Claude hides footer hints such as 'esc to interrupt'. Needs Git Bash on Windows">
       <Toggle checked={claudeUsage} disabled={!agentHooks} onChange={(value) => { void update({ claudeUsage: value }) }} label="Claude limits" />
