@@ -111,6 +111,12 @@ export function TerminalSettings(): React.JSX.Element {
             disabled={!settings.shellIntegration}
           />
         </Field>
+        <Field label="Shift+Enter New Line" hint="In Claude Code, Codex and OpenCode tabs, Shift+Enter adds a line instead of sending">
+          <Toggle checked={settings.shiftEnterNewline} onChange={(v) => void update({ shiftEnterNewline: v })} label="Shift+Enter new line" />
+        </Field>
+        <Field label="Clipboard from Terminal Apps" hint="Let programs copy to your clipboard with OSC 52, also over SSH and tmux. Reading the clipboard is never allowed">
+          <Toggle checked={settings.osc52Clipboard} onChange={(v) => void update({ osc52Clipboard: v })} label="OSC 52 clipboard" />
+        </Field>
         <Field label="Bell">
           <Toggle checked={settings.bell} onChange={(v) => void update({ bell: v })} label="Bell" />
         </Field>
