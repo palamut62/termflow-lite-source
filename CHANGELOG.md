@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.24.0 - 2026-10-14
+
+- Installed agent CLIs are found for you: Claude Code, Codex, OpenCode, Gemini CLI, Qwen Code, Copilot CLI, Grok, Droid, Kimi, Pi, Codebuff, Cursor Agent, Amp, Aider and Crush appear in the New Tab menu (and in the Explorer and phone menus) only when installed, each opening with its full-access flag. Installing or removing one updates the list on its own; Settings > Profiles has Rescan.
+- Agent status comes from the agent itself: Claude Code through its hooks and Codex through its notifications, so a tab shows running, waiting for you or done without guessing from the screen.
+- Notifications when an agent finishes or needs you: a dot on the tab, a bell with a count, a Windows taskbar badge, a system notification and a sound, with per-event settings in Settings > Notifications. Mark as Unread is in the terminal right-click menu.
+- Ctrl+Shift+J jumps to a tab or a saved agent session: tabs waiting for you come first, 1-9 picks a row, typing searches tabs, folders, branches and sessions, Shift+Enter opens the tab beside the current pane.
+- Reopen the app and every tab comes back with its last output (API keys masked), and Claude Code and Codex tabs continue their own conversation.
+- Claude and Codex 5-hour and weekly limits show in the status bar. Claude's limits need the opt-in setting because they use Claude's status line.
+- Worktree setup steps: files to copy (like .env) and commands to run (like npm ci) in every new worktree before the agent starts, with a failure screen that lets you start the agent anyway, open a shell or cancel.
+- Terminal: Reset Terminal, OSC 52 clipboard, Shift+Enter for a new line in agents, link menu, importing Windows Terminal, iTerm2 and Ghostty themes, minimum contrast.
+- Fixed: the tail of an API key typed into the terminal was left visible; the new worktree dialog could run off the window.
+
 ## 1.23.0 - 2026-10-09
 
 - Voice input (Settings > Voice Input, off until you turn it on): hold Space in a terminal and speak, release it and the text is typed where the cursor is. A short press still types a space, and fast typing never starts a recording. Esc while recording cancels.

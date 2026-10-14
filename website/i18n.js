@@ -81,6 +81,14 @@
     'f8.li4': 'Yalnızca Tailscale adresini dinler, yerel ağa ya da internete açılmaz. Telefon uygulamasından, ana ekrandan bile QR okutarak eşleşir; sen bağlantıyı kesene kadar eşli kalır',
     'f8.alt': 'Eşleştirme QR kodu gösteren Ayarlar > Remote Access ve yanında aynı PowerShell sekmesini çalıştıran bir telefon',
 
+    'f10.title': 'Bilgisayarındaki her ajan hazır',
+    'f10.text': 'TermFlow Lite kurulu ajan CLI\'larını bulur ve her birini tam yetki bayrağıyla Yeni Sekme menüsüne ekler. Yenisini kurarsan kendiliğinden görünür.',
+    'f10.li1': 'Claude Code, Codex, OpenCode, Gemini CLI, Qwen Code, Copilot CLI, Grok, Droid, Kimi, Pi ve daha fazlası; yalnızca kuruluysa',
+    'f10.li2': 'Aynı liste Gezgin sağ tık menüsünde ve telefonunda da',
+    'f10.li3': 'Hangi sekmenin seni beklediğini bil: renkli nokta, sayılı zil, görev çubuğu rozeti, bildirim ve ses; hepsi ajanın kendi hook\'larından. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>J</kbd> ile oraya atla',
+    'f10.li4': 'Uygulamayı yeniden açınca her sekme çıktısı ve Claude ya da Codex konuşmasıyla geri gelir. Claude ve Codex limitleri durum çubuğunda görünür',
+    'f10.alt': 'Kurulu ajan CLI\'larını tam yetki bayraklarıyla listeleyen Ayarlar > Profiles ve yeni bir ajan bulunduğunu söyleyen bildirim',
+
     'f9.title': 'Yazmak yerine konuş',
     'f9.text': "Space'i basılı tut ve konuş, bırakınca metin imlecin olduğu yere temizlenmiş olarak gelir; Enter'a basmadan önce kontrol edersin. Kısa basış hâlâ boşluktur.",
     'f9.li1': 'Noktalama ve yazım düzelir, dolgu sözcükleri atılır, komutlar ve dosya adları senin yazacağın gibi yazılır',
