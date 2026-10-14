@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.24.2 - 2026-10-14
+
+- The limit strip under the terminal now replaces the limit button in the status bar instead of repeating it. With the strip off, or before any data arrives, the button stays.
+
 ## 1.24.1 - 2026-10-14
 
 - Memory update frequency: Settings > Memory > Update lets you pick every hour, day or week (it was fixed at 30 minutes). Only sessions that are new or changed since the last check are analysed; with none, nothing is sent to the model, and the last real run's usage stays visible.
