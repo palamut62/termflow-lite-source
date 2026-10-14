@@ -80,7 +80,7 @@ export function FilePanel({ embedded = false }: { embedded?: boolean } = {}): Re
       <input
         className="file-panel-filter"
         value={filter}
-        placeholder="Filter files"
+        placeholder={embedded ? "Find files" : "Filter files"}
         aria-label="Filter files"
         spellCheck={false}
         onChange={(e) => store.setFilter(e.target.value)}

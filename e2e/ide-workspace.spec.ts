@@ -42,6 +42,7 @@ test('the tree shows the project, its worktrees and the open terminal', async ()
   await expect(tree.locator('.ide-tree-project')).toHaveText(/shop-api/)
   const main = tree.locator('.ide-tree-worktree', { hasText: 'main' })
   await expect(main.locator('.ide-badge')).toHaveText('primary')
+  await expect(tree.locator('.ide-child-chip')).toHaveText(/1 child/)
   await expect(tree.locator('.ide-tree-worktree', { hasText: 'fix-login' })).toBeVisible()
   // The startup terminal opened in the repo sits under the primary checkout.
   await expect(tree.locator('.ide-tree-session')).toHaveCount(1)
@@ -50,7 +51,7 @@ test('the tree shows the project, its worktrees and the open terminal', async ()
   // A worktree without a terminal opens one in its folder.
   await tree.locator('.ide-tree-worktree', { hasText: 'fix-login' }).click()
   await expect(win.locator('.tab')).toHaveCount(2)
-  await expect(tree.locator('.ide-tree-worktree-wrap', { hasText: 'fix-login' }).locator('.ide-tree-session')).toHaveCount(1)
+  await expect(tree.locator('.ide-card-child', { hasText: 'fix-login' }).locator('.ide-tree-session')).toHaveCount(1)
   await expect(tree.locator('.ide-tree-active')).toHaveCount(1)
 })
 

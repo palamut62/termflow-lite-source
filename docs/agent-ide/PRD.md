@@ -318,6 +318,28 @@ modulleri (worktree-note, hibernate, race, scheduled-prompts, remote-attention) 
 5. **Ilk acilis karti:** yalniz IDE exe'sinde, yeni kurulumda (Terminal / Agent IDE secimi).
 6. **Yayin:** yeni public repo (oneri `palamut62/termflow-agent-ide`); repo ilk yayindan once kullanici onayiyla acilir.
 
+## 12b. Ilerleme (2026-10-14)
+- **Faz 0 tamam:** `src/shared/edition.ts` (derleme zamani `TERMFLOW_EDITION`), IDE kimligi (ad, appId, userData,
+  kurucu adi, `dist-ide/`), `uiMode` + `uiModeChosen`, `Ctrl+Shift+I`, komut paleti girdisi, ilk acilis karti
+  (`shells/uiMode.tsx`). Lite'ta mod gecisi yok, `uiMode` her zaman `terminal` (SettingsStore testi).
+- **Tek kabuk:** PRD 9'daki ayri `TerminalShell`/`IdeShell` yerine tek `shells/AppShell.tsx`: `TerminalArea` iki modda da
+  `.app-body` icinde ayni sirada, mod gecisinde terminaller yeniden kurulmaz (E2E: 5 gecis, ayni xterm dugumu).
+- **Faz 1 tamam (Orca yerlesimi):** kenar cubugu ve sag panel pencere tepesine kadar, sekme seridi orta sutunda;
+  gezinme (Search, Tasks = GitHub paneli, Automations = kayitli/zamanli komutlar, Mobile = Remote Access),
+  Projects (aktivite zili, klasor ekle, yeni worktree), kart agaci (`ideTreeModel.ts`, primary karti, "N child",
+  oturum haplari), sag panel ikon sekmeleri Explorer + Agents, notr alt cubuk (solda limitler).
+  Sag tik: New Terminal Here, Reveal, Copy Path, Remove Worktree, Remove from Projects.
+- Komutlar: `npm run dev:ide`, `npm run build:ide`, `npm run test:e2e:ide`, `npm run dist:win:ide`.
+- Gorsel karsilastirma (`node output/ide-shot.cjs`):
+
+| TermFlow Agent IDE | Orca |
+|---|---|
+| ![TermFlow IDE Explorer](img/tf-01-ide-explorer.png) | ![Orca Explorer](img/03-sag-panel-explorer.jpg) |
+| ![TermFlow IDE Agents](img/tf-02-ide-agents.png) | ![Orca Agents](img/04-sag-panel-agents.jpg) |
+
+- Faz 1'de yapilmayan: kenar cubugu "Artifacts" (Faz 4), Floating Workspace dugmesi (Faz 3), Explorer
+  `Names | Contents` icerik aramasi, sag panel Source Control/Checks (Faz 2).
+
 ## 13. Devir notu (sonraki oturum icin)
 - Repo: `C:\Users\umuti\Projects\termflow-lite\termflow-lite` (kaynak PRIVATE `palamut62/termflow-lite-source`).
   Once `DURUM.md`, sonra `PROJE-REHBER.md` "Hangi istek icin nereye bakilir" tablosu.

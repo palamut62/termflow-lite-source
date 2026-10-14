@@ -55,17 +55,25 @@ export function AgentsPanel(): React.JSX.Element {
 
   return (
     <div className="ide-agents">
+      <div className="ide-panel-head">
+        <div><strong>Agents</strong><span>Resume past sessions</span></div>
+        <button className="ide-icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh sessions"><RefreshCw size={12} /></button>
+      </div>
       <div className="ide-segment" role="radiogroup" aria-label="Session scope">
         {(['workspace', 'project', 'all'] as Scope[]).map((value) => (
           <button key={value} role="radio" aria-checked={scope === value} className={scope === value ? 'ide-segment-on' : ''} onClick={() => setScope(value)}>
             {value === 'workspace' ? 'Workspace' : value === 'project' ? 'Project' : 'All'}
           </button>
         ))}
-        <button className="ide-icon-btn" onClick={refresh} title="Refresh" aria-label="Refresh sessions"><RefreshCw size={12} /></button>
       </div>
-      <label className="ide-search"><Search size={12} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Resume past sessions" aria-label="Search sessions" /></label>
+      <label className="ide-search"><Search size={12} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sessions" aria-label="Search sessions" /></label>
       {error && <div className="ide-note ide-note-error">{error}</div>}
-      {sessions === null && <div className="ide-note"><LoaderCircle size={12} className="ide-state-working" /> Loading sessions...</div>}
+      {sessions === null && (
+        <div aria-busy="true">
+          <div className="ide-note"><LoaderCircle size={12} className="ide-state-working" /> Scanning sessions</div>
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="ide-skeleton" aria-hidden="true"><span /><span /></div>)}
+        </div>
+      )}
       {sessions !== null && filtered.length === 0 && <div className="ide-note">{scope === 'all' ? 'No agent sessions yet.' : 'No sessions here. Try Project or All.'}</div>}
       <ul className="ide-session-list">
         {filtered.map((session) => {

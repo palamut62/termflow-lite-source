@@ -15,6 +15,7 @@ export interface IdeSettings {
   rightWidth: number
   rightOpen: boolean
   rightTab: IdeRightTab
+  sidebarOpen: boolean
 }
 export type TabAttention = 'needs-input' | 'done' | 'error'
 export interface AlertChannel { system: boolean; sound: boolean }
@@ -720,7 +721,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showSessionRail: false,
   uiMode: EDITION === 'ide' ? 'ide' : 'terminal',
   uiModeChosen: false,
-  ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer' },
+  ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer', sidebarOpen: true },
   sessionRailWidth: 220,
   closeToTray: true,
   quakeMode: false,

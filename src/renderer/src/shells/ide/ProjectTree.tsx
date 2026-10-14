@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, CircleDot, FolderGit2, GitBranch, LoaderCircle, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, CircleDot, GitBranch, LoaderCircle, Plus } from 'lucide-react'
 import type { WorktreeEntry } from '../../../../shared/ipc'
 import { agentForProfile } from '../../../../shared/profiles'
 import { resolveDefaultProfileId, useSettingsStore } from '../../store/settingsStore'
@@ -39,7 +39,8 @@ export function ProjectTree(): React.JSX.Element {
     repoRoots,
     tabs,
     activeTabId,
-    agentOf: (tab) => agentForProfile(settings, tab.profileId)
+    agentOf: (tab) => agentForProfile(settings, tab.profileId),
+    hooked: settings.agentHooks
   }), [settings, worktrees, repoRoots, tabs, activeTabId])
 
   // Worktree listeleri: proje ya da sekme worktree'leri degisince ve pencere odaklaninca yenilenir.
@@ -124,23 +125,18 @@ export function ProjectTree(): React.JSX.Element {
               onClick={() => toggle(project.root)}
               onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, project }) }}
             >
-              {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-              <FolderGit2 size={14} />
+              <span className="ide-avatar" style={{ background: avatarColor(project.label) }} aria-hidden="true">{project.label.slice(0, 1).toUpperCase()}</span>
               <span className="ide-tree-label">{project.label}</span>
+              {isCollapsed ? <ChevronRight size={12} className="ide-chevron" /> : <ChevronDown size={12} className="ide-chevron" />}
               {isCollapsed && urgent && <StateIcon state={urgent} />}
             </button>
             {!isCollapsed && (
-              <div role="group">
-                {project.worktrees.map((worktree) => (
-                  <WorktreeNode
-                    key={worktree.path}
-                    worktree={worktree}
-                    now={now}
-                    onOpen={() => openWorktree(worktree)}
-                    onMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, project, worktree }) }}
-                  />
-                ))}
-              </div>
+              <PrimaryCard
+                project={project}
+                now={now}
+                onOpen={openWorktree}
+                onMenu={(e, worktree) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, project, worktree }) }}
+              />
             )}
           </div>
         )
@@ -153,22 +149,60 @@ export function ProjectTree(): React.JSX.Element {
   )
 }
 
-function WorktreeNode({ worktree, now, onOpen, onMenu }: { worktree: IdeWorktree; now: number; onOpen: () => void; onMenu: (e: React.MouseEvent) => void }): React.JSX.Element {
-  const name = worktree.branch ?? worktree.path.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? worktree.path
+const DOT: Record<SessionState, string> = { working: 'ide-dot-working', 'needs-input': 'ide-dot-needs-input', error: 'ide-dot-error', done: 'ide-dot-done', idle: 'ide-dot-idle' }
+
+/** Projenin rengi: ada gore sabit, tema bagimsiz (Orca'daki proje avatari). */
+function avatarColor(label: string): string {
+  let hash = 0
+  for (const ch of label) hash = (hash * 31 + ch.charCodeAt(0)) | 0
+  return `hsl(${Math.abs(hash) % 360} 55% 42%)`
+}
+
+function worktreeName(worktree: IdeWorktree): string {
+  const folder = worktree.path.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? worktree.path
+  return worktree.primary ? worktree.branch ?? folder : folder
+}
+
+/** Ana checkout karti; diger worktree'ler "N child" ile icinde acilir (Orca). */
+function PrimaryCard({ project, now, onOpen, onMenu }: {
+  project: IdeProject
+  now: number
+  onOpen: (worktree: IdeWorktree) => void
+  onMenu: (e: React.MouseEvent, worktree: IdeWorktree) => void
+}): React.JSX.Element {
+  const [primary, ...children] = project.worktrees
+  const [childrenOpen, setChildrenOpen] = useState(true)
   return (
-    <div role="treeitem" aria-label={name} className="ide-tree-worktree-wrap">
-      <button data-tree-row className={`ide-tree-worktree${worktree.primary ? ' ide-tree-primary' : ''}`} title={worktree.path} onClick={onOpen} onContextMenu={onMenu}>
-        <GitBranch size={12} />
-        <span className="ide-tree-label">{name}</span>
-        {worktree.primary && <span className="ide-badge">primary</span>}
-        {worktree.sessions.length > 0 && <span className="ide-tree-count">{worktree.sessions.length}</span>}
-      </button>
-      {worktree.sessions.length > 0 && (
-        <div role="group">
+    <div role="group" className="ide-card">
+      <WorktreeHeader worktree={primary} onOpen={() => onOpen(primary)} onMenu={(e) => onMenu(e, primary)} />
+      {children.length > 0 && (
+        <button className="ide-child-chip" onClick={() => setChildrenOpen((v) => !v)} aria-expanded={childrenOpen}>
+          <GitBranch size={11} /> {children.length} {children.length === 1 ? 'child' : 'children'} {childrenOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+        </button>
+      )}
+      {primary.sessions.map((session) => <SessionRow key={session.tabId} session={session} now={now} />)}
+      {childrenOpen && children.map((worktree) => (
+        <div key={worktree.path} role="group" className="ide-card ide-card-child">
+          <WorktreeHeader worktree={worktree} onOpen={() => onOpen(worktree)} onMenu={(e) => onMenu(e, worktree)} />
           {worktree.sessions.map((session) => <SessionRow key={session.tabId} session={session} now={now} />)}
         </div>
-      )}
+      ))}
     </div>
+  )
+}
+
+function WorktreeHeader({ worktree, onOpen, onMenu }: { worktree: IdeWorktree; onOpen: () => void; onMenu: (e: React.MouseEvent) => void }): React.JSX.Element {
+  const name = worktreeName(worktree)
+  const state = mostUrgent(worktree.sessions) ?? (worktree.sessions.length ? 'idle' : null)
+  return (
+    <button data-tree-row role="treeitem" aria-label={name} className="ide-tree-worktree" title={worktree.path} onClick={onOpen} onContextMenu={onMenu}>
+      <span className="ide-tree-worktree-line">
+        <span className={`ide-dot ${state ? DOT[state] : 'ide-dot-none'}`} aria-hidden="true" />
+        <span className="ide-tree-label ide-tree-name">{name}</span>
+        {worktree.primary && <span className="ide-badge">primary</span>}
+      </span>
+      <span className="ide-tree-branch">{worktree.branch ?? 'no branch'}</span>
+    </button>
   )
 }
 

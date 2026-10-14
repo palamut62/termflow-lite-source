@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
-import { ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Plus, Rows2, PanelLeft, Smartphone } from 'lucide-react'
+import { ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Play, Plus, Rows2, PanelLeft, PanelRight, Smartphone } from 'lucide-react'
 import { useWidgetStore } from '../widget/widgetStore'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
@@ -9,6 +9,7 @@ import { PathLauncherModal } from './PathLauncherModal'
 import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
+import { useTaskPaletteStore } from '../store/taskPaletteStore'
 import { AttentionBell } from '../attention/AttentionBell'
 import { effectiveMotion } from '../motion'
 import { phonesLabel, useConnectedPhones } from '../remoteStatus'
@@ -27,8 +28,31 @@ function RemoteIndicator(): React.JSX.Element | null {
   )
 }
 
+/** Agent IDE sekme seridinin sag ucu (Orca): Command paleti ve sag panel dugmesi; kenar cubugu kapaliysa acma dugmesi. */
+function IdeTabBarActions({ sidebarOpen, rightOpen }: { sidebarOpen: boolean; rightOpen: boolean }): React.JSX.Element {
+  const setIde = (patch: { sidebarOpen?: boolean; rightOpen?: boolean }): void => {
+    const current = useSettingsStore.getState().settings.ide
+    void useSettingsStore.getState().update({ ide: { ...current, ...patch } })
+  }
+  return (
+    <>
+      <span className="ide-tab-spacer" />
+      {!sidebarOpen && (
+        <button className="split-tab-btn" onClick={() => setIde({ sidebarOpen: true })} title="Show sidebar" aria-label="Show sidebar"><PanelLeft size={14} /></button>
+      )}
+      <button className="ide-command-btn" onClick={() => useTaskPaletteStore.getState().toggle()} title="Command palette (Ctrl+Shift+P)"><Play size={11} /> Command</button>
+      {/* Panel acikken dugmesi panelin kendi ust satirinda (Orca). */}
+      {!rightOpen && (
+        <button className="split-tab-btn" onClick={() => setIde({ rightOpen: true })} title="Show right panel" aria-label="Show right panel"><PanelRight size={14} /></button>
+      )}
+    </>
+  )
+}
+
 interface TabBarProps {
   height: number
+  /** Agent IDE: sekme seridi orta sutunda; pencere dugmeleri payi yalniz sag panel kapaliyken. */
+  ide?: { sidebarOpen: boolean; rightOpen: boolean }
 }
 
 /**
@@ -40,7 +64,7 @@ interface TabBarProps {
 const WINDOWS_OVERLAY_WIDTH = 140
 const MACOS_TRAFFIC_LIGHTS_WIDTH = 78
 
-export function TabBar({ height }: TabBarProps): React.JSX.Element {
+export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
   const tabs = useTerminalStore((s) => s.tabs)
   const activeTabId = useTerminalStore((s) => s.activeTabId)
   const splitDirection = useTerminalStore((s) => s.splitDirection)
@@ -134,7 +158,9 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
 
   const platform = window.termflow?.system.platform
   const titleBarInset: CSSProperties =
-    platform === 'win32'
+    ide && (ide.rightOpen || platform !== 'win32')
+      ? {}
+      : platform === 'win32'
       ? { paddingRight: WINDOWS_OVERLAY_WIDTH }
       : platform === 'darwin'
         ? { paddingLeft: MACOS_TRAFFIC_LIGHTS_WIDTH }
@@ -162,6 +188,7 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
         ))}
       </div>
       <div className="new-tab-area">
+        {!ide && <>
         <button
           className={`split-tab-btn${showSessionRail ? ' split-tab-btn-active' : ''}`}
           onClick={() => useSettingsStore.getState().update({ showSessionRail: !showSessionRail })}
@@ -173,6 +200,7 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
         <button className={`split-tab-btn${splitDirection === 'vertical' ? ' split-tab-btn-active' : ''}`} onClick={() => useTerminalStore.getState().splitActive('vertical')} title="Split terminal right" aria-label="Split terminal right"><Columns2 size={14} /></button>
         <button className={`split-tab-btn${splitDirection === 'horizontal' ? ' split-tab-btn-active' : ''}`} onClick={() => useTerminalStore.getState().splitActive('horizontal')} title="Split terminal down" aria-label="Split terminal down"><Rows2 size={14} /></button>
         {splitDirection && <button className="split-tab-btn" onClick={() => useTerminalStore.getState().closeSplit()} title="Close split view" aria-label="Close split view"><PanelTopClose size={14} /></button>}
+        </>}
         <button className="new-tab-btn" onClick={newTab} title="New Tab" aria-label="New tab">
           <Plus size={14} />
         </button>
@@ -197,6 +225,7 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
         )}
         <AttentionBell />
         <RemoteIndicator />
+        {ide && <IdeTabBarActions {...ide} />}
       </div>
       {pathLauncherOpen && <PathLauncherModal onClose={() => setPathLauncherOpen(false)} />}
       {worktreeLauncherOpen && <WorktreeLauncherModal onClose={() => setWorktreeLauncherOpen(false)} />}

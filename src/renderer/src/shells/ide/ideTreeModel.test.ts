@@ -46,6 +46,9 @@ describe('session state', () => {
     expect(sessionState(tab('x', '/', { activity: 'running' }), 'claude')).toBe('working')
     expect(sessionState(tab('x', '/', { activity: 'running' }), null)).toBe('idle')
     expect(sessionState(tab('x', '/', { activity: 'error' }), null)).toBe('error')
+    // Hook'lu Claude ilk olaydan once prompt bekliyor; cikti tahmini "Working" demesin.
+    expect(sessionState(tab('x', '/', { activity: 'running' }), 'claude', true)).toBe('idle')
+    expect(sessionState(tab('x', '/', { activity: 'running' }), 'opencode', true)).toBe('working')
   })
 
   it('picks the most urgent state for a collapsed group', () => {

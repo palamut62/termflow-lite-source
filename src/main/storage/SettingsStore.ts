@@ -50,7 +50,8 @@ function normalizeIde(value: unknown): AppSettings['ide'] {
     sidebarWidth: width(input.sidebarWidth, 260, 200, 400),
     rightWidth: width(input.rightWidth, 300, 220, 560),
     rightOpen: input.rightOpen !== false,
-    rightTab: input.rightTab === 'agents' ? 'agents' : 'explorer'
+    rightTab: input.rightTab === 'agents' ? 'agents' : 'explorer',
+    sidebarOpen: input.sidebarOpen !== false
   }
 }
 

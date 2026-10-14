@@ -18,13 +18,17 @@ export function AppShell(): React.JSX.Element {
   const showSessionRail = useSettingsStore((s) => s.settings.showSessionRail)
   const ide = useSettingsStore((s) => s.settings.uiMode === 'ide')
   const rightOpen = useSettingsStore((s) => s.settings.ide.rightOpen)
+  const sidebarOpen = useSettingsStore((s) => s.settings.ide.sidebarOpen)
+  // IDE (Orca yerlesimi): kenar cubugu ve sag panel pencerenin tepesine kadar uzanir, sekme seridi yalniz
+  // orta sutunun ustundedir. TabBar bu yuzden .app-body'nin SON cocugu olur; TerminalArea'nin sirasi degismez.
   return (
     <>
-      <TabBar height={tabHeight} />
-      <div className={ide ? 'app-body ide-body' : 'app-body'}>
-        {ide ? <IdeSidebar /> : showSessionRail && <SessionRail />}
+      {!ide && <TabBar height={tabHeight} />}
+      <div className={ide ? 'app-body ide-body' : 'app-body'} style={ide ? { '--ide-top': `${tabHeight}px` } as React.CSSProperties : undefined}>
+        {ide ? sidebarOpen && <IdeSidebar /> : showSessionRail && <SessionRail />}
         <TerminalArea />
         {ide ? rightOpen && <RightPanel /> : <FilePanel />}
+        {ide && <TabBar height={tabHeight} ide={{ sidebarOpen, rightOpen }} />}
       </div>
       <StatusBar />
     </>

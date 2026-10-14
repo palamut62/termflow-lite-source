@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-14 | son arac: Claude Code (Opus 5.5) | dal: `main` | surum 1.24.2
+guncel: 2026-10-14 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.24.2
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -32,12 +32,13 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
 - [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
 
-## Son oturum (2026-10-14, Agent IDE PRD)
-- Orca (onorca.dev + bu PC'deki kurulum) arayuzu ekran ekran incelendi; 18 goruntu `docs/agent-ide/img/`
-- Kullanici karari: Terminal (CLI) moduna ek ayri **Agent IDE** modu. PRD: `docs/agent-ide/PRD.md` (TASLAK, onay bekliyor; kod yazilmadi)
+## Son oturum (2026-10-14, Agent IDE Faz 0-1)
+- PRD kararlari (bolum 12): ayri urun "TermFlow Agent IDE" ayni repodan (`TERMFLOW_EDITION=ide`), IDE exe'si iki modlu, freeware, Faz 5 ertelendi, yeni public repo (ilk yayindan once onayla)
+- Faz 0 + Faz 1 tamam, Orca yerlesimi (`docs/agent-ide/PRD.md` 12b, karsilastirma gorselleri). Tek `shells/AppShell.tsx`; Lite DOM'u ayni
+- Dogrulama: birim 720, IDE E2E 3/3 (`npm run test:e2e:ide`), Lite E2E tam kosu 106/107 (kalan bilinen session-rail hatasi)
 
 ## Yarim kalan / siradaki adim
-- **Agent IDE:** `docs/agent-ide/PRD.md` bolum 12 sorularini kullaniciya sor, onaydan sonra Faz 0 (uiMode + `shells/TerminalShell.tsx` tasimasi). Kalan 5 Orca modulu IDE fazlarina katildi (PRD bolum 11)
+- **Agent IDE:** siradaki Faz 2 (Create worktree modali, arama paletine ayar/aksiyon kaynaklari, Source Control + Checks panelleri). Dal `feature/agent-ide` push edilmedi. IDE yayin reposu henuz yok (IDE'de updater ve Explorer menusu kapali)
 - Memory guncelleme sikligi (Ayarlar > Memory > Update: saatlik/gunluk/haftalik, varsayilan saatlik; zamani gelince yalniz yeni/degisen session analiz edilir, yoksa model cagrilmaz, onceki kullanim bilgisi korunur). Surum 1.24.0 kaldi, yerel kurulum
 - Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)

@@ -43,6 +43,8 @@ export interface IdeTreeInput {
   tabs: readonly TerminalTab[]
   activeTabId: string | null
   agentOf: (tab: TerminalTab) => AgentKind | null
+  /** agent-hooks acik mi (ayar). */
+  hooked?: boolean
 }
 
 const norm = (path: string): string => path.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
@@ -54,9 +56,14 @@ export function isInside(child: string, parent: string): boolean {
   return c === p || c.startsWith(`${p}/`)
 }
 
-export function sessionState(tab: TerminalTab, agent: AgentKind | null): SessionState {
+/**
+ * `hooked`: ajan durumunu kendisi bildiriyor (agent-hooks acik, Claude/Codex). O zaman ilk olaydan once
+ * ajan prompt bekliyordur; cikti tahminine bakilmaz (ilk acilista "Working" gorunmesin).
+ */
+export function sessionState(tab: TerminalTab, agent: AgentKind | null, hooked = false): SessionState {
   if (tab.agentHook) return tab.agentHook.state === 'idle' ? 'idle' : tab.agentHook.state
   if (tab.activity === 'error') return 'error'
+  if (hooked && (agent === 'claude' || agent === 'codex')) return 'idle'
   if (tab.activity === 'running' || tab.activity === 'unread') return agent ? 'working' : 'idle'
   return 'idle'
 }
@@ -110,7 +117,7 @@ export function buildIdeTree(input: IdeTreeInput): IdeProject[] {
       tabId: tab.id,
       title: tab.title,
       agent,
-      state: sessionState(tab, agent),
+      state: sessionState(tab, agent, input.hooked),
       since: tab.agentHook?.at ?? tab.busySince ?? tab.startedAt,
       active: tab.id === input.activeTabId
     })

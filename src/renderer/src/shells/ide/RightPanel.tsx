@@ -1,4 +1,4 @@
-import { Bot, FolderTree, X } from 'lucide-react'
+import { Bot, Files, PanelRight } from 'lucide-react'
 import type { IdeRightTab } from '../../../../shared/types'
 import { useSettingsStore } from '../../store/settingsStore'
 import { FilePanel } from '../../components/FilePanel'
@@ -6,11 +6,14 @@ import { AgentsPanel } from './AgentsPanel'
 import { ResizeHandle } from './ResizeHandle'
 
 const TABS: { id: IdeRightTab; label: string; icon: React.JSX.Element }[] = [
-  { id: 'explorer', label: 'Explorer', icon: <FolderTree size={13} /> },
-  { id: 'agents', label: 'Agents', icon: <Bot size={13} /> }
+  { id: 'explorer', label: 'Explorer (Ctrl+Shift+E)', icon: <Files size={15} /> },
+  { id: 'agents', label: 'Agents (Ctrl+Shift+A)', icon: <Bot size={15} /> }
 ]
 
-/** Agent IDE sag paneli (PRD F1.4). Source Control ve Checks Faz 2'de eklenir. */
+/**
+ * Agent IDE sag paneli (PRD 4.3, F1.4), Orca yerlesimi: ust satir pencere dugmelerinin altinda kalir,
+ * altinda yalniz ikonlu sekmeler. Source Control ve Checks Faz 2'de eklenir.
+ */
 export function RightPanel(): React.JSX.Element {
   const ide = useSettingsStore((s) => s.settings.ide)
   const save = (patch: Partial<typeof ide>): void => {
@@ -19,13 +22,23 @@ export function RightPanel(): React.JSX.Element {
   return (
     <aside className="ide-right" style={{ width: ide.rightWidth }} aria-label="Workspace panel">
       <ResizeHandle edge="left" width={ide.rightWidth} min={220} max={560} label="Resize workspace panel" onChange={(rightWidth) => save({ rightWidth })} />
+      <div className={`ide-right-top${window.termflow?.system.platform === 'win32' ? ' ide-right-top-win' : ''}`}>
+        <button className="ide-icon-btn ide-icon-on" onClick={() => save({ rightOpen: false })} title="Hide right panel" aria-label="Hide workspace panel"><PanelRight size={15} /></button>
+      </div>
       <div className="ide-right-tabs" role="tablist" aria-label="Workspace panel">
         {TABS.map((tab) => (
-          <button key={tab.id} role="tab" aria-selected={ide.rightTab === tab.id} className={ide.rightTab === tab.id ? 'ide-right-tab ide-right-tab-on' : 'ide-right-tab'} onClick={() => save({ rightTab: tab.id })}>
-            {tab.icon}<span>{tab.label}</span>
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={ide.rightTab === tab.id}
+            aria-label={tab.label.replace(/ \(.*\)$/, '')}
+            title={tab.label}
+            className={ide.rightTab === tab.id ? 'ide-right-tab ide-right-tab-on' : 'ide-right-tab'}
+            onClick={() => save({ rightTab: tab.id })}
+          >
+            {tab.icon}
           </button>
         ))}
-        <button className="ide-icon-btn ide-right-close" onClick={() => save({ rightOpen: false })} title="Hide panel" aria-label="Hide workspace panel"><X size={13} /></button>
       </div>
       <div className="ide-right-body" role="tabpanel">
         {ide.rightTab === 'explorer' ? <FilePanel embedded /> : <AgentsPanel />}
