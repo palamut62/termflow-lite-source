@@ -635,7 +635,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     'ctrl+=': 'font-increase',
     'ctrl+-': 'font-decrease',
     'ctrl+0': 'font-reset',
-    'ctrl+alt+b': 'toggle-broadcast'
+    'ctrl+alt+b': 'toggle-broadcast',
+    'ctrl+shift+j': 'jump-palette'
   },
   profiles: [],
   providerProfiles: [

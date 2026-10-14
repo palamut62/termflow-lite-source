@@ -765,3 +765,9 @@ body {
 .usage-value { text-align: right; }
 .usage-reset, .usage-note { opacity: 0.7; }
 .usage-note { margin-top: 3px; font-size: 11px; }
+
+/* Jump palette (Ctrl+Shift+J): numara, durum noktasi, ikon, baslik, zaman. */
+.palette-item.jump-item { grid-template-columns: 12px 7px 18px 1fr auto; }
+.jump-key { font: inherit; font-size: 10px; color: var(--tab-inactive-foreground); text-align: center; }
+.jump-dot { width: 7px; height: 7px; }
+.jump-item time { color: var(--tab-inactive-foreground); font-size: 10px; white-space: nowrap; }

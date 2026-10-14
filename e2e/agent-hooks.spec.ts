@@ -177,3 +177,34 @@ test('a restart resumes the conversation the agent reported, and falls back when
   await expect(win.getByText('could not be resumed')).toBeVisible({ timeout: 20_000 })
   await expect.poll(terminalText, { timeout: 20_000 }).toContain('args resume=none')
 })
+
+test('Ctrl+Shift+J lists the waiting tab first, 1 jumps to it, Shift+Enter opens a tab beside', async () => {
+  const quiet = { system: false, sound: false }
+  await launch(true, { agentAlerts: { needsInput: quiet, done: quiet, error: quiet, volume: 0, soundFile: '' } })
+  await expect.poll(terminalText, { timeout: 20_000 }).toContain('fake claude ready')
+  await win.locator('.terminal-host .xterm').first().click()
+  await win.keyboard.type('fix login')
+  await win.keyboard.press('Enter')
+  await win.keyboard.press('Control+Shift+T')
+  await win.keyboard.press('Control+Shift+T')
+  const tabs = win.locator('.tab')
+  await expect(tabs).toHaveCount(3)
+  await expect(tabs.first().locator('.tab-attention-needs-input')).toBeVisible({ timeout: 10_000 })
+
+  await win.keyboard.press('Control+Shift+J')
+  const rows = win.getByRole('listbox', { name: 'Tabs and sessions' }).getByRole('option')
+  await expect(rows).toHaveCount(2) // the active tab is not listed
+  await expect(rows.first().locator('.tab-attention-needs-input')).toBeVisible()
+  await expect(rows.first()).toHaveAttribute('aria-label', /Needs your input/)
+  await win.screenshot({ path: 'test-results/jump-palette.png' })
+  await win.keyboard.press('1')
+  await expect(win.getByRole('dialog', { name: 'Jump to tab or session' })).toHaveCount(0)
+  await expect(tabs.first()).toHaveClass(/tab-active/)
+  await expect(tabs.first().locator('.tab-attention')).toHaveCount(0)
+
+  // The tab just left is now the most recent; Shift+Enter puts it beside this one.
+  await win.keyboard.press('Control+Shift+J')
+  await win.keyboard.press('Shift+Enter')
+  await expect(win.locator('.pane-tree-split')).toHaveCount(1)
+  await expect(win.locator('.terminal-host .xterm:visible')).toHaveCount(2)
+})

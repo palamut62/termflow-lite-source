@@ -8,7 +8,7 @@ import { useHandoverStore } from '../store/handoverStore'
 
 const LABELS: Record<AgentKind, string> = { claude: 'Claude', codex: 'Codex', opencode: 'OpenCode' }
 
-function relativeTime(timestamp: number): string {
+export function relativeTime(timestamp: number): string {
   const diff = Math.max(0, Date.now() - timestamp)
   const minutes = Math.floor(diff / 60_000)
   if (minutes < 1) return 'now'

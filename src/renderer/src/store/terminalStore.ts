@@ -112,6 +112,8 @@ interface TerminalState {
   setTabCwd(id: string, cwd: string): void
   setTabWorkingDirectory(id: string, cwd: string): void
   splitActive(direction: 'vertical' | 'horizontal'): void
+  /** Var olan sekmeyi aktif panenin yanina split olarak getirir (jump palette Shift+Enter). */
+  openBeside(id: string): void
   setSplitDirection(direction: 'vertical' | 'horizontal'): void
   closeSplit(): void
   setSplitRatio(ratio: number): void
@@ -396,6 +398,19 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     }
     const paneTree = buildTiledPane(tabs.map((tab) => tab.id), direction)!
     set({ tabs, paneTree, splitDirection: direction, splitTabIds: paneTerminalIds(paneTree), splitRatio: 0.5, activeTabId: second.id })
+  },
+
+  openBeside(id) {
+    const state = get()
+    const active = state.activeTabId
+    const base: PaneNode | null = state.paneTree ?? (active ? { type: 'leaf', terminalId: active } : null)
+    if (!active || active === id || !base || !state.tabs.some((tab) => tab.id === id) || paneTerminalIds(base).includes(id)) {
+      get().setActiveTab(id)
+      return
+    }
+    const direction = state.splitDirection ?? 'vertical'
+    const paneTree = splitPane(base, active, id, direction)
+    set({ paneTree, splitDirection: direction, splitTabIds: paneTerminalIds(paneTree), activeTabId: id })
   },
 
   setSplitDirection(direction) {

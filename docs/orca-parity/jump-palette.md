@@ -1,6 +1,6 @@
 # jump-palette - Sekme ve oturum atlama paleti
 
-Durum: TASLAK 2026-10-14. Bagimli: agent-attention. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: agent-attention. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Cok sekmeli ajan kullaniminda "hangi sekme beni bekliyor"a tek tusla gitmek. Mevcut palet
@@ -28,3 +28,17 @@ Cok sekmeli ajan kullaniminda "hangi sekme beni bekliyor"a tek tusla gitmek. Mev
 ## Dilimler
 1. Palet bileseni + sekme kaynagi + dikkat siralamasi.
 2. Oturum kaynagi (surdur), split ile acma, yeni sekme satiri.
+
+## Uygulama notlari (2026-10-14)
+- Kod: saf siralama `src/renderer/src/jumpRanking.ts` (+test), `store/jumpPaletteStore.ts` (ac/kapa + sekme yakinlik
+  takibi `lastSeen`), `components/JumpPalette.tsx` (TaskPalette CSS'i), `terminalStore.openBeside` (Shift+Enter).
+- Kisayol `settings.shortcuts` icinde `ctrl+shift+j -> jump-palette`; Ayarlar > Keyboard'dan degistirilebilir.
+- Bos sorguda aktif sekme listelenmez; "son aktif" = en son aktif olan ya da aktiflikten cikan an (Alt+Tab gibi).
+  Bekleyen sekmenin zamani olayin zamanidir.
+- Session rail gruplari ayri satir olmadi: sekmenin klasor adi, tam yolu ve worktree depo adi aranir, yani depo adi
+  yazinca o gruptaki sekmeler gelir. Agirlik: baslik/dal 3, klasor/depo adi 2, profil/tam yol 1.
+- Rakam: bos sorguda `1`-`9`, sorgu varken `Ctrl+1`-`9`. Shift+Enter yalniz sekme satirinda split yapar; oturum ve
+  klasor satirinda Enter gibi davranir. Bir sekmede acik olan oturum (hook ya da resume kimligi) oturum listesinde tekrar cikmaz.
+- "Open new tab in" satiri mevcut `system.resolvePath` ile (aktif sekmenin klasorune gore) yalniz klasorse cikar.
+- E2E: `e2e/agent-hooks.spec.ts` "Ctrl+Shift+J ..." (bekleyen sekme ilk, `1` ile atlama, Shift+Enter split).
+  Dondurma bilesen durumu (`useState` baslangici) ile yapildi; ayri testi yok.

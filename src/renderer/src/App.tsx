@@ -15,6 +15,8 @@ import { CommandHistory } from './components/CommandHistory'
 import { useCommandHistoryStore } from './store/commandHistoryStore'
 import { TaskPalette } from './components/TaskPalette'
 import { useTaskPaletteStore } from './store/taskPaletteStore'
+import { JumpPalette } from './components/JumpPalette'
+import { trackTabRecency, useJumpPaletteStore } from './store/jumpPaletteStore'
 import { AgentSessions } from './components/AgentSessions'
 import { useAgentSessionStore } from './store/agentSessionStore'
 import { paneTerminalIds, type PaneNode } from './paneUtils'
@@ -64,6 +66,7 @@ export default function App(): React.JSX.Element {
   const paneTree = useTerminalStore((s) => s.paneTree)
   const historyOpen = useCommandHistoryStore((s) => s.open)
   const taskPaletteOpen = useTaskPaletteStore((s) => s.open)
+  const jumpPaletteOpen = useJumpPaletteStore((s) => s.open)
   const agentSessionsOpen = useAgentSessionStore((s) => s.open)
   const savedCommandsOpen = useSavedCommandStore((s) => s.open)
   const agentInboxOpen = useAgentEventStore((s) => s.open)
@@ -108,6 +111,8 @@ export default function App(): React.JSX.Element {
   useEffect(() => startAttention(), [])
   // scrollback-restore: degisen sekmeleri dakikada bir, hepsini kapanista kaydet.
   useEffect(() => startScrollbackAutosave(), [])
+  // jump-palette: "son aktif sekmeler" sirasi.
+  useEffect(() => trackTabRecency(), [])
 
   // Önizleme kartları: izlenen klasörlerde yeni beliren medya, sekme kapanınca temizlik.
   useEffect(() => window.termflow.media.onNew((tabIds, info) => {
@@ -277,6 +282,9 @@ export default function App(): React.JSX.Element {
         case 'settings':
           useSettingsStore.getState().openSettings()
           break
+        case 'jump-palette':
+          useJumpPaletteStore.getState().toggle()
+          break
         default:
           return
       }
@@ -365,6 +373,7 @@ export default function App(): React.JSX.Element {
       {agentSessionsOpen && <AgentSessions />}
       {agentInboxOpen && <AgentInbox />}
       {taskPaletteOpen && <TaskPalette />}
+      {jumpPaletteOpen && <JumpPalette />}
       {settingsOpen && <Settings />}
       {pendingCloseTabId && <CloseTabConfirm />}
       {handover && <HandoverDialog />}

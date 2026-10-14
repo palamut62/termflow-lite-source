@@ -5,6 +5,7 @@ import { useSettingsStore } from '../store/settingsStore'
 const TIPS = [
   'Ctrl+Up / Ctrl+Down jumps between commands. Right-click a command block to copy its output or rerun it.',
   'Ctrl+Shift+P opens the task palette with your package.json scripts, Git and Docker tasks.',
+  'Ctrl+Shift+J jumps to the tab that is waiting for you; 1-9 picks a row.',
   'Ctrl+Shift+H searches every command you ran, across folders and profiles.',
   'Click a location like src/app.ts:42:7 in compiler output to open the file at that line.',
   'Split the terminal from the tab bar, then press Ctrl+Alt+B to type into every pane at once.',

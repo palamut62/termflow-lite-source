@@ -380,3 +380,25 @@ describe('applyAgentHook', () => {
     expect(useTerminalStore.getState().tabs[0].agentHook).toBeUndefined()
   })
 })
+
+describe('openBeside', () => {
+  it('splits the active pane with an existing background tab and focuses it', () => {
+    const store = useTerminalStore.getState()
+    const a = store.addTab('bash')
+    const b = store.addTab('bash', false)
+    store.addTab('bash', false)
+    useTerminalStore.getState().openBeside(b)
+    const state = useTerminalStore.getState()
+    expect(state.paneTree).toEqual({ type: 'split', dir: 'vertical', ratio: 0.5, a: { type: 'leaf', terminalId: a }, b: { type: 'leaf', terminalId: b } })
+    expect(state.splitTabIds).toEqual([a, b])
+    expect(state.activeTabId).toBe(b)
+  })
+
+  it('only focuses a tab that is already on screen', () => {
+    const store = useTerminalStore.getState()
+    const a = store.addTab('bash')
+    store.openBeside(a)
+    expect(useTerminalStore.getState().paneTree).toBeNull()
+    expect(useTerminalStore.getState().activeTabId).toBe(a)
+  })
+})

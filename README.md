@@ -23,6 +23,7 @@ TermFlow Lite opens straight into a terminal — no welcome screens, no setup wi
 - **Smart status bar** - see process activity, provider model, Git branch and changes, full-access state, current directory, and tab count without visual clutter
 - **Command history** - search commands across folders and profiles, rerun them in the active terminal, or clear saved history with `Ctrl+Shift+H`
 - **Task and command palette** - discover `package.json` scripts and run project, Git, npm, or Docker tasks with `Ctrl+Shift+P`
+- **Jump palette** - `Ctrl+Shift+J` lists the tabs waiting for you first, then recent ones; press `1`-`9` to jump, type to search tabs, folders, branches and saved agent sessions, `Shift+Enter` opens a tab beside the current pane
 - **Agent work panel** - agent/provider, model, activity, permission mode, working directory, and live session duration below the terminal
 - **Agent security profiles** - start Codex or Claude in Safe, Workspace, or Full Access mode with CLI-native permission flags pinned per tab
 - **Agent Inbox and timeline** - review redacted, persistent agent activity, approval waits, tool work, completion, and failure events across tabs
@@ -101,6 +102,7 @@ Defaults (rebindable in Settings > Keyboard):
 | `Ctrl+Shift+Tab` | Previous tab |
 | `Ctrl+Shift+H` | Command history |
 | `Ctrl+Shift+P` | Task and command palette |
+| `Ctrl+Shift+J` | Jump to a tab or agent session (tabs waiting for you first) |
 | `Ctrl+\\` | Split terminal right |
 | `Ctrl+Shift+\\` | Split terminal down |
 | `Ctrl+Shift+F` | Search terminal |
