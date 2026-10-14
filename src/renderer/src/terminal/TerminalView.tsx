@@ -32,6 +32,7 @@ import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
 import { AsciiBackdrop } from './AsciiBackdrop'
 import { AgentWorkPanel } from '../components/AgentWorkPanel'
+import { UsageStrip } from '../usage/UsageStrip'
 import { AgentCompanion } from '../components/AgentCompanion'
 import { MediaCards } from '../components/MediaCards'
 import { reportMedia } from '../store/mediaStore'
@@ -1018,6 +1019,7 @@ ${block.output.slice(-8000)}
         </div>
         <AgentCompanion tabId={tabId} visible={visible} />
       </div>
+      <UsageStrip tabId={tabId} />
       <AgentWorkPanel tabId={tabId} onChangeCwd={handleChangeCwd} />
       {uiSearchTabId === tabId && (
         <TerminalSearch

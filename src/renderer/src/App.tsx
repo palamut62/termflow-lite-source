@@ -47,7 +47,6 @@ import { startAttention } from './attention/alerts'
 import { startScrollbackAutosave } from './terminal/scrollbackRestore'
 import { persistedResume } from './terminal/agentResume'
 import { startAgentDetection } from './agentDetect'
-import { UsageCard } from './usage/UsageCard'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -372,7 +371,6 @@ export default function App(): React.JSX.Element {
             {backgroundTabs.map((tab) => <TerminalView key={tab.id} tabId={tab.id} active={false} visible={false} />)}
           </>
         ) : tabs.map((tab) => <TerminalView key={tab.id} tabId={tab.id} active={tab.id === activeTabId} />)}
-        <UsageCard />
       </div>
       <FilePanel />
       </div>

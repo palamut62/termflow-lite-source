@@ -6,6 +6,7 @@
 :root[data-backdrop='on'] .app,
 :root[data-backdrop='on'] .pane-leaf,
 :root[data-backdrop='on'] .agent-work-panel,
+:root[data-backdrop='on'] .usage-strip,
 :root[data-backdrop='on'] .terminal-host .xterm .xterm-viewport {
   background: transparent;
 }

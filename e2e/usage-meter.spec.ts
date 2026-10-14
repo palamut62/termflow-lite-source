@@ -51,10 +51,13 @@ test('the status bar shows the active Codex tab limits from the local session fi
   // Default: remaining percent, like Codex's own footer.
   await expect(meter).toHaveText(/5h 15% left · 7d 88% left/, { timeout: 15_000 })
   await expect(meter).toHaveClass(/usage-warn/)
-  // Cards in the terminal corner, coloured by level: 5h is at 85% used (amber), 7d at 12% (green).
-  await expect(win.locator('.usage-card-warn')).toContainText('15% left')
-  await expect(win.locator('.usage-card-ok')).toContainText('88% left')
-  await win.screenshot({ path: 'test-results/usage-cards.png' })
+  // One-line strip under the terminal, both windows side by side: 5h at 85% used (amber), 7d at 12% (green).
+  const strip = win.locator('.usage-strip')
+  await expect(strip.locator('.usage-strip-warn')).toContainText('15% left')
+  await expect(strip.locator('.usage-strip-ok')).toContainText('88% left')
+  const rows = await strip.locator('.usage-strip-item').evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)))
+  expect(new Set(rows).size).toBe(1)
+  await win.screenshot({ path: 'test-results/usage-strip.png' })
   await meter.click()
   await expect(win.locator('.usage-popover')).toContainText(/resets in (2h 59m|3h 0m)/)
 
