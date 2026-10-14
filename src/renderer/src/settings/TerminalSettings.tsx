@@ -184,6 +184,28 @@ export function TerminalSettings(): React.JSX.Element {
           />
         </Field>
         <Field
+          label="Restore Terminal Output"
+          hint="Each restored tab shows its last 2000 lines from before the restart. Saved on this computer with API keys masked. Turning it off deletes the saved output."
+        >
+          <Toggle
+            checked={settings.restoreScrollback}
+            disabled={!settings.restoreSession}
+            onChange={(v) => { if (!v) window.termflow.scrollback.clear(); void update({ restoreScrollback: v }) }}
+            label="Restore terminal output"
+          />
+        </Field>
+        <Field
+          label="Resume Agent Conversations"
+          hint="Claude Code, Codex and OpenCode tabs continue their own conversation after a restart. Only the conversation id is saved."
+        >
+          <Toggle
+            checked={settings.resumeAgentsOnRestore}
+            disabled={!settings.restoreSession}
+            onChange={(v) => void update({ resumeAgentsOnRestore: v })}
+            label="Resume agent conversations"
+          />
+        </Field>
+        <Field
           label="Close to Tray"
           hint="Closing the window keeps the app running in the system tray; use Quit in the tray menu to exit."
         >

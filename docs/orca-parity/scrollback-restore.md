@@ -1,6 +1,6 @@
 # scrollback-restore - Terminal icerigini yeniden acilista geri getirmek
 
-Durum: TASLAK 2026-10-14. Bagimli: yok. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: yok. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Bugun sekmeler, klasorler ve bolunmus duzen geri geliyor ama terminaller bos aciliyor. Kullanici
@@ -35,5 +35,13 @@ uygulamayi kapatip actiginda (ya da guncellemeden sonra) her panenin son ciktisi
 2. Geri yukleme + ayirici + yetim temizligi.
 3. Periyodik kayit, ayar, temizleme dugmesi, boyut sinirlari.
 
-## Acik sorular
-- Varsayilan acik mi olsun? Terminal ciktisi diske yazilmis olur (maskeli de olsa). Oneri: acik, ayarda net aciklama.
+## Uygulama notlari (2026-10-14)
+- Kod: `src/main/storage/ScrollbackStore.ts` (+test), `src/main/ipc/scrollback.ts`, renderer `terminal/scrollbackRestore.ts`,
+  `TerminalView` (SerializeAddon, PTY'den once geri yukleme). Ayar `restoreScrollback` (varsayilan acik, `restoreSession` kapaliysa devre disi).
+- Kayit: degisen sekmeler 60 sn'de bir; pencere kapanirken `sendSync` ile hepsi (cikista yarim kalmasin diye).
+- Acilista oturumda olmayan dosyalar silinir; ayar ya da `restoreSession` kapaliysa klasorun tamami silinir. Sekme kapaninca dosyasi silinir.
+- Maskeleme ANSI'ye duyarli (`redactApiKeysInAnsi`): PSReadLine renklendirmesi anahtarin ortasina dizi koyabiliyor.
+- Bu sirada bulunan mevcut hata duzeltildi: canli `TerminalSecretRedactor` karakter karakter yazilan anahtarin ilk onekini secip
+  kuyrugu acikta birakiyordu; artik en uzun eslesme. Canli yazilan komut satirinda kuyruk yine gorunur (akisin dogasi), ciktida tam maskelenir.
+- Ayirici tarihi `en-US` (arayuz Ingilizce). Telefona geri yuklenen icerik gitmez.
+- Olculmedi: 10 sekmeyle acilis suresi artisi.

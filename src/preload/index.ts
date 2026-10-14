@@ -219,6 +219,14 @@ const api = {
     loadSound: (file: string): Promise<Uint8Array | null> => ipcRenderer.invoke(IPC.ALERTS_LOAD_SOUND, file),
     setBadge: (badge: AttentionBadge): void => ipcRenderer.send(IPC.WINDOW_ATTENTION, badge)
   },
+  scrollback: {
+    save: (tabId: string, data: string): void => ipcRenderer.send(IPC.SCROLLBACK_SAVE, tabId, data),
+    /** Pencere kapanirken: yazma bitene kadar bekler. */
+    saveAllSync: (entries: [string, string][]): void => { ipcRenderer.sendSync(IPC.SCROLLBACK_SAVE_ALL_SYNC, entries) },
+    load: (tabId: string): Promise<string | null> => ipcRenderer.invoke(IPC.SCROLLBACK_LOAD, tabId),
+    remove: (tabId: string): void => ipcRenderer.send(IPC.SCROLLBACK_REMOVE, tabId),
+    clear: (): void => ipcRenderer.send(IPC.SCROLLBACK_CLEAR)
+  },
   themes: {
     pick: (): Promise<{ name: string; text: string } | { error: string } | null> => ipcRenderer.invoke(IPC.DIALOG_PICK_THEME)
   },

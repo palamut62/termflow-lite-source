@@ -29,6 +29,9 @@ function fire(name, extra) {
   })
 }
 const say = (text) => process.stdout.write(text)
+const resumeAt = args.indexOf('--resume')
+if (resumeAt >= 0 && process.env.FAKE_FAIL_RESUME) { say('No conversation found\r\n'); process.exit(1) }
+say('args resume=' + (resumeAt >= 0 ? args[resumeAt + 1] : 'none') + '\r\n')
 fire('SessionStart', { source: 'startup' }).then(() => say('fake claude ready\r\n> '))
 let awaiting = false
 let line = ''
@@ -56,6 +59,12 @@ let app: ElectronApplication
 let win: Page
 let folder = ''
 
+async function relaunch(env: Record<string, string> = {}): Promise<void> {
+  app = await electron.launch({ args: ['.', '--no-sandbox'], env: { ...process.env, ...env, TERMFLOW_E2E: '1', TERMFLOW_E2E_USER_DATA: join(folder, 'user-data') } })
+  win = await app.firstWindow()
+  await win.waitForSelector('.terminal-host .xterm')
+}
+
 async function launch(agentHooks: boolean, extra: Record<string, unknown> = {}): Promise<void> {
   folder = mkdtempSync(join(tmpdir(), 'termflow-e2e-hooks-'))
   const userData = join(folder, 'user-data')
@@ -77,9 +86,7 @@ async function launch(agentHooks: boolean, extra: Record<string, unknown> = {}):
     profiles: [{ id: 'fake-claude', name: 'Fake Claude', command, args: [], fullPermissions: false }],
     ...extra
   }))
-  app = await electron.launch({ args: ['.', '--no-sandbox'], env: { ...process.env, TERMFLOW_E2E: '1', TERMFLOW_E2E_USER_DATA: userData } })
-  win = await app.firstWindow()
-  await win.waitForSelector('.terminal-host .xterm')
+  await relaunch()
 }
 
 test.afterEach(async () => {
@@ -150,4 +157,23 @@ test('a background tab that needs approval gets a dot, the bell lists it, visiti
   await win.locator('.terminal-host .xterm').first().click({ button: 'right' })
   await win.getByRole('menuitem', { name: 'Mark as Unread' }).click()
   await expect(firstTab.locator('.tab-attention-done')).toBeVisible()
+})
+
+test('a restart resumes the conversation the agent reported, and falls back when it is gone', async () => {
+  await launch(true, { restoreSession: true })
+  await expect.poll(terminalText, { timeout: 20_000 }).toContain('args resume=none')
+  await win.locator('.terminal-host .xterm').first().click()
+  await win.keyboard.type('first prompt')
+  await win.keyboard.press('Enter')
+  await expect.poll(activity, { timeout: 5_000 }).toBe('Activity: running')
+  await app.close()
+
+  await relaunch()
+  await expect.poll(terminalText, { timeout: 20_000 }).toContain('args resume=e2e-session-1')
+  await app.close()
+
+  // The conversation no longer exists: the tab starts fresh instead of showing an error.
+  await relaunch({ FAKE_FAIL_RESUME: '1' })
+  await expect(win.getByText('could not be resumed')).toBeVisible({ timeout: 20_000 })
+  await expect.poll(terminalText, { timeout: 20_000 }).toContain('args resume=none')
 })

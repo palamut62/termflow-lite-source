@@ -25,6 +25,8 @@ import { motionEnabled } from '../motion'
 import { formatDroppedPaths } from './dropPaths'
 import { getPathAtMouse, getUrlAtMouse, registerPathLinkProvider, type PathMenuInfo } from './pathLinks'
 import { parseOsc52, shiftEnterSequence } from './terminalExtras'
+import { SerializeAddon } from '@xterm/addon-serialize'
+import { markScrollbackDirty, registerSerializer, restoreScrollback } from './scrollbackRestore'
 import { useToastStore } from '../store/toastStore'
 import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
@@ -238,6 +240,10 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     const searchAddon = new SearchAddon()
     term.loadAddon(searchAddon)
     searchAddons.set(tabId, searchAddon) // TerminalSearch lookup (Faz 7)
+    // scrollback-restore: yalniz normal buffer'in son 2000 satiri (TUI'nin alternatif ekrani degil).
+    const serializeAddon = new SerializeAddon()
+    term.loadAddon(serializeAddon)
+    const unregisterSerializer = registerSerializer(tabId, () => serializeAddon.serialize({ scrollback: 2000, excludeAltBuffer: true, excludeModes: true }))
     term.loadAddon(new Unicode11Addon())
     term.unicode.activeVersion = '11'
     term.open(host)
@@ -340,6 +346,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       if (ready) term.write(data)
       else queue.push(data)
       recordOutput(tabId, data.length)
+      markScrollbackDirty(tabId)
       // Strip CSI and OSC sequences: shell integration ends every prompt with
       // OSC 133;B, which would otherwise hide the prompt from the check below.
       recentOutput = (recentOutput + data).replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]/g, '').slice(-256)
@@ -365,6 +372,13 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     dataHandlers.set(tabId, onDataHandler)
 
     const onExitHandler = (exitCode: number, durationMs: number): void => {
+      // agent-resume: silinmis ya da baska makineye ait konusma hemen hata verir; sekme yeni oturumla baslar.
+      if (resumeSession && exitCode !== 0 && durationMs < 8000) {
+        useToastStore.getState().show(`The previous ${resumeSession.agent} conversation could not be resumed. Started a new one.`, 'info')
+        createdPtys.delete(tabId)
+        useTerminalStore.getState().dropResume(tabId) // efekt resumeSession'a bagli: yeniden calisir, temiz baslar
+        return
+      }
       // Sarımsı mesaj terminal içine, butonlar overlay'de (PRD §74).
       term.write(`\r\n\x1b[33mProcess exited with code ${exitCode}\x1b[0m\r\n`)
       useTerminalStore.getState().clearAgentHook(tabId)
@@ -418,8 +432,9 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
         return
       }
       createdPtys.add(tabId)
-      void window.termflow.pty
-        .create(tabId, profileId, lastSizeRef.current.cols, lastSizeRef.current.rows, launchCwd, resumeSession, launchCommand, permissionMode, model)
+      // Eski cikti once basilir; canli cikti kuyrukta bekledigi icin sira bozulmaz.
+      void restoreScrollback(term, tabId)
+        .then(() => window.termflow.pty.create(tabId, profileId, lastSizeRef.current.cols, lastSizeRef.current.rows, launchCwd, resumeSession, launchCommand, permissionMode, model))
         .then(() => {
           if (disposed) return
           useHandoverStore.getState().started(tabId)
@@ -675,6 +690,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       codexOsc?.dispose()
       codexTitle?.dispose()
       osc52.dispose()
+      unregisterSerializer()
       voice.blur()
       term.textarea?.removeEventListener('blur', onVoiceBlur)
       window.removeEventListener('blur', onVoiceBlur)

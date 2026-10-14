@@ -3,6 +3,7 @@ import type { AgentHookEvent, AgentHookState } from '../../../shared/agentHooks'
 import { useTerminalStore } from '../store/terminalStore'
 import { useAgentEventStore } from '../store/agentEventStore'
 import { raiseAttention } from '../attention/alerts'
+import { pickStartedSession } from './agentResume'
 
 /** Hook'lu sekmede bu olaylar yalniz ajanin kendi bildiriminden gelir, cikti metninden degil. */
 export const HOOK_OWNED_KINDS = new Set<AgentEventKind>(['approval', 'question', 'completed', 'error'])
@@ -29,6 +30,19 @@ export function applyHookEvent(tabId: string, agent: AgentKind, permissionMode: 
   // Ajan yeniden calisiyorsa artik kimseyi beklemiyor; okunmadi isareti kalkar.
   if (event.state === 'working') useTerminalStore.getState().clearAttention([tabId])
   else if (event.state === 'needs-input' || event.state === 'done' || event.state === 'error') raiseAttention(tabId, agent, event.state, event.detail)
+  // Codex OSC 9 oturum kimligi tasimaz; ilk turdan sonra yerel oturum dosyasindan eslenir (agent-resume).
+  if (agent === 'codex' && event.state === 'done') void findCodexSession(tabId)
+}
+
+async function findCodexSession(tabId: string): Promise<void> {
+  const tab = useTerminalStore.getState().tabs.find((item) => item.id === tabId)
+  const cwd = tab?.cwd || tab?.launchCwd
+  if (!tab || !cwd || tab.agentHook?.sessionId || tab.resumeSession) return
+  const sessions = await window.termflow.agentSessions.list({ agents: ['codex'], limit: 30 }).catch(() => [])
+  const current = useTerminalStore.getState()
+  const taken = new Set(current.tabs.flatMap((item) => [item.agentHook?.sessionId, item.resumeSession?.id]).filter((id): id is string => Boolean(id)))
+  const id = pickStartedSession(sessions, cwd, tab.startedAt, taken)
+  if (id && current.tabs.some((item) => item.id === tabId)) current.applyAgentHook(tabId, { sessionId: id })
 }
 
 /** Ana surecten gelen Claude hook olaylari; dinlemeyi birakan fonksiyonu dondurur. */

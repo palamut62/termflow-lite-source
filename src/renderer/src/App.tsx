@@ -41,6 +41,8 @@ import { startRemoteBridge } from './remoteBridge'
 import { VoiceIndicator } from './components/VoiceIndicator'
 import { subscribeAgentHooks } from './terminal/agentHookEvents'
 import { startAttention } from './attention/alerts'
+import { startScrollbackAutosave } from './terminal/scrollbackRestore'
+import { persistedResume } from './terminal/agentResume'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -104,6 +106,8 @@ export default function App(): React.JSX.Element {
   useEffect(() => subscribeAgentHooks(), [])
   // agent-attention: gorunen sekmenin isaretini temizle, gorev cubugu rozeti.
   useEffect(() => startAttention(), [])
+  // scrollback-restore: degisen sekmeleri dakikada bir, hepsini kapanista kaydet.
+  useEffect(() => startScrollbackAutosave(), [])
 
   // Önizleme kartları: izlenen klasörlerde yeni beliren medya, sekme kapanınca temizlik.
   useEffect(() => window.termflow.media.onNew((tabIds, info) => {
@@ -150,7 +154,7 @@ export default function App(): React.JSX.Element {
     if (!useSettingsStore.getState().settings.restoreSession) return
     window.termflow.session.save({
       version: 1,
-      tabs: state.tabs.map((tab) => ({ id: tab.id, title: tab.title, profileId: tab.profileId, cwd: tab.cwd || tab.launchCwd, model: tab.model, permissionMode: tab.permissionMode, resumeSession: tab.resumeSession, worktree: tab.worktree })),
+      tabs: state.tabs.map((tab) => ({ id: tab.id, title: tab.title, profileId: tab.profileId, cwd: tab.cwd || tab.launchCwd, model: tab.model, permissionMode: tab.permissionMode, resumeSession: persistedResume(tab, useSettingsStore.getState().settings), worktree: tab.worktree })),
       activeTabId: state.activeTabId,
       paneTree: state.paneTree,
       splitDirection: state.splitDirection,

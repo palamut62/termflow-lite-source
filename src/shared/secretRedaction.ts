@@ -34,6 +34,24 @@ export function redactApiKeys(value: string, knownKeys: Iterable<string> = findA
   return redacted
 }
 
+// CSI, OSC (BEL ya da ST ile biten) ve iki baytlik ESC dizileri.
+const ANSI_SEQUENCE = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_])/g
+
+/**
+ * Terminal ciktisi icin: kabuk renklendirmesi bir anahtarin ortasina ANSI dizisi koyabilir
+ * (PSReadLine). Anahtarlar ANSI'siz metinde bulunur, ciktida aralarindaki dizilerle birlikte maskelenir.
+ */
+export function redactApiKeysInAnsi(value: string): string {
+  const keys = findApiKeys(value.replace(ANSI_SEQUENCE, ''))
+  const gap = `(?:${ANSI_SEQUENCE.source})*`
+  let redacted = value
+  for (const key of keys) {
+    const pattern = new RegExp([...key].map((ch) => ch.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&')).join(gap), 'g')
+    redacted = redacted.replace(pattern, MASK)
+  }
+  return redacted
+}
+
 /** Keeps pasted keys in memory only for the lifetime of one terminal process. */
 export class TerminalSecretRedactor {
   private readonly keys = new Set<string>()
@@ -56,7 +74,8 @@ export class TerminalSecretRedactor {
     if (!this.keys.size) return data
     let output = '', i = 0
     while (i < data.length) {
-      const key = [...this.keys].find(key => data.startsWith(key, i))
+      // En uzun eslesme: karakter karakter yazilan anahtarin her oneki ayri kayitlidir; ilki secilirse kuyrugu acikta kalir.
+      const key = [...this.keys].filter(key => data.startsWith(key, i)).sort((a, b) => b.length - a.length)[0]
       if (key) { output += MASK; i += key.length; continue }
       const rest = data.slice(i)
       if ([...this.keys].some(key => key.startsWith(rest))) { this.pending = rest; break }

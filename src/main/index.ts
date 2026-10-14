@@ -15,6 +15,8 @@ import { handleMediaRequest, MEDIA_SCHEME, unwatchAllMedia } from './media'
 import { WIDGET_ACTIONS, WidgetController } from './widget'
 import { registerDialogIpc } from './ipc/dialog'
 import { registerAlertsIpc } from './ipc/alerts'
+import { registerScrollbackIpc } from './ipc/scrollback'
+import { ScrollbackStore } from './storage/ScrollbackStore'
 import { registerGitIpc } from './ipc/git'
 import { registerWorktreeIpc } from './ipc/worktree'
 import { registerGithubIpc } from './ipc/github'
@@ -435,6 +437,12 @@ app.whenReady().then(() => {
   })
   registerDialogIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
   registerAlertsIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
+  // scrollback-restore: yalniz geri yuklenecek oturumun sekmeleri kalir, gerisi silinir.
+  const scrollbackStore = new ScrollbackStore(join(app.getPath('userData'), 'scrollback'))
+  const scrollbackEnabled = (): boolean => Boolean(settingsStore?.get().restoreScrollback && settingsStore.get().restoreSession)
+  if (scrollbackEnabled()) scrollbackStore.prune(sessionStore?.get()?.tabs.map((tab) => tab.id) ?? [])
+  else scrollbackStore.clear()
+  registerScrollbackIpc(scrollbackStore, scrollbackEnabled)
   registerGitIpc()
   registerWorktreeIpc()
   registerGithubIpc()

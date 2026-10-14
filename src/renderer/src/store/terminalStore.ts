@@ -105,6 +105,8 @@ interface TerminalState {
   clearAgentHook(id: string): void
   markAttention(id: string, attention: TabAttention): void
   clearAttention(ids: string[]): void
+  /** Surdurulemeyen konusmayi birakir; sekme yeni oturumla baslar (agent-resume). */
+  dropResume(id: string): void
   /** Reorder (Faz 7'de sürükleme; store şimdi hazır). */
   moveTab(id: string, toIndex: number): void
   setTabCwd(id: string, cwd: string): void
@@ -252,6 +254,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
 
     // Tear the PTY down and drop the stream handlers for this tab.
     window.termflow.pty.kill(id)
+    window.termflow.scrollback?.remove(id) // kapanan sekmenin kayitli ciktisi silinir
     useSavedCommandStore.getState().finishRun(id, -1, 0, 'Terminal closed before completion.')
     dataHandlers.delete(id)
     exitHandlers.delete(id)
@@ -327,6 +330,10 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   clearAttention(ids) {
     if (!get().tabs.some((tab) => tab.attention && ids.includes(tab.id))) return
     set((s) => ({ tabs: s.tabs.map((tab) => (tab.attention && ids.includes(tab.id) ? { ...tab, attention: undefined } : tab)) }))
+  },
+
+  dropResume(id) {
+    set((s) => ({ tabs: s.tabs.map((tab) => (tab.id === id ? { ...tab, resumeSession: undefined, agentHook: undefined } : tab)) }))
   },
 
   clearAgentHook(id) {

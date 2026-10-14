@@ -101,7 +101,7 @@ test('Settings > Voice lists audio models and tests the selected one', async () 
   await win.keyboard.press('Control+,')
   await win.locator('.settings-nav-item', { hasText: 'Voice Input' }).click()
   await expect(win.getByRole('switch', { name: 'Enable voice input' })).toHaveAttribute('aria-checked', 'true')
-  await win.getByRole('button', { name: 'Test' }).click()
+  await win.getByRole('button', { name: 'Test', exact: true }).click()
   await expect(win.locator('.memory-status', { hasText: 'Test: Works' })).toBeVisible({ timeout: 10_000 })
   await win.screenshot({ path: 'test-results/voice-settings.png' })
   reply = 'git status --short'

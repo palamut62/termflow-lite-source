@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findApiKeys, redactApiKeys, TerminalSecretRedactor } from './secretRedaction'
+import { findApiKeys, redactApiKeys, redactApiKeysInAnsi, TerminalSecretRedactor } from './secretRedaction'
 
 describe('API key redaction', () => {
   it('recognizes common provider keys and labeled custom keys', () => {
@@ -30,4 +30,28 @@ describe('API key redaction', () => {
     redactor.registerInput(key)
     expect(redactor.redact(`prompt> ${key}\r\n`)).toBe('prompt> ************\r\n')
   })
+})
+
+describe('redactApiKeysInAnsi', () => {
+  it('masks a key that shell colouring split with escape sequences', () => {
+    const key = 'sk-ant-abcdefghijklmnopqrstuvwxyz0123456789'
+    const split = `echo \x1b[37m${key.slice(0, 19)}\x1b[39m\x1b[37m${key.slice(19)}\x1b[0m done`
+    const out = redactApiKeysInAnsi(split)
+    expect(out).not.toContain('mnopqrstuvwxyz0123456789')
+    expect(out).toContain('echo ')
+    expect(out).toContain(' done')
+  })
+
+  it('leaves text without keys untouched', () => {
+    expect(redactApiKeysInAnsi('\x1b[32mok\x1b[0m')).toBe('\x1b[32mok\x1b[0m')
+  })
+})
+
+it('masks the whole typed key, not the first prefix that looked like a key', () => {
+  const redactor = new TerminalSecretRedactor()
+  const key = 'sk-ant-abcdefghijklmnopqrstuvwxyz0123456789'
+  for (const ch of `echo ${key}`) redactor.registerInput(ch)
+  const out = redactor.redact(`${key}\r\n`)
+  expect(out).not.toContain('mnopqrstuvwxyz')
+  expect(out.startsWith('************')).toBe(true)
 })

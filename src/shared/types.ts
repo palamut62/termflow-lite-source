@@ -381,6 +381,10 @@ export interface AppSettings {
   /** Ajan bitti / seni bekliyor / hata: kategori basina sistem bildirimi ve ses. */
   agentAlerts: AgentAlertSettings
   /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
+  /** Yeniden acilista her sekmenin son ciktisini geri getir (userData/scrollback, anahtarlar maskeli). */
+  restoreScrollback: boolean
+  /** Yeniden acilista ajan sekmeleri kendi konusmasiyla surer (yalniz { agent, id } kaydedilir). */
+  resumeAgentsOnRestore: boolean
   osc52Clipboard: boolean
   /** Ajan sekmesinde Shift+Enter gondermek yerine yeni satir ekler. */
   shiftEnterNewline: boolean
@@ -697,6 +701,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   mediaPreviews: 'all',
   commandNotifications: true,
   agentHooks: true,
+  restoreScrollback: true,
+  resumeAgentsOnRestore: true,
   osc52Clipboard: true,
   shiftEnterNewline: true,
   minimumContrastRatio: 1,

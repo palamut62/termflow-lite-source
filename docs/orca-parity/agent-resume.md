@@ -1,6 +1,6 @@
 # agent-resume - Geri yuklenen ajan sekmesini kendi oturumuyla surdurmek
 
-Durum: TASLAK 2026-10-14. Bagimli: agent-hooks. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: agent-hooks. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Orca'da ajanlar ayri bir arka plan servisinde yasar, uygulama kapansa da olmez. TermFlow'da Quit,
@@ -43,6 +43,15 @@ Surdurme argumanlari bugun zaten var (`profileResolver.ts`).
 2. Acilista auto/ask akisi + kart + basarisiz yedek.
 3. Kapanis onayi metni, Remote Access sekme listesine "resumed" etiketi.
 
-## Acik sorular
-- Varsayilan `ask` mi `auto` mu?
-- Ileride gercek arka plan servisi (Orca'nin daemon'u gibi) istenirse ayri spec; bu modul onu engellemez.
+## Uygulama notlari (2026-10-14)
+- Catisma yoktu: `sanitizeSession` `resumeSession`'i zaten sakliyordu (dosyadaki "duser" yorumu eskimis); oturum tarayicisindan
+  surdurulen sekmeler bugun de otomatik surduruluyordu. Bu modul taze baslatilan ajan sekmelerinin kimligini de kaydeder.
+- Kimlik: Claude `agentHook.sessionId` (ilk UserPromptSubmit), Codex ilk tur sonunda `agentSessions.list` ile ayni klasorde sekmeden
+  sonra baslamis, baska sekmeye ait olmayan en yeni oturum (`terminal/agentResume.ts pickStartedSession`, testli). OpenCode: yalniz
+  tarayicidan surdurulenler.
+- Kimlik `tab.resumeSession`'a degil yalniz `session.json`'a yazilir (App kaydinda `persistedResume`); `resumeSession` TerminalView
+  efektinin bagimliligi oldugu icin calisan sekmede degistirmek terminali yeniden kurardi.
+- Ayar `resumeAgentsOnRestore` boolean, varsayilan acik (`ask` karti ve "calisirken kapandi" karti YAPILMADI: mevcut tarayici akisi
+  da otomatik surduruyordu; kart yerine basarisiz surdurmede toast).
+- Basarisiz surdurme: surec 8 sn icinde sifir disi kodla biterse toast + `dropResume` -> efekt yeniden calisir, temiz baslar.
+- E2E: `e2e/agent-hooks.spec.ts` "a restart resumes ...". Gercek daemon (Orca gibi) ayri is; bu modul onu engellemez.
