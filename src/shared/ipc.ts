@@ -92,6 +92,10 @@ export const IPC = {
   AGENT_EVENTS_CLEAR: 'agent-events:clear',
   /** main -> renderer: ajanin kendi bildirdigi durum (tabId, AgentHookEvent). */
   AGENT_HOOK_EVENT: 'agent-hooks:event',
+  /** agent-attention: ozel ses sec / baytlarini al, gorev cubugu rozeti. */
+  ALERTS_PICK_SOUND: 'alerts:pick-sound',
+  ALERTS_LOAD_SOUND: 'alerts:load-sound',
+  WINDOW_ATTENTION: 'window:attention',
   APP_LAUNCH_CWD: 'app:launch-cwd',
   APP_LAUNCH_READY: 'app:launch-ready',
   APP_OPEN_PATH: 'app:open-path',
@@ -331,3 +335,10 @@ export interface TitleBarOverlayPayload {
 }
 
 export type { ShellInfo, UpdateStatus }
+
+/** Gorev cubugu rozeti: okunmamis ajan olayi sayisi; Windows'ta renderer'in cizdigi PNG. */
+export interface AttentionBadge {
+  count: number
+  needsInput: boolean
+  icon?: string
+}

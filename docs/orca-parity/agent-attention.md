@@ -1,6 +1,6 @@
 # agent-attention - Ajan bitti / seni bekliyor bildirimi
 
-Durum: TASLAK 2026-10-14. Bagimli: agent-hooks. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: agent-hooks. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Kullanici baska sekmede ya da baska uygulamadayken bir ajan turunu bitirdiginde veya onay istediginde
@@ -44,5 +44,15 @@ bitince gidiyor (`TerminalView.tsx` onCommandFinished); ajan turlari bildirim ur
 3. Zil listesi + Mark as unread.
 4. Gorev cubugu rozeti / flash, ozel ses dosyasi, Ayarlar > Notifications.
 
-## Acik sorular
-- Mevcut "command finished" bildirimi de zil listesine girsin mi? (Oneri: evet, ayri kategori "Commands".)
+## Uygulama notlari (2026-10-14)
+- Kod: `src/renderer/src/attention/` (attentionPolicy saf + testli, alerts calisma zamani, AttentionBell), ana surec
+  `src/main/ipc/alerts.ts` (ses sec/yukle, `setOverlayIcon` / `flashFrame` / Linux `setBadgeCount`), ayar
+  `agentAlerts` + `settings/NotificationSettings.tsx`.
+- Ozel ses `userData/sounds/alert.<uzanti>`; renderer yalniz baytlari alir ve WebAudio ile cozer, CSP `media-src` degismedi.
+  Tek dosya tum kategoriler icin (Orca ile ayni).
+- Isaret yalniz sekmeye gecince, zilden secince ya da pencere odak alinca kalkar; boylece "Mark as Unread"
+  (terminal sag tik menusu; sekmelerin kendi sag tik menusu yok) gorunur sekmede de kalir. Ajan yeniden calisinca isaret kalkar.
+- Dikkat noktasi varken ayni yerdeki surec noktasi CSS ile gizlenir.
+- `commandNotifications` Terminal bolumunde kaldi (tasima ertelendi); zil listesine girmiyor.
+- E2E: `e2e/agent-hooks.spec.ts` "background tab ..." (nokta, zil, ziyaretle temizlenme, Mark as Unread).
+- Elle dogrulanmadi: Windows gorev cubugu rozeti / yanip sonme ve gercek sistem bildirimi (E2E'de kapali).

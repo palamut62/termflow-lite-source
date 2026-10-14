@@ -2,12 +2,13 @@
 // scan as a repository -> checkout -> session tree than as a row of tabs that
 // stops being readable past six or seven entries.
 
-import type { TabActivity, TerminalTab } from '../../shared/types'
+import type { TabActivity, TabAttention, TerminalTab } from '../../shared/types'
 
 export interface RailSession {
   id: string
   title: string
   activity: TabActivity
+  attention?: TabAttention
   /** Branch of the isolated checkout this session runs in, when it has one. */
   branch?: string
   active: boolean
@@ -70,6 +71,7 @@ export function buildRailGroups(
       id: tab.id,
       title: tab.title,
       activity: tab.activity,
+      attention: tab.attention,
       branch: tab.worktree?.branch,
       active: tab.id === activeTabId
     })

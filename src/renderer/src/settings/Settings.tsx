@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react'
-import { Bot, Brain, Info, Keyboard, Mic, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
+import { Bell, Bot, Brain, Info, Keyboard, Mic, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { AppearanceSettings } from './AppearanceSettings'
 import { TerminalSettings } from './TerminalSettings'
@@ -10,6 +10,7 @@ import { AboutSettings } from './AboutSettings'
 import { ProviderSettings } from './ProviderSettings'
 import { SshSettings } from './SshSettings'
 import { AgentSecuritySettings } from './AgentSecuritySettings'
+import { NotificationSettings } from './NotificationSettings'
 import { ProfileHealthSettings } from './ProfileHealthSettings'
 import { WorkspaceSettings } from './WorkspaceSettings'
 import { BackupSettings } from './BackupSettings'
@@ -17,7 +18,7 @@ import { MemorySettings } from './MemorySettings'
 import { RemoteSettings } from './RemoteSettings'
 import { VoiceSettings } from './VoiceSettings'
 
-type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice'
+type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice' | 'notifications'
 
 const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: string }[] = [
   { id: 'appearance', label: 'Appearance', icon: <Palette size={14} />, keywords: 'theme font size family weight ligatures line height letter spacing cursor blink effect trail blaze glow gpu webgl rendering inline images opacity blur backdrop mica acrylic transparency tint window border corner radius tab height padding custom theme motion animation transition reduce motion retro crt scanlines confetti celebrate agent animation companion mascot face pixel scenes style character ember miso piko ascii weather rain snow sunny city background picture image photo wallpaper art density characters' },
@@ -30,6 +31,7 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
   { id: 'memory', label: 'Memory', icon: <Brain size={14} />, keywords: 'agent memory session history summary openrouter model project unfinished mcp connect claude codex opencode exclude' },
   { id: 'voice', label: 'Voice Input', icon: <Mic size={14} />, keywords: 'voice input dictation microphone speech speak talk transcribe hold space push to talk openrouter audio model' },
   { id: 'remote', label: 'Remote Access', icon: <Smartphone size={14} />, keywords: 'remote access phone mobile tailscale qr pair pairing device disconnect web control' },
+  { id: 'notifications', label: 'Notifications', icon: <Bell size={14} />, keywords: 'notifications alerts agent needs you approval finished done error sound chime volume badge taskbar bell unread' },
   { id: 'agent-security', label: 'Agent Security', icon: <ShieldCheck size={14} />, keywords: 'agent security permission mode safe workspace full access status hooks' },
   { id: 'ssh', label: 'SSH', icon: <Server size={14} />, keywords: 'ssh connections host user port identity file key jump host proxyjump remote directory command persistent tmux screen multiplexer forward agent extra arguments' },
   { id: 'keyboard', label: 'Keyboard', icon: <Keyboard size={14} />, keywords: 'keyboard shortcuts keybindings hotkeys' },
@@ -127,6 +129,7 @@ export function Settings(): React.JSX.Element {
             {section === 'remote' && <RemoteSettings />}
             {section === 'voice' && <VoiceSettings />}
             {section === 'agent-security' && <AgentSecuritySettings />}
+            {section === 'notifications' && <NotificationSettings />}
             {section === 'ssh' && <SshSettings />}
             {section === 'keyboard' && <KeyboardSettings />}
             {section === 'about' && <AboutSettings />}

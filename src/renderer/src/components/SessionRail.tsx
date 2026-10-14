@@ -4,6 +4,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import { buildRailGroups, groupAttention, type RailGroup } from '../sessionRail'
 import { TabIcon } from '../tabs/TabIcon'
+import { ATTENTION_LABELS } from '../attention/AttentionBell'
 
 const MIN_WIDTH = 150
 const MAX_WIDTH = 420
@@ -104,6 +105,7 @@ function RailGroupRow({ group, collapsed, onToggle }: { group: RailGroup; collap
             {session.branch && (
               <span className="session-rail-branch"><GitBranch size={10} /><span>{session.branch}</span></span>
             )}
+            {session.attention && <span className={`tab-attention tab-attention-${session.attention}`} aria-label={ATTENTION_LABELS[session.attention]} />}
             <span className={`tab-process-indicator tab-activity-${session.activity}`} aria-label={`Activity: ${session.activity}`} />
           </button>
           <button

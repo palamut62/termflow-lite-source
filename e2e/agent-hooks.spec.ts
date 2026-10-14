@@ -56,7 +56,7 @@ let app: ElectronApplication
 let win: Page
 let folder = ''
 
-async function launch(agentHooks: boolean): Promise<void> {
+async function launch(agentHooks: boolean, extra: Record<string, unknown> = {}): Promise<void> {
   folder = mkdtempSync(join(tmpdir(), 'termflow-e2e-hooks-'))
   const userData = join(folder, 'user-data')
   writeFileSync(join(folder, 'claude.js'), FAKE_CLAUDE)
@@ -74,7 +74,8 @@ async function launch(agentHooks: boolean): Promise<void> {
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({
     gpuAcceleration: 'off', motion: 'off', showTips: false, closeToTray: false, confirmBeforeClose: false, restoreSession: false,
     agentCompanion: false, agentHooks, defaultAgentPermissionMode: 'workspace', defaultProfileId: 'fake-claude',
-    profiles: [{ id: 'fake-claude', name: 'Fake Claude', command, args: [], fullPermissions: false }]
+    profiles: [{ id: 'fake-claude', name: 'Fake Claude', command, args: [], fullPermissions: false }],
+    ...extra
   }))
   app = await electron.launch({ args: ['.', '--no-sandbox'], env: { ...process.env, TERMFLOW_E2E: '1', TERMFLOW_E2E_USER_DATA: userData } })
   win = await app.firstWindow()
@@ -120,4 +121,33 @@ test('with agent status hooks off, no settings file is passed', async () => {
   await expect.poll(terminalText, { timeout: 10_000 }).toContain('Allow Bash?')
   // Without hooks the old prompt heuristic still drives the tab.
   expect(await activity()).not.toBe('Activity: completed')
+})
+
+test('a background tab that needs approval gets a dot, the bell lists it, visiting clears it', async () => {
+  // No real toasts or chimes during the test run.
+  const quiet = { system: false, sound: false }
+  await launch(true, { agentAlerts: { needsInput: quiet, done: quiet, error: quiet, volume: 0, soundFile: '' } })
+  await expect.poll(terminalText, { timeout: 20_000 }).toContain('fake claude ready')
+  await win.locator('.terminal-host .xterm').first().click()
+  await win.keyboard.type('fix login')
+  await win.keyboard.press('Enter')
+  // Leave the tab before the agent asks (it asks 1.5 s later).
+  await win.keyboard.press('Control+Shift+T')
+  await expect(win.locator('.tab')).toHaveCount(2)
+
+  const firstTab = win.locator('.tab').first()
+  await expect(firstTab.locator('.tab-attention-needs-input')).toBeVisible({ timeout: 10_000 })
+  const bell = win.locator('.attention-bell-btn')
+  await expect(bell).toContainText('1')
+  await bell.click()
+  await expect(win.locator('.attention-bell-item')).toContainText('Approve Bash')
+  await win.screenshot({ path: 'test-results/attention-bell.png' })
+  await win.locator('.attention-bell-item').first().click()
+  await expect(firstTab.locator('.tab-attention')).toHaveCount(0)
+  await expect(bell).toHaveCount(0)
+
+  // Mark as Unread from the terminal menu keeps the dot even on the visible tab.
+  await win.locator('.terminal-host .xterm').first().click({ button: 'right' })
+  await win.getByRole('menuitem', { name: 'Mark as Unread' }).click()
+  await expect(firstTab.locator('.tab-attention-done')).toBeVisible()
 })

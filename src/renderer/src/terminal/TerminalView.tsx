@@ -996,6 +996,7 @@ ${block.output.slice(-8000)}
           onPaste={handlePaste}
           onSelectAll={handleSelectAll}
           onClear={handleClear}
+          onMarkUnread={() => { useTerminalStore.getState().markAttention(tabId, 'done'); closeMenu() }}
           onSearch={handleSearch}
           onNewTab={handleNewTab}
           onCloseTab={handleCloseTab}

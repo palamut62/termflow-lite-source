@@ -40,6 +40,7 @@ import { useWidgetStore } from './widget/widgetStore'
 import { startRemoteBridge } from './remoteBridge'
 import { VoiceIndicator } from './components/VoiceIndicator'
 import { subscribeAgentHooks } from './terminal/agentHookEvents'
+import { startAttention } from './attention/alerts'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -101,6 +102,8 @@ export default function App(): React.JSX.Element {
 
   // Claude Code hook olaylari (agent-hooks): sekme durumunu ajanin kendisi bildirir.
   useEffect(() => subscribeAgentHooks(), [])
+  // agent-attention: gorunen sekmenin isaretini temizle, gorev cubugu rozeti.
+  useEffect(() => startAttention(), [])
 
   // Önizleme kartları: izlenen klasörlerde yeni beliren medya, sekme kapanınca temizlik.
   useEffect(() => window.termflow.media.onNew((tabIds, info) => {

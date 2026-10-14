@@ -736,3 +736,9 @@
 .remote-qr-expired { display:flex; align-items:center; justify-content:center; color:#555; font-size:12px; }
 .remote-pairing-info { display:flex; flex-direction:column; gap:6px; color:var(--tab-inactive-foreground); font-size:11px; line-height:1.45; overflow-wrap:anywhere; }
 .remote-code { font-family: var(--terminal-font, ui-monospace, Consolas, monospace); font-size: 22px; letter-spacing: 2px; color: var(--tab-active-foreground, #fff); user-select: all; }
+
+.settings-inline-label {
+  margin-right: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}

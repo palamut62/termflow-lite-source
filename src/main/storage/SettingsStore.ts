@@ -35,6 +35,18 @@ function normalizeVoiceSettings(value: unknown): AppSettings['voice'] {
     speak: { enabled: speak.enabled === true, model: speak.model === 'ema' ? 'ema' : 'antalia', speed, studioDir }
   }
 }
+function normalizeAgentAlerts(value: unknown): AppSettings['agentAlerts'] {
+  const fallback = DEFAULT_SETTINGS.agentAlerts
+  const input: Partial<AppSettings['agentAlerts']> = value && typeof value === 'object' ? value : {}
+  const channel = (raw: unknown, base: AppSettings['agentAlerts']['done']): AppSettings['agentAlerts']['done'] => {
+    const c: Partial<AppSettings['agentAlerts']['done']> = raw && typeof raw === 'object' ? raw : {}
+    return { system: typeof c.system === 'boolean' ? c.system : base.system, sound: typeof c.sound === 'boolean' ? c.sound : base.sound }
+  }
+  const volume = typeof input.volume === 'number' && Number.isFinite(input.volume) ? Math.round(Math.min(100, Math.max(0, input.volume))) : fallback.volume
+  // Yalniz userData/sounds altindaki bir dosya adi; yol ya da baska klasor kabul edilmez.
+  const soundFile = typeof input.soundFile === 'string' && /^alert\.(?:mp3|wav|ogg|m4a|aac|flac)$/.test(input.soundFile) ? input.soundFile : ''
+  return { needsInput: channel(input.needsInput, fallback.needsInput), done: channel(input.done, fallback.done), error: channel(input.error, fallback.error), volume, soundFile }
+}
 const BACKDROPS: AppSettings['backdrop'][] = ['none', 'mica', 'acrylic', 'tabbed']
 
 /**
@@ -77,6 +89,7 @@ export class SettingsStore {
     merged.memory = normalizeMemorySettings(settings.memory)
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
+    merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
     return merged
   }
 

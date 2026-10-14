@@ -4,6 +4,18 @@ import type { AgentHookState } from './agentHooks'
 export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'custom'
 export type TabActivity = 'running' | 'waiting' | 'unread' | 'completed' | 'error'
 export type AgentKind = 'claude' | 'codex' | 'opencode'
+/** Ajanin dikkat istedigi okunmamis olay (agent-attention). */
+export type TabAttention = 'needs-input' | 'done' | 'error'
+export interface AlertChannel { system: boolean; sound: boolean }
+export interface AgentAlertSettings {
+  needsInput: AlertChannel
+  done: AlertChannel
+  error: AlertChannel
+  /** 0-100 */
+  volume: number
+  /** userData/sounds altindaki dosya adi; bos = yerlesik ses. */
+  soundFile: string
+}
 export type AgentPermissionMode = 'safe' | 'workspace' | 'full'
 export type AgentEventKind = 'session' | 'activity' | 'tool' | 'approval' | 'question' | 'completed' | 'error'
 
@@ -74,6 +86,8 @@ export interface TerminalTab {
   lastCommand?: { exitCode: number; durationMs: number; finishedAt: number }
   /** Ajanin kendi bildirdigi durum (agent-hooks); varken cikti tahmini sekme durumunu degistirmez. */
   agentHook?: { state: AgentHookState; sessionId?: string; detail?: string; at: number }
+  /** Gorulmemis ajan olayi: sekme noktasi, zil, gorev cubugu rozeti. */
+  attention?: TabAttention
 }
 
 export interface TerminalProfile {
@@ -364,6 +378,8 @@ export interface AppSettings {
   commandNotifications: boolean
   /** Ajan durumunu ajanin kendisinden oku: Claude HTTP hook'lari (--settings), Codex OSC 9. Kullanici dosyalarina yazilmaz. */
   agentHooks: boolean
+  /** Ajan bitti / seni bekliyor / hata: kategori basina sistem bildirimi ve ses. */
+  agentAlerts: AgentAlertSettings
   /** Ajan sekmelerinin sağında, ajan durumuna göre değişen karakter animasyonu. */
   agentCompanion: boolean
   /** Animasyon stili: gözleriyle tepki veren ASCII yüz ya da piksel-art sahneler. */
@@ -675,6 +691,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   mediaPreviews: 'all',
   commandNotifications: true,
   agentHooks: true,
+  agentAlerts: {
+    needsInput: { system: true, sound: true },
+    done: { system: true, sound: false },
+    error: { system: true, sound: false },
+    volume: 60,
+    soundFile: ''
+  },
   agentCompanion: true,
   agentAnimationStyle: 'face',
   agentCharacter: 'auto',

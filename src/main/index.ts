@@ -14,6 +14,7 @@ import { registerMediaIpc } from './ipc/media'
 import { handleMediaRequest, MEDIA_SCHEME, unwatchAllMedia } from './media'
 import { WIDGET_ACTIONS, WidgetController } from './widget'
 import { registerDialogIpc } from './ipc/dialog'
+import { registerAlertsIpc } from './ipc/alerts'
 import { registerGitIpc } from './ipc/git'
 import { registerWorktreeIpc } from './ipc/worktree'
 import { registerGithubIpc } from './ipc/github'
@@ -433,6 +434,7 @@ app.whenReady().then(() => {
     return WIDGET_ACTIONS.includes(action as never) ? widget.handle(action as (typeof WIDGET_ACTIONS)[number]) : widget.state()
   })
   registerDialogIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
+  registerAlertsIpc(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null))
   registerGitIpc()
   registerWorktreeIpc()
   registerGithubIpc()

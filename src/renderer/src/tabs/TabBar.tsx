@@ -9,6 +9,7 @@ import { PathLauncherModal } from './PathLauncherModal'
 import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
+import { AttentionBell } from '../attention/AttentionBell'
 import { effectiveMotion } from '../motion'
 import { phonesLabel, useConnectedPhones } from '../remoteStatus'
 
@@ -194,6 +195,7 @@ export function TabBar({ height }: TabBarProps): React.JSX.Element {
             onOpenGithub={() => { setMenuOpen(false); setGithubOpen(true) }}
           />
         )}
+        <AttentionBell />
         <RemoteIndicator />
       </div>
       {pathLauncherOpen && <PathLauncherModal onClose={() => setPathLauncherOpen(false)} />}

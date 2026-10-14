@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid'
 import type { SearchAddon } from '@xterm/addon-search'
-import type { AgentPermissionMode, AgentSessionRef, PersistedSession, TabActivity, TabWorktree, TerminalTab } from '../../../shared/types'
+import type { AgentPermissionMode, AgentSessionRef, PersistedSession, TabActivity, TabAttention, TabWorktree, TerminalTab } from '../../../shared/types'
 import { hookActivity, type AgentHookEvent } from '../../../shared/agentHooks'
 import { mergeProfiles, providerFromProfileId, sshFromProfileId } from '../../../shared/profiles'
 import { resolveDefaultProfileId, useSettingsStore } from './settingsStore'
@@ -103,6 +103,8 @@ interface TerminalState {
   /** Ajanin kendi bildirdigi olay; `running` (surec canli) degismez. */
   applyAgentHook(id: string, event: AgentHookEvent): void
   clearAgentHook(id: string): void
+  markAttention(id: string, attention: TabAttention): void
+  clearAttention(ids: string[]): void
   /** Reorder (Faz 7'de sürükleme; store şimdi hazır). */
   moveTab(id: string, toIndex: number): void
   setTabCwd(id: string, cwd: string): void
@@ -316,6 +318,15 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
         return withBusyPeriod({ ...tab, agentHook, activity: hookActivity(state) }, tab.activity)
       })
     }))
+  },
+
+  markAttention(id, attention) {
+    set((s) => ({ tabs: s.tabs.map((tab) => (tab.id === id && tab.attention !== attention ? { ...tab, attention } : tab)) }))
+  },
+
+  clearAttention(ids) {
+    if (!get().tabs.some((tab) => tab.attention && ids.includes(tab.id))) return
+    set((s) => ({ tabs: s.tabs.map((tab) => (tab.attention && ids.includes(tab.id) ? { ...tab, attention: undefined } : tab)) }))
   },
 
   clearAgentHook(id) {

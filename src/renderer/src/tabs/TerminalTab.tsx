@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import type { TerminalTab as TerminalTabModel } from '../../../shared/types'
 import { TabIcon } from './TabIcon'
+import { ATTENTION_LABELS } from '../attention/AttentionBell'
 
 interface TerminalTabProps {
   tab: TerminalTabModel
@@ -125,6 +126,7 @@ export function TerminalTab({
           aria-hidden="true"
         />
       )}
+      {tab.attention && <span className={`tab-attention tab-attention-${tab.attention}`} role="status" aria-label={ATTENTION_LABELS[tab.attention]} title={ATTENTION_LABELS[tab.attention]} />}
       <span className={`tab-process-indicator tab-activity-${tab.activity}`} aria-label={`Activity: ${tab.activity}`} title={`Activity: ${tab.activity}`} />
       <button
         className="tab-close"

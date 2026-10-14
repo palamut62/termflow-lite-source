@@ -76,3 +76,43 @@ export function playCue(theme: SoundTheme, cue: Cue): void {
   else if (cue === 'bell') tone(ac, 1046, 0.06, 0.35, 1046)
   else tone(ac, 330, 0.05, 0.2, 220)
 }
+
+/**
+ * Ajan dikkat sesi (agent-attention): tus sesi temasindan bagimsiz, ses seviyesi 0-100.
+ * Seni bekliyor = yukselen iki ton, bitti = tek yumusak ton, hata = alcak ton.
+ */
+export function playAlertTone(kind: 'needs-input' | 'done' | 'error', volume: number): void {
+  const ac = audio()
+  if (!ac || volume <= 0) return
+  const gain = 0.12 * (volume / 100)
+  if (kind === 'needs-input') {
+    tone(ac, 784, gain, 0.18)
+    setTimeout(() => tone(ac, 1175, gain, 0.28), 140)
+  } else if (kind === 'done') tone(ac, 988, gain * 0.8, 0.35, 880)
+  else tone(ac, 262, gain, 0.3, 196)
+}
+
+const decoded = new Map<string, Promise<AudioBuffer | null>>()
+
+/** Kullanicinin sectigi uyari dosyasi; cozulmus hali ayni dosya icin onbellekte. */
+export async function playAlertFile(file: string, load: () => Promise<Uint8Array | null>, volume: number): Promise<boolean> {
+  const ac = audio()
+  if (!ac || volume <= 0) return false
+  if (!decoded.has(file)) {
+    decoded.set(file, load().then((bytes) => (bytes ? ac.decodeAudioData(bytes.slice().buffer) : null)).catch(() => null))
+  }
+  const buffer = await decoded.get(file)
+  if (!buffer) { decoded.delete(file); return false }
+  const src = ac.createBufferSource()
+  const amp = ac.createGain()
+  src.buffer = buffer
+  amp.gain.value = volume / 100
+  src.connect(amp).connect(ac.destination)
+  src.start()
+  return true
+}
+
+/** Yeni dosya secilince eski cozulmus sesi birak. */
+export function forgetAlertFile(): void {
+  decoded.clear()
+}

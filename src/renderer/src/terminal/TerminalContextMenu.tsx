@@ -26,6 +26,7 @@ interface TerminalContextMenuProps {
   onPaste: () => void
   onSelectAll: () => void
   onClear: () => void
+  onMarkUnread: () => void
   onSearch: () => void
   onNewTab: () => void
   onCloseTab: () => void
@@ -146,6 +147,9 @@ export function TerminalContextMenu(props: TerminalContextMenuProps): React.JSX.
       </button>
       <button className="ctx-menu-item" role="menuitem" onClick={props.onCloseTab}>
         Close Tab
+      </button>
+      <button className="ctx-menu-item" role="menuitem" onClick={props.onMarkUnread}>
+        Mark as Unread
       </button>
       <div className="ctx-menu-divider" />
       <button className="ctx-menu-item" role="menuitem" onClick={props.onSettings}>

@@ -2,6 +2,7 @@ import type { AgentEventKind, AgentKind, AgentPermissionMode } from '../../../sh
 import type { AgentHookEvent, AgentHookState } from '../../../shared/agentHooks'
 import { useTerminalStore } from '../store/terminalStore'
 import { useAgentEventStore } from '../store/agentEventStore'
+import { raiseAttention } from '../attention/alerts'
 
 /** Hook'lu sekmede bu olaylar yalniz ajanin kendi bildiriminden gelir, cikti metninden degil. */
 export const HOOK_OWNED_KINDS = new Set<AgentEventKind>(['approval', 'question', 'completed', 'error'])
@@ -22,8 +23,12 @@ export function applyHookEvent(tabId: string, agent: AgentKind, permissionMode: 
   if (!store.tabs.some((tab) => tab.id === tabId)) return
   const previous = store.tabs.find((tab) => tab.id === tabId)?.agentHook?.state
   store.applyAgentHook(tabId, event)
-  const inbox = event.state && event.state !== previous ? INBOX[event.state] : undefined
+  if (!event.state || event.state === previous) return
+  const inbox = INBOX[event.state]
   if (inbox) useAgentEventStore.getState().append(tabId, agent, permissionMode, { ...inbox, ...(event.detail ? { detail: event.detail } : {}) })
+  // Ajan yeniden calisiyorsa artik kimseyi beklemiyor; okunmadi isareti kalkar.
+  if (event.state === 'working') useTerminalStore.getState().clearAttention([tabId])
+  else if (event.state === 'needs-input' || event.state === 'done' || event.state === 'error') raiseAttention(tabId, agent, event.state, event.detail)
 }
 
 /** Ana surecten gelen Claude hook olaylari; dinlemeyi birakan fonksiyonu dondurur. */
