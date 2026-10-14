@@ -48,7 +48,8 @@ test('the status bar shows the active Codex tab limits from the local session fi
   await win.waitForSelector('.terminal-host .xterm')
 
   const meter = win.locator('.usage-meter-btn')
-  await expect(meter).toHaveText(/5h 85% · 7d 12%/, { timeout: 15_000 })
+  // Default: remaining percent, like Codex's own footer.
+  await expect(meter).toHaveText(/5h 15% left · 7d 88% left/, { timeout: 15_000 })
   await expect(meter).toHaveClass(/usage-warn/)
   await meter.click()
   await expect(win.locator('.usage-popover')).toContainText(/resets in (2h 59m|3h 0m)/)
@@ -56,7 +57,7 @@ test('the status bar shows the active Codex tab limits from the local session fi
   await win.keyboard.press('Escape')
   await win.keyboard.press('Control+,')
   await win.locator('.settings-nav-item', { hasText: 'Agent Security' }).click()
-  await win.locator('select').filter({ has: win.locator('option[value="remaining"]') }).selectOption('remaining')
+  await win.locator('select').filter({ has: win.locator('option[value="used"]') }).selectOption('used')
   await win.keyboard.press('Escape')
-  await expect(meter).toHaveText(/5h 15% left/)
+  await expect(meter).toHaveText(/5h 85% · 7d 12%/)
 })
