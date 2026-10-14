@@ -6,6 +6,7 @@ Kapsam: Orca'da olup TermFlow Lite'ta olmayan, "cok iyi bir terminal" cizgisini 
 Kapsam DISI (kullanici karari 2026-10-14, bu dosyalarda yok): diff goruntuleyici / AI diff yorumu,
 Monaco editoru, gomulu Chromium / Design Mode, GitHub-Linear-Jira panelleri, orchestration,
 uygulamayi kumanda eden CLI, Native Chat / CSV / Jupyter, hesap degistirici.
+Guncelleme 2026-10-14: bu kalemler Agent IDE modu icin yeniden ele alindi, bkz. `docs/agent-ide/PRD.md`. Terminal modu icin karar gecerli.
 
 ## Yetenek haritasi
 
