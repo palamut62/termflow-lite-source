@@ -30,7 +30,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.21.1 Telefon klavyesi (dokununca acilir, canli yazma, IME uyumlu), cift terminal cevabi giderildi, sekme cubugunda bagli telefon simgesi
 - [x] 1.22.0 Telefon: eslestirme ekraninda QR tarama (fotograf + jsQR), elle yazilabilir kod, masaustunde cihaz basina Reconnect QR (ayni kayit, yeni anahtar), ana ekran uygulamasi icin sabit dosya adlari + ETag
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
-- [~] Orca karsilastirmasi (`docs/orca-parity/`, dal `feature/agent-hooks`, her modul ayri commit, spec'lerde "Uygulama notlari"): UYGULANDI agent-hooks, agent-attention, terminal-polish, scrollback-restore, agent-resume, usage-meter, jump-palette (Ctrl+Shift+J), worktree-setup + kullanici istegi agent-detect. Kalan: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention
+- [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
 
 ## Son oturum (2026-10-14)
 - Orca paritesi 8 modul (yukarida) uygulandi; Claude HTTP hook + Codex OSC 9 ile sekme durumu, dikkat noktasi/zil/rozet, Reset/OSC 52/Shift+Enter/tema ice aktarma, scrollback + `--resume` ile surdurme, limit gostergesi, atlama paleti, worktree kurulum adimlari
@@ -38,7 +38,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Yazilan anahtarin kuyrugunun maskelenmemesi (PtyCore redactor en kisa onek) ve worktree modalinin pencereden tasmasi duzeltildi
 
 ## Yarim kalan / siradaki adim
-- Kalan 5 Orca modulu; sonra surum karari (plan 1.24-1.27, README "Yapim sirasi"), CHANGELOG, main'e alma ve push (sorulacak)
+- Kalan 5 Orca modulu (1.25.0 adayi)
 - Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.22.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye yerel derleme sessiz kuruldu. iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect gercek telefonla denenmeli
