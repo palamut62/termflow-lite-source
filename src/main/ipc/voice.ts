@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
-import type { AppSettings, VoiceResult } from '../../shared/types'
+import type { AppSettings, SpeakResult, VoiceResult } from '../../shared/types'
+import { synthesize } from '../voice/speak'
 import { MAX_VOICE_BYTES, testVoiceModel, transcribe, type VoiceContext } from '../voice/transcribe'
 
 export interface VoiceIpcDeps {
@@ -30,6 +31,13 @@ export function registerVoiceIpc(deps: VoiceIpcDeps): void {
     const apiKey = deps.getApiKey()
     if (!apiKey) return { ok: false, text: '', model, latencyMs: 0, error: NO_KEY }
     return transcribe({ apiKey, model, wav, cleanup: voice.cleanup, language: voice.language, context: validContext(context), url: deps.url })
+  })
+
+  ipcMain.handle(IPC.VOICE_SYNTH, async (_event, text: unknown): Promise<SpeakResult> => {
+    const speak = deps.getSettings().voice.speak
+    if (!speak.enabled) return { ok: false, error: 'Read aloud is turned off.' }
+    if (typeof text !== 'string') return { ok: false, error: 'There is no text to read.' }
+    return synthesize(text, speak)
   })
 
   ipcMain.handle(IPC.VOICE_TEST, async (_event, model: unknown): Promise<VoiceResult> => {

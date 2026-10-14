@@ -30,3 +30,9 @@ girdilerinde ayni calisir.
   model katalogunda ses bayragi.
 - E2E: Chromium sahte mikrofonu + sahte OpenRouter sunucusu (`TERMFLOW_E2E_OPENROUTER_URL`).
 - Canli: Windows konusma sentezinden WAV, gercek anahtarla tek istek.
+
+## Sesli okuma (Read Aloud)
+- Terminalde metin sec, sag tik > "Read Aloud"; durdurmak icin menu ya da ekrandaki Stop. Ayarlar > Voice > Read Aloud ile acilir (varsayilan kapali).
+- Motor: yerel tts-studyo (`C:\Users\umuti\Projects\tts-studyo`, Antalia-2 Mini / EMA Lightning, Turkce, CPU, cevrimdisi). Sunucu kapaliysa `src/main/voice/speak.ts` onu `.venv` python'u ile 127.0.0.1:8765'te baslatir, uygulama kapaninca durdurur.
+- Metin cumle cumle `/api/tts` ile uretilir, renderer Web Audio ile kesintisiz calar (`renderer/voice/speak.ts`). En fazla 5000 karakter.
+- Dikteyle ilgisi yok: bu modeller yalniz metinden ses uretir (TTS), konusmayi yaziya cevirmez.

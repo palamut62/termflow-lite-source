@@ -48,6 +48,7 @@ import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
 import { RemoteController } from './remote/RemoteController'
 import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
+import { stopStudio } from './voice/speak'
 import type { ShellInfo } from '../shared/types'
 
 // Dev: project resources/. Packaged: extraResources under process.resourcesPath.
@@ -569,6 +570,7 @@ app.on('before-quit', () => {
   manager?.shutdown() // kill every live PTY
   unwatchAllMedia()
   stopMemoryScheduler?.()
+  stopStudio()
   void remoteController?.shutdown()
 })
 

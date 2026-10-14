@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FlaskConical, Mic, RefreshCw, Trash2 } from 'lucide-react'
-import type { OpenRouterModel, OpenRouterModelList, VoiceLanguage, VoiceResult } from '../../../shared/types'
+import { FlaskConical, Mic, RefreshCw, Trash2, Volume2 } from 'lucide-react'
+import type { SpeakModel, OpenRouterModel, OpenRouterModelList, VoiceLanguage, VoiceResult } from '../../../shared/types'
 import { contextText, ModelPicker, usd } from './ModelPicker'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
+import { speak } from '../voice/speak'
 import { Field, NumberInput, Select, TextInput, Toggle } from './Settings'
 
 /** Shared with Agent Memory: one OpenRouter key for the app. */
@@ -33,6 +34,7 @@ export function VoiceSettings(): React.JSX.Element {
   const [refreshing, setRefreshing] = useState(false)
   const [testing, setTesting] = useState(false)
   const [test, setTest] = useState<VoiceResult | null>(null)
+  const [speakTest, setSpeakTest] = useState('')
 
   const refreshKey = useCallback(async (): Promise<void> => {
     setHasKey(await window.termflow.providerSecrets.has(SECRET_ID))
@@ -99,6 +101,13 @@ export function VoiceSettings(): React.JSX.Element {
     }
   }
 
+  const patchSpeak = (next: Partial<typeof voice.speak>): Promise<void> => patch({ speak: { ...voice.speak, ...next } })
+  const runSpeakTest = async (): Promise<void> => {
+    setSpeakTest('Testing...')
+    const result = await speak('Merhaba, ben TermFlow. Sesli okuma çalışıyor.')
+    setSpeakTest('firstSoundMs' in result ? `Works · first sound in ${(result.firstSoundMs / 1000).toFixed(1)} s` : result.error)
+  }
+
   const audioPrice = selected?.audioPrice
   const modelHint = selected
     ? `${contextText(selected.contextLength)}${audioPrice != null ? ` · audio ${usd(audioPrice)} / 1M tokens (~${usd(audioPrice * 32 * 10 / 1_000_000)} per 10 s)` : ''}`
@@ -159,6 +168,30 @@ export function VoiceSettings(): React.JSX.Element {
       </Field>
       <Field label="Hold time" hint="How long Space is held before recording starts (ms)">
         <NumberInput value={voice.holdMs} min={250} max={1000} step={50} onChange={(holdMs) => void patch({ holdMs })} />
+      </Field>
+
+      <div className="settings-section-title"><Volume2 size={14} /> Read Aloud</div>
+      <p className="settings-note">
+        Select text in a terminal, right-click and choose <strong>Read Aloud</strong>. The Turkish voice runs on this computer
+        with the local models of tts-studyo (Antalia-2 Mini, EMA Lightning); nothing is sent online. The server is started when
+        needed and closed with the app.
+      </p>
+      <Field label="Enable read aloud" hint="Adds Read Aloud to the terminal menu">
+        <Toggle checked={voice.speak.enabled} label="Enable read aloud" onChange={(enabled) => void patchSpeak({ enabled })} />
+      </Field>
+      <Field label="Voice model" hint="Antalia is a little faster; try both">
+        <Select value={voice.speak.model} options={[{ value: 'antalia', label: 'Antalia-2 Mini' }, { value: 'ema', label: 'EMA Lightning' }]} onChange={(model) => void patchSpeak({ model: model as SpeakModel })} />
+      </Field>
+      <Field label="Speed" hint="0.5 - 2.0">
+        <NumberInput value={voice.speak.speed} min={0.5} max={2} step={0.1} onChange={(speed) => void patchSpeak({ speed })} />
+      </Field>
+      <Field label="tts-studyo folder" hint="Empty = Projects/tts-studyo in your home folder">
+        <TextInput className="settings-input-wide" value={voice.speak.studioDir} onChange={(e) => void patchSpeak({ studioDir: e.target.value })} placeholder="C:\Users\you\Projects\tts-studyo" />
+      </Field>
+      <Field label="Test" hint={speakTest || 'Speaks one sentence'}>
+        <button className="settings-btn settings-btn-small" disabled={!voice.speak.enabled} onClick={() => void runSpeakTest()}>
+          <FlaskConical size={12} /> Test voice
+        </button>
       </Field>
     </section>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Mic } from 'lucide-react'
+import { Loader2, Mic, Square, Volume2 } from 'lucide-react'
 import { useVoiceStore } from '../store/voiceStore'
+import { stopSpeaking } from '../voice/speak'
 
 const BARS = 5
 
@@ -9,6 +10,7 @@ export function VoiceIndicator(): React.JSX.Element | null {
   const phase = useVoiceStore((s) => s.phase)
   const level = useVoiceStore((s) => s.level)
   const startedAt = useVoiceStore((s) => s.startedAt)
+  const speaking = useVoiceStore((s) => s.speaking)
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -17,6 +19,15 @@ export function VoiceIndicator(): React.JSX.Element | null {
     return () => clearInterval(timer)
   }, [phase])
 
+  if (phase === 'idle' && speaking !== 'idle') {
+    return (
+      <div className="voice-indicator voice-speaking" role="status" aria-live="polite">
+        {speaking === 'preparing' ? <Loader2 size={14} className="voice-spin" /> : <Volume2 size={14} />}
+        <span>{speaking === 'preparing' ? 'Preparing voice...' : 'Reading aloud'}</span>
+        <button className="voice-stop" onClick={stopSpeaking} aria-label="Stop reading"><Square size={10} /> Stop</button>
+      </div>
+    )
+  }
   if (phase === 'idle') return null
   const seconds = Math.max(0, Math.floor((now - startedAt) / 1000))
   // Speech sits around 0.02-0.2 RMS; spread that over the bars.

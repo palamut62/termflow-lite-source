@@ -85,6 +85,7 @@ export const IPC = {
   MEMORY_MODELS: 'memory:models', // (force?) -> OpenRouterModelList; 24 saat cache'li
   MEMORY_TEST_MODEL: 'memory:test-model', // (model) -> OpenRouterModelTest
   VOICE_TRANSCRIBE: 'voice:transcribe', // (wav Uint8Array, VoiceContext) -> VoiceResult
+  VOICE_SYNTH: 'voice:synth', // (text) -> SpeakResult; WAV from the local tts-studyo server
   VOICE_TEST: 'voice:test', // (model) -> VoiceResult; a short tone with the stored key
   AGENT_EVENTS_LIST: 'agent-events:list',
   AGENT_EVENTS_APPEND: 'agent-events:append',

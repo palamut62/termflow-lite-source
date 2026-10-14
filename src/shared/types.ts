@@ -405,6 +405,26 @@ export interface VoiceSettings {
   /** Fix punctuation, drop filler words and spell technical terms; off keeps the words as spoken. */
   cleanup: boolean
   language: VoiceLanguage
+  /** Read selected terminal text aloud with a local Turkish voice (tts-studyo). */
+  speak: SpeakSettings
+}
+
+export type SpeakModel = 'antalia' | 'ema'
+
+export interface SpeakSettings {
+  enabled: boolean
+  model: SpeakModel
+  /** 0.5-2.0; 1 is normal speed. */
+  speed: number
+  /** tts-studyo folder; empty = ~/Projects/tts-studyo. Started on demand when it is not running. */
+  studioDir: string
+}
+
+/** One synthesized piece of speech (WAV) from the local tts-studyo server. */
+export interface SpeakResult {
+  ok: boolean
+  wav?: Uint8Array
+  error?: string
 }
 
 /** Result of one dictation or of a model test. */
@@ -657,7 +677,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   asciiBackgrounds: {},
   memory: { enabled: false, model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
   remote: { enabled: false, port: 47321 },
-  voice: { enabled: false, model: 'google/gemini-2.5-flash-lite', holdMs: 400, cleanup: true, language: 'auto' },
+  voice: { enabled: false, model: 'google/gemini-2.5-flash-lite', holdMs: 400, cleanup: true, language: 'auto', speak: { enabled: false, model: 'antalia', speed: 1, studioDir: '' } },
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,

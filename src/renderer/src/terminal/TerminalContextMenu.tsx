@@ -19,6 +19,8 @@ interface TerminalContextMenuProps {
   onCopyOutput?: () => void
   onRerun?: () => void
   onCopyForAgent?: () => void
+  /** Read aloud (local Turkish voice); hidden unless enabled in Settings > Voice. */
+  speak?: { speaking: boolean; onSpeak: () => void; onStop: () => void }
   onClose: () => void
   onCopy: () => void
   onPaste: () => void
@@ -123,6 +125,11 @@ export function TerminalContextMenu(props: TerminalContextMenuProps): React.JSX.
       <button className="ctx-menu-item" role="menuitem" onClick={props.onPaste}>
         Paste
       </button>
+      {props.speak && (
+        <button className="ctx-menu-item" role="menuitem" disabled={!props.speak.speaking && !props.hasSelection} onClick={props.speak.speaking ? props.speak.onStop : props.speak.onSpeak}>
+          {props.speak.speaking ? 'Stop Reading' : 'Read Aloud'}
+        </button>
+      )}
       <button className="ctx-menu-item" role="menuitem" onClick={props.onSelectAll}>
         Select All
       </button>

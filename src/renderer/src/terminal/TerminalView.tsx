@@ -37,6 +37,8 @@ import { mergeProfiles, providerFromProfileId } from '../../../shared/profiles'
 import { useAgentEventStore } from '../store/agentEventStore'
 import { useSavedCommandStore } from '../store/savedCommandStore'
 import { useHandoverStore } from '../store/handoverStore'
+import { useVoiceStore } from '../store/voiceStore'
+import { speak, stopSpeaking } from '../voice/speak'
 import { createVoiceInput } from '../voice/voiceInput'
 
 interface Props {
@@ -134,6 +136,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   // xterm's own background goes see-through when a backdrop or an ASCII picture sits behind it.
   const transparent = backdropActive(settings) || !!asciiBackground
   const [menu, setMenu] = useState<ContextMenuState | null>(null)
+  const speakingNow = useVoiceStore((s) => s.speaking !== 'idle')
 
   useEffect(() => {
     activeRef.current = active
@@ -785,6 +788,11 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     // Menü tıklaması odağı aldı; yapıştırdıktan sonra yazmaya devam edilebilsin.
     termRef.current?.focus()
   }
+  const handleSpeak = (): void => {
+    const text = termRef.current?.getSelection() ?? ''
+    closeMenu()
+    void speak(text)
+  }
   const handleSelectAll = (): void => {
     termRef.current?.selectAll()
     closeMenu()
@@ -951,6 +959,7 @@ ${block.output.slice(-8000)}
           onOpenPath={handleOpenPath}
           onRevealInFolder={handleRevealInFolder}
           onCopyPath={handleCopyPath}
+          speak={settings.voice.speak.enabled ? { speaking: speakingNow, onSpeak: handleSpeak, onStop: () => { closeMenu(); stopSpeaking() } } : undefined}
           onClose={closeMenu}
           onCopy={handleCopy}
           onPaste={handlePaste}

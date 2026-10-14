@@ -726,6 +726,9 @@ body {
 
 /* Voice input: hold Space to dictate (docs/voice-input.md). */
 .voice-indicator { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 510; display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: var(--menu-background, #252526); color: var(--menu-foreground, #ccc); border: 1px solid var(--widget-border, #454545); box-shadow: 0 6px 24px rgba(0,0,0,.35); font-size: 12px; pointer-events: none; }
+.voice-speaking { pointer-events: auto; }
+.voice-stop { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--widget-border, #454545); background: transparent; color: inherit; font-size: 11px; cursor: pointer; }
+.voice-stop:hover { background: rgba(255,255,255,.08); }
 .voice-recording .voice-mic { color: #f14c4c; }
 .voice-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 18px; }
 .voice-meter span { width: 3px; border-radius: 2px; background: var(--widget-border, #555); }

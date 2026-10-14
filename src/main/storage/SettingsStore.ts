@@ -27,7 +27,13 @@ function normalizeVoiceSettings(value: unknown): AppSettings['voice'] {
   const model = typeof input.model === 'string' && input.model.trim() ? input.model.trim().slice(0, 200) : defaults.model
   const holdMs = typeof input.holdMs === 'number' && Number.isFinite(input.holdMs) ? Math.min(1000, Math.max(250, Math.round(input.holdMs))) : defaults.holdMs
   const language = input.language === 'tr' || input.language === 'en' ? input.language : 'auto'
-  return { enabled: input.enabled === true, model, holdMs, cleanup: input.cleanup !== false, language }
+  const speak: Partial<AppSettings['voice']['speak']> = input.speak && typeof input.speak === 'object' ? input.speak : {}
+  const speed = typeof speak.speed === 'number' && Number.isFinite(speak.speed) ? Math.min(2, Math.max(0.5, speak.speed)) : 1
+  const studioDir = typeof speak.studioDir === 'string' ? speak.studioDir.trim().slice(0, 500) : ''
+  return {
+    enabled: input.enabled === true, model, holdMs, cleanup: input.cleanup !== false, language,
+    speak: { enabled: speak.enabled === true, model: speak.model === 'ema' ? 'ema' : 'antalia', speed, studioDir }
+  }
 }
 const BACKDROPS: AppSettings['backdrop'][] = ['none', 'mica', 'acrylic', 'tabbed']
 

@@ -3,6 +3,8 @@ import { create } from 'zustand'
 export type VoicePhase = 'idle' | 'starting' | 'recording' | 'transcribing'
 
 interface VoiceState {
+  /** Read aloud (separate from dictation): synthesizing the first piece, then playing. */
+  speaking: 'idle' | 'preparing' | 'playing'
   phase: VoicePhase
   /** Tab the text will go to. */
   tabId: string | null
@@ -14,6 +16,7 @@ interface VoiceState {
 
 /** What the dictation indicator shows; driven by voice/voiceInput.ts. */
 export const useVoiceStore = create<VoiceState>()((set) => ({
+  speaking: 'idle',
   phase: 'idle',
   tabId: null,
   startedAt: 0,
