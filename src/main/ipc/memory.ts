@@ -1,15 +1,17 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
-import type { MemoryAgent, MemoryConnection, MemoryProject, OpenRouterModelList, OpenRouterModelTest } from '../../shared/types'
+import type { MemoryAgent, MemoryConnection, MemoryInterval, MemoryProject, OpenRouterModelList, OpenRouterModelTest } from '../../shared/types'
 import { connect, connectionStatus, disconnect, type ServerLaunch } from '../memory/connect'
 import type { MemoryEngine } from '../memory/engine'
+import { memoryDue } from '../memory/schedule'
 import { testModel, type ModelCatalog } from '../memory/models'
 import type { MemoryStore } from '../memory/store'
 
 export const MEMORY_SECRET_ID = 'termflow-memory'
 const AGENTS: MemoryAgent[] = ['claude', 'codex', 'opencode']
 const FIRST_RUN_DELAY_MS = 30_000
-const RUN_INTERVAL_MS = 30 * 60 * 1000
+/** Ayar degisince ya da uygulama gec acilinca zamani gelen calisma en gec bu kadar sonra baslar. */
+const CHECK_MS = 5 * 60 * 1000
 
 const isAgent = (value: unknown): value is MemoryAgent => AGENTS.includes(value as MemoryAgent)
 
@@ -61,11 +63,14 @@ export function registerMemoryIpc({ engine, store, launch, catalog, getApiKey }:
   })
 }
 
-/** Açılıştan kısa süre sonra ve sonra 30 dk'da bir; değişen session yoksa API çağrısı olmaz. */
-export function startMemoryScheduler(engine: MemoryEngine): () => void {
-  const tick = (): void => { void engine.run().catch((error) => console.warn('[memory] run failed:', error)) }
+/** Kullanicinin sectigi sikliga gore (saatlik/gunluk/haftalik); yeni session yoksa API cagrisi olmaz. */
+export function startMemoryScheduler(engine: MemoryEngine, getEvery: () => MemoryInterval): () => void {
+  const tick = (): void => {
+    if (!memoryDue(engine.getStatus().lastRunAt, getEvery(), Date.now())) return
+    void engine.run().catch((error) => console.warn('[memory] run failed:', error))
+  }
   const first = setTimeout(tick, FIRST_RUN_DELAY_MS)
-  const interval = setInterval(tick, RUN_INTERVAL_MS)
+  const interval = setInterval(tick, CHECK_MS)
   return () => {
     clearTimeout(first)
     clearInterval(interval)

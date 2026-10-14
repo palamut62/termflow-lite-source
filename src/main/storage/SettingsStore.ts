@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
 import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
-import { DEFAULT_SETTINGS, type AppSettings } from '../../shared/types'
+import { DEFAULT_SETTINGS, MEMORY_INTERVAL_MS, type AppSettings } from '../../shared/types'
 import { normalizeSetupSteps } from '../../shared/worktreeSetup'
 
 const WRITE_DEBOUNCE_MS = 300
@@ -13,7 +13,8 @@ function normalizeMemorySettings(value: unknown): AppSettings['memory'] {
   const excluded = Array.isArray(input.excludedProjects)
     ? [...new Set(input.excludedProjects.filter((key): key is string => typeof key === 'string' && key.length > 0 && key.length < 1024))]
     : []
-  return { enabled: input.enabled === true, model, excludedProjects: excluded }
+  const updateEvery = input.updateEvery && input.updateEvery in MEMORY_INTERVAL_MS ? input.updateEvery : defaults.updateEvery
+  return { enabled: input.enabled === true, updateEvery, model, excludedProjects: excluded }
 }
 function normalizeRemoteSettings(value: unknown): AppSettings['remote'] {
   const input = value && typeof value === 'object' ? value as Partial<AppSettings['remote']> : {}

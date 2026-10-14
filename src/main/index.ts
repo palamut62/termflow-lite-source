@@ -406,7 +406,7 @@ app.whenReady().then(() => {
     catalog: new ModelCatalog(join(app.getPath('userData'), 'cache', 'openrouter-models.json')),
     getApiKey: () => providerSecrets.get(MEMORY_SECRET_ID)
   })
-  stopMemoryScheduler = startMemoryScheduler(memoryEngine)
+  stopMemoryScheduler = startMemoryScheduler(memoryEngine, () => (settingsStore ? settingsStore.get() : DEFAULT_SETTINGS).memory.updateEvery)
   // Voice input shares the OpenRouter key with Memory (docs/voice-input.md).
   registerVoiceIpc({
     getSettings: () => (settingsStore ? settingsStore.get() : DEFAULT_SETTINGS),

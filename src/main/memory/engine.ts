@@ -195,12 +195,13 @@ export class MemoryEngine {
     }
 
     const lastError = fatal ?? (errors.length ? `${errors.length} item(s) failed. First: ${errors[0]}` : undefined)
-    const state = store.setState({ lastRunAt: now, lastError, usage })
+    // Yeni session yoksa model cagrilmaz; son gercek calismanin kullanimi korunur.
+    const state = store.setState({ lastRunAt: now, lastError, ...(usage.requests > 0 ? { usage } : {}) })
     this.emit({
       state: fatal ? 'error' : 'idle',
       lastRunAt: state.lastRunAt,
       lastError,
-      usage,
+      usage: state.usage,
       projects: store.listProjects().length,
       done: undefined,
       total: undefined

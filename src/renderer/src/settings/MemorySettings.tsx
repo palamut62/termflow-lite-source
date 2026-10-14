@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Brain, FlaskConical, RefreshCw, Trash2 } from 'lucide-react'
-import type { MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModel, OpenRouterModelList, OpenRouterModelTest } from '../../../shared/types'
+import type { MemoryAgent, MemoryConnection, MemoryInterval, MemoryProject, MemoryStatus, OpenRouterModel, OpenRouterModelList, OpenRouterModelTest } from '../../../shared/types'
 import { contextText, ModelPicker, priceText, usd } from './ModelPicker'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
-import { Field, TextInput, Toggle } from './Settings'
+import { Field, Select, TextInput, Toggle } from './Settings'
 
 const SECRET_ID = 'termflow-memory'
 /** Model listesi hiç çekilemediyse (ilk açılış, çevrimdışı) gösterilen yedek öneriler. */
@@ -18,6 +18,9 @@ const CONNECTION_LABEL: Record<MemoryConnection['state'], string> = {
   outdated: 'Registered with an old app path',
   error: 'Error'
 }
+
+const EVERY_OPTIONS = [{ value: 'hourly', label: 'Every hour' }, { value: 'daily', label: 'Every day' }, { value: 'weekly', label: 'Every week' }]
+const EVERY_TEXT: Record<MemoryInterval, string> = { hourly: 'every hour', daily: 'every day', weekly: 'every week' }
 
 const date = (time?: number): string => time ? new Date(time).toLocaleString() : 'never'
 
@@ -258,7 +261,11 @@ export function MemorySettings(): React.JSX.Element {
         </p>
       )}
 
-      <Field label="Status" hint={status?.usage?.requests ? `Last run: ${status.usage.requests} requests, ${status.usage.promptTokens + status.usage.completionTokens} tokens${status.usage.cost ? `, $${status.usage.cost.toFixed(4)}` : ''}` : 'Checks for changed sessions every 30 minutes'}>
+      <Field label="Update" hint="Only sessions that are new or changed since the last check are analyzed">
+        <Select value={memory.updateEvery} options={EVERY_OPTIONS} onChange={(value) => void update({ memory: { ...memory, updateEvery: value as MemoryInterval } })} />
+      </Field>
+
+      <Field label="Status" hint={status?.usage?.requests ? `Last run: ${status.usage.requests} requests, ${status.usage.promptTokens + status.usage.completionTokens} tokens${status.usage.cost ? `, $${status.usage.cost.toFixed(4)}` : ''}` : `Checks for new sessions ${EVERY_TEXT[memory.updateEvery]}; with none, nothing is sent to the model`}>
         <span className="memory-inline">
           <span className={`memory-status${status?.state === 'error' ? ' memory-status-error' : ''}`}>{statusText(status)}</span>
           <button className="settings-btn settings-btn-small" disabled={running || !memory.enabled || !hasKey} onClick={() => void runNow()}>

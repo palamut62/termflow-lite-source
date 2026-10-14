@@ -483,8 +483,13 @@ export interface RemoteSettings {
   port: number
 }
 
+/** Hafiza ne siklikla yeni session arar (yeni session yoksa model cagrilmaz). */
+export type MemoryInterval = 'hourly' | 'daily' | 'weekly'
+export const MEMORY_INTERVAL_MS: Record<MemoryInterval, number> = { hourly: 60 * 60_000, daily: 24 * 60 * 60_000, weekly: 7 * 24 * 60 * 60_000 }
+
 export interface MemorySettings {
   enabled: boolean
+  updateEvery: MemoryInterval
   /** OpenRouter model id. */
   model: string
   /** Project keys (normalized git roots) that are never read or sent. */
@@ -732,7 +737,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentWeather: 'cycle',
   weatherPlace: null,
   asciiBackgrounds: {},
-  memory: { enabled: false, model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
+  memory: { enabled: false, updateEvery: 'hourly', model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
   remote: { enabled: false, port: 47321 },
   voice: { enabled: false, model: 'google/gemini-2.5-flash-lite', holdMs: 400, cleanup: true, language: 'auto', speak: { enabled: false, model: 'antalia', speed: 1, studioDir: '' } },
   widgetX: null,

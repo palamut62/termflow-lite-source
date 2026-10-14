@@ -34,9 +34,13 @@ describe('SettingsStore', () => {
 
   it('keeps agent memory off by default and sanitizes its settings', () => {
     writeFileSync(file(), JSON.stringify({ memory: { enabled: 'yes', model: '  ', excludedProjects: ['c:\a', 'c:\a', 3, ''] } }))
-    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: false, model: DEFAULT_SETTINGS.memory.model, excludedProjects: ['c:\a'] })
+    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: false, updateEvery: 'hourly', model: DEFAULT_SETTINGS.memory.model, excludedProjects: ['c:\a'] })
     writeFileSync(file(), JSON.stringify({ memory: { enabled: true, model: ' x/y ' } }))
-    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: true, model: 'x/y', excludedProjects: [] })
+    expect(new SettingsStore(file()).get().memory).toEqual({ enabled: true, updateEvery: 'hourly', model: 'x/y', excludedProjects: [] })
+    writeFileSync(file(), JSON.stringify({ memory: { enabled: true, updateEvery: 'weekly' } }))
+    expect(new SettingsStore(file()).get().memory.updateEvery).toBe('weekly')
+    writeFileSync(file(), JSON.stringify({ memory: { updateEvery: 'every-minute' } }))
+    expect(new SettingsStore(file()).get().memory.updateEvery).toBe('hourly')
   })
 
   it('keeps worktree setup steps but drops paths that leave the repository', () => {

@@ -68,8 +68,10 @@ describe('MemoryEngine', () => {
     expect(store.readIndex()).toContain('Memory half done')
 
     chat.mockClear()
-    await engine.run()
+    const again = await engine.run()
     expect(chat).not.toHaveBeenCalled()
+    // Yeni session yokken son gercek calismanin kullanimi silinmez.
+    expect(again.usage).toMatchObject({ requests: 3 })
   })
 
   it('drops the cut-off last line of a truncated merge and sums cost', async () => {
