@@ -50,6 +50,7 @@ import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
 import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
 import { RemoteController } from './remote/RemoteController'
 import { AgentHookServer } from './agentHooks/hookServer'
+import { readClaudeUsage, readCodexUsage } from './usage/agentUsage'
 import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
 import { stopStudio } from './voice/speak'
@@ -353,6 +354,12 @@ app.whenReady().then(() => {
   agentHookServer = hookServer
   mgr.setAgentHooks(() => hookServer.current())
   hookServer.start().catch((error) => console.warn('[agent-hooks] server failed to start:', error))
+  // usage-meter: Codex yerel oturum dosyasindan, Claude status line'dan (bu oturum ya da son kayit).
+  const claudeUsageFile = join(app.getPath('userData'), 'agent-hooks', 'usage', 'claude.json')
+  ipcMain.handle(IPC.USAGE_GET, async () => {
+    const [codex, claude] = await Promise.all([readCodexUsage(), hookServer.claudeUsage() ?? readClaudeUsage(claudeUsageFile)])
+    return [claude, codex].filter(Boolean)
+  })
   // WSL distro enumeration makes discovery async — the renderer re-queries
   // via SHELLS_DISCOVER anyway, so the warm value is only a fallback.
   let currentShells: Awaited<ReturnType<typeof discoverShells>> = []

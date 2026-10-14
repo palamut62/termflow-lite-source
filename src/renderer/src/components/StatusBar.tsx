@@ -27,6 +27,8 @@ const PERMISSION_LABELS: Record<AgentPermissionMode, string> = {
 
 const CONFIRM_RESET_MS = 6000
 
+import { UsageMeter } from '../usage/UsageMeter'
+
 /** Shown while a paired phone is connected through Remote Access; opens its settings. */
 function RemoteBadge(): React.JSX.Element | null {
   const phones = useConnectedPhones()
@@ -200,6 +202,7 @@ export function StatusBar(): React.JSX.Element {
       {git && <span className="status-item status-git" title={`${git.changedFiles} changed file${git.changedFiles === 1 ? '' : 's'}`}><GitBranch size={12} />{git.branch}{git.changedFiles > 0 ? ` (${git.changedFiles})` : ''}</span>}
       <OutputPulse />
       <span className="status-item">{tabs.length} tab{tabs.length === 1 ? '' : 's'}</span>
+      <UsageMeter />
       <RemoteBadge />
       <UpdateBadge />
       {profileSwitchError && <span className="status-item status-switch-error" title="The active agent profile could not be changed"><AlertCircle size={12} />Switch failed</span>}

@@ -77,7 +77,7 @@ export class SessionStore {
 
 /**
  * Yalnızca serileştirilebilir, beklenen şekle uyan alanları geçirir. Bozuk
- * veya yabancı alanlar (ör. resumeSession) sessizce düşer; şekil hiç tutmuyorsa
+ * veya yabancı alanlar sessizce düşer (resumeSession yalnız { agent, id } olarak kalır); şekil hiç tutmuyorsa
  * null döner ve çağıran normal açılışa geri düşer.
  */
 export function sanitizeSession(value: unknown): PersistedSession | null {

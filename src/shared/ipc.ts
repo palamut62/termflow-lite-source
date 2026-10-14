@@ -103,6 +103,8 @@ export const IPC = {
   SCROLLBACK_LOAD: 'scrollback:load',
   SCROLLBACK_REMOVE: 'scrollback:remove',
   SCROLLBACK_CLEAR: 'scrollback:clear',
+  /** usage-meter: yerel dosyalardan Claude/Codex limitleri. */
+  USAGE_GET: 'usage:get',
   APP_LAUNCH_CWD: 'app:launch-cwd',
   APP_LAUNCH_READY: 'app:launch-ready',
   APP_OPEN_PATH: 'app:open-path',

@@ -385,6 +385,10 @@ export interface AppSettings {
   restoreScrollback: boolean
   /** Yeniden acilista ajan sekmeleri kendi konusmasiyla surer (yalniz { agent, id } kaydedilir). */
   resumeAgentsOnRestore: boolean
+  /** Durum cubugunda ajan limitleri: kullanilan ya da kalan yuzde. */
+  usageDisplay: 'off' | 'used' | 'remaining'
+  /** Claude limitleri icin status line yardimcisi (Claude'un alt bilgi ipuclarini gizler; istege bagli). */
+  claudeUsage: boolean
   osc52Clipboard: boolean
   /** Ajan sekmesinde Shift+Enter gondermek yerine yeni satir ekler. */
   shiftEnterNewline: boolean
@@ -703,6 +707,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentHooks: true,
   restoreScrollback: true,
   resumeAgentsOnRestore: true,
+  usageDisplay: 'used',
+  claudeUsage: false,
   osc52Clipboard: true,
   shiftEnterNewline: true,
   minimumContrastRatio: 1,

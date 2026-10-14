@@ -1,8 +1,10 @@
 import { createServer, type IncomingMessage, type Server } from 'node:http'
-import { randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { writeFileSync } from 'node:fs'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
-import { claudeHookEvent, claudeHookSettings, type AgentHookEvent } from '../../shared/agentHooks'
+import { dirname, join } from 'node:path'
+import { claudeHookEvent, claudeHookSettings, claudeStatusLineCommand, type AgentHookEvent } from '../../shared/agentHooks'
+import { parseClaudeRateLimits, type AgentUsage } from '../../shared/usage'
 
 /**
  * Claude Code HTTP hook'larinin geldigi yerel sunucu (spec: docs/orca-parity/agent-hooks.md).
@@ -11,6 +13,8 @@ import { claudeHookEvent, claudeHookSettings, type AgentHookEvent } from '../../
  */
 export interface HookLaunch {
   claudeSettingsPath: string
+  /** Ayni hook'lar + Claude limitleri icin status line (usage-meter); kullanicinin komutu varsa onu sarmalar. */
+  claudeUsageSettings: (userCommand: string | null) => string
   token: string
 }
 
@@ -21,11 +25,19 @@ export class AgentHookServer {
   private server: Server | null = null
   private readonly token = randomBytes(32).toString('hex')
   private launch: HookLaunch | null = null
+  private claude: AgentUsage | null = null
 
   constructor(
     private readonly settingsPath: string,
-    private readonly emit: (tabId: string, event: AgentHookEvent) => void
+    private readonly emit: (tabId: string, event: AgentHookEvent) => void,
+    /** Claude status line'dan gelen son limitler; dosyaya yazilir ki yeniden acilista da gorunsun. */
+    private readonly usageFile: string = join(dirname(settingsPath), 'usage', 'claude.json')
   ) {}
+
+  /** Bu oturumda status line'dan gelen son Claude limitleri. */
+  claudeUsage(): AgentUsage | null {
+    return this.claude
+  }
 
   /** Baslatma bilgisi; sunucu hazir degilse null (ajan hook'suz baslar, spinner yedegi calisir). */
   current(): HookLaunch | null {
@@ -42,8 +54,21 @@ export class AgentHookServer {
     })
     this.server = server
     const port = (server.address() as { port: number }).port
-    await writeAtomic(this.settingsPath, JSON.stringify(claudeHookSettings(`http://127.0.0.1:${port}/claude`), null, 2))
-    this.launch = { claudeSettingsPath: this.settingsPath, token: this.token }
+    const base = `http://127.0.0.1:${port}`
+    await writeAtomic(this.settingsPath, JSON.stringify(claudeHookSettings(`${base}/claude`), null, 2))
+    const written = new Map<string, string>()
+    // Komut basina bir dosya (yol ayni kalsin diye kisa hash); senkron, ajan baslamadan hazir olmali.
+    const claudeUsageSettings = (userCommand: string | null): string => {
+      const key = userCommand ?? ''
+      const cached = written.get(key)
+      if (cached) return cached
+      const suffix = userCommand ? `-${createHash('sha1').update(userCommand).digest('hex').slice(0, 10)}` : ''
+      const file = this.settingsPath.replace(/\.json$/, `-usage${suffix}.json`)
+      writeFileSync(file, JSON.stringify(claudeHookSettings(`${base}/claude`, claudeStatusLineCommand(`${base}/claude-status`, process.platform, userCommand)), null, 2))
+      written.set(key, file)
+      return file
+    }
+    this.launch = { claudeSettingsPath: this.settingsPath, claudeUsageSettings, token: this.token }
   }
 
   stop(): void {
@@ -53,10 +78,11 @@ export class AgentHookServer {
   }
 
   private async handle(req: IncomingMessage): Promise<number> {
-    if (req.method !== 'POST' || req.url !== '/claude') return 404
+    if (req.method !== 'POST' || (req.url !== '/claude' && req.url !== '/claude-status')) return 404
     // DNS rebinding: yalniz dogrudan loopback istegi.
     if (!/^127\.0\.0\.1:\d+$/.test(req.headers.host ?? '')) return 403
     if (!sameToken(header(req, 'x-termflow-token'), this.token)) return 403
+    if (req.url === '/claude-status') return this.handleStatus(req)
     const tabId = header(req, 'x-termflow-tab')
     if (!TAB_ID.test(tabId)) return 400
     const body = await readBody(req)
@@ -65,6 +91,21 @@ export class AgentHookServer {
     try { parsed = JSON.parse(body) } catch { return 400 }
     const event = claudeHookEvent(parsed)
     if (event) this.emit(tabId, event)
+    return 204
+  }
+
+  /** Claude status line JSON'u: yalniz rate_limits saklanir (model, maliyet, yol gibi alanlar atilir). */
+  private async handleStatus(req: IncomingMessage): Promise<number> {
+    const body = await readBody(req)
+    if (body === null) return 413
+    let parsed: unknown
+    try { parsed = JSON.parse(body) } catch { return 400 }
+    const usage = parseClaudeRateLimits(parsed, Date.now())
+    if (usage) {
+      this.claude = usage
+      const limits = (parsed as { rate_limits: unknown }).rate_limits
+      await writeAtomic(this.usageFile, JSON.stringify({ rate_limits: limits })).catch(() => undefined)
+    }
     return 204
   }
 }

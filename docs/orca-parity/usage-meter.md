@@ -1,6 +1,6 @@
 # usage-meter - Claude ve Codex limit takibi
 
-Durum: TASLAK 2026-10-14. Bagimli: agent-hooks (betik altyapisi). Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: agent-hooks (betik altyapisi). Ortak kurallar: [README.md](README.md).
 
 ## Amac
 CLI ajan kullanicisi limite takilmadan once gorsun: 5 saatlik ve haftalik pencere yuzdesi, sifirlanma
@@ -46,6 +46,17 @@ saati, %80'i gecince uyari. Durum cubugunda ajan sekmesi aktifken gorunur.
 2. Claude statusline sarmalayicisi + kullanici komutunu iletme.
 3. Ayar, esik renkleri, telefon ozeti.
 
-## Acik sorular
-- Sarmalayici her status line yenilemesinde Electron-as-node baslatir; agent-hooks dilim 0 olcumu yavas cikarsa
-  Claude tarafi "yalniz kullanici status line'i yoksa" moduna indirgenir.
+## Uygulama notlari (2026-10-14)
+- Kod: `src/shared/usage.ts` (ayristirma, esikler, sure; testli), `src/main/usage/agentUsage.ts` (Codex en yeni rollout'un son
+  64 KB'i, Claude kayitli JSON), hook sunucusunda `/claude-status`, `src/main/agentHooks/claudeStatusLine.ts`, renderer
+  `usage/UsageMeter.tsx`. E2E `e2e/usage-meter.spec.ts` (sahte HOME + sahte codex).
+- Claude yardimcisi Electron-as-node DEGIL (her guncellemede ~450 ms): `curl` (Windows'ta Git Bash icinden `curl.exe`) JSON'u
+  yerel hook sunucusuna gonderir. Kullanicinin kendi status line komutu varsa (yerel > proje > kullanici) POSIX sh ile
+  sarmalanir: `i=$(cat); (printf '%s' "$i" | curl ... &); printf '%s' "$i" | <kullanici komutu>`; gorunum degismez
+  (bu PC'de `python ~/.claude/statusline.py` ile canli denendi). Komut basina ayar dosyasi `claude-settings-usage-<hash>.json`.
+- Claude limitleri ISTEGE BAGLI (`claudeUsage`, varsayilan kapali): kullanicinin status line'i yoksa Claude alt bilgi ipuclarini
+  ('esc to interrupt') gizler ve karakter animasyonu bu ipucunu okuyor. Codex varsayilan acik (`usageDisplay`).
+- Sunucu Claude JSON'undan yalniz `rate_limits`'i saklar (`userData/agent-hooks/usage/claude.json`); model, yol, maliyet atilir.
+- Durum cubugu zemini renkli oldugu icin %80+/%95+ uyarisi metin rengi degil zemin rengi (okunurluk).
+- Telefona usage ozeti eklenmedi (remote-attention'a birakildi).
+- Sinir: Git Bash'siz Windows'ta (Claude PowerShell'e duser) `$TERMFLOW_HOOK_TOKEN` okunmaz, Claude limitleri gelmez.

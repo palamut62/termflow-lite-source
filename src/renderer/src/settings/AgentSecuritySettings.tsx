@@ -13,6 +13,8 @@ export function AgentSecuritySettings(): React.JSX.Element {
   const mode = useSettingsStore((state) => state.settings.defaultAgentPermissionMode)
   const update = useSettingsStore((state) => state.update)
   const agentHooks = useSettingsStore((state) => state.settings.agentHooks)
+  const usageDisplay = useSettingsStore((state) => state.settings.usageDisplay)
+  const claudeUsage = useSettingsStore((state) => state.settings.claudeUsage)
   return <div className="settings-section">
     <h2><ShieldCheck size={18} /> Agent Security</h2>
     <p className="settings-section-description">The selected policy is pinned when a new agent tab starts. Existing sessions are never silently elevated by a settings change.</p>
@@ -21,6 +23,12 @@ export function AgentSecuritySettings(): React.JSX.Element {
     </Field>
     <Field label="Agent status from the agent" hint="New Claude Code and Codex tabs report working, needs approval and done themselves. Passed as launch arguments only; your Claude and Codex config files are never changed">
       <Toggle checked={agentHooks} onChange={(value) => { void update({ agentHooks: value }) }} label="Agent status hooks" />
+    </Field>
+    <Field label="Usage limits in the status bar" hint="5-hour and weekly limits of the active Claude Code or Codex tab, read from local files. Amber at 80%, red at 95%">
+      <Select value={usageDisplay} options={[{ value: 'used', label: 'Show % used' }, { value: 'remaining', label: 'Show % remaining' }, { value: 'off', label: 'Off' }]} onChange={(value) => { void update({ usageDisplay: value as 'off' | 'used' | 'remaining' }) }} />
+    </Field>
+    <Field label="Claude limits" hint="Claude Pro/Max only. New Claude Code tabs get a small status line helper that hands the limits to TermFlow. Your own status line keeps showing as before; without one, Claude hides footer hints such as 'esc to interrupt'. Needs Git Bash on Windows">
+      <Toggle checked={claudeUsage} disabled={!agentHooks} onChange={(value) => { void update({ claudeUsage: value }) }} label="Claude limits" />
     </Field>
     <div className="agent-security-grid">
       <article><strong>Safe</strong><span>Codex read-only sandbox. Claude plan mode. No file modifications.</span></article>

@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing, type AttentionBadge } from '../shared/ipc'
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentHookEvent } from '../shared/agentHooks'
+import type { AgentUsage } from '../shared/usage'
 import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, SpeakResult, UpdateStatus, VoiceResult } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
@@ -226,6 +227,9 @@ const api = {
     load: (tabId: string): Promise<string | null> => ipcRenderer.invoke(IPC.SCROLLBACK_LOAD, tabId),
     remove: (tabId: string): void => ipcRenderer.send(IPC.SCROLLBACK_REMOVE, tabId),
     clear: (): void => ipcRenderer.send(IPC.SCROLLBACK_CLEAR)
+  },
+  usage: {
+    get: (): Promise<AgentUsage[]> => ipcRenderer.invoke(IPC.USAGE_GET)
   },
   themes: {
     pick: (): Promise<{ name: string; text: string } | { error: string } | null> => ipcRenderer.invoke(IPC.DIALOG_PICK_THEME)

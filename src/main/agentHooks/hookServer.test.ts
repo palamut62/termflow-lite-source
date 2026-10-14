@@ -57,3 +57,26 @@ describe('AgentHookServer', () => {
     expect(readFileSync(file, 'utf8')).not.toContain(server.current()!.token)
   })
 })
+
+describe('Claude status line', () => {
+  it('keeps only the rate limits from the status line JSON and writes a usage settings file', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'tf-hooks-'))
+    const file = join(dir, 'claude-settings.json')
+    const server = new AgentHookServer(file, () => undefined)
+    await server.start()
+    try {
+      const usageSettings = JSON.parse(readFileSync(server.current()!.claudeUsageSettings(null), 'utf8'))
+      const wrapped = JSON.parse(readFileSync(server.current()!.claudeUsageSettings('python C:/me/statusline.py'), 'utf8'))
+      expect(wrapped.statusLine.command).toMatch(/^i=\$\(cat\);.*\| python C:\/me\/statusline\.py$/)
+      expect(usageSettings.statusLine.command).toContain('/claude-status')
+      const url = usageSettings.statusLine.command.split(' ').at(-1)
+      const status = await post(url, JSON.stringify({ model: { id: 'x' }, cwd: 'C:/secret', rate_limits: { five_hour: { used_percentage: 23.5, resets_at: 2_000_000_000 } } }), { 'x-termflow-token': server.current()!.token })
+      expect(status).toBe(204)
+      expect(server.claudeUsage()?.windows[0]).toMatchObject({ label: '5h', usedPercent: 23.5 })
+      const saved = readFileSync(join(dir, 'usage', 'claude.json'), 'utf8')
+      expect(saved).not.toContain('secret')
+    } finally {
+      server.stop()
+    }
+  })
+})

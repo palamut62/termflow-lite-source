@@ -80,8 +80,21 @@ export function agentHookArgs(agent: AgentKind, args: readonly string[], claudeS
   return []
 }
 
+/**
+ * usage-meter: Claude status line JSON'unu yerel hook sunucusuna gonderen komut. Windows'ta Claude bunu Git Bash'te
+ * calistirir (curl.exe hem Git'te hem System32'de var). Kullanicinin kendi status line komutu varsa ayni JSON ona da
+ * aynen verilir ve ciktisi gosterilir; gonderim arka planda, gorunum degismez. POSIX sh ile calisir.
+ * shortcut: PowerShell'e dusen (Git Bash'siz) kurulumda $VAR env okumaz, token bos gider (403); Git Bash gerekir.
+ */
+export function claudeStatusLineCommand(url: string, platform: string, userCommand?: string | null): string {
+  const curl = platform === 'win32' ? 'curl.exe' : 'curl'
+  const send = `${curl} -s -m 2 -o /dev/null -H "x-termflow-token: $TERMFLOW_HOOK_TOKEN" --data-binary @- ${url}`
+  if (!userCommand) return send
+  return `i=$(cat); (printf '%s' "$i" | ${send} &); printf '%s' "$i" | ${userCommand}`
+}
+
 /** userData/agent-hooks/claude-settings.json icerigi; token ve sekme env'den gelir, dosyada sir yok. */
-export function claudeHookSettings(url: string): { hooks: Record<string, unknown[]> } {
+export function claudeHookSettings(url: string, statusLine?: string): { hooks: Record<string, unknown[]>; statusLine?: { type: 'command'; command: string; padding: number } } {
   const hook = {
     type: 'http',
     url,
@@ -89,5 +102,6 @@ export function claudeHookSettings(url: string): { hooks: Record<string, unknown
     headers: { 'x-termflow-token': '$TERMFLOW_HOOK_TOKEN', 'x-termflow-tab': '$TERMFLOW_TAB_ID' },
     allowedEnvVars: ['TERMFLOW_HOOK_TOKEN', 'TERMFLOW_TAB_ID']
   }
-  return { hooks: Object.fromEntries(CLAUDE_HOOK_EVENTS.map((event) => [event, [{ hooks: [hook] }]])) }
+  const hooks = Object.fromEntries(CLAUDE_HOOK_EVENTS.map((event) => [event, [{ hooks: [hook] }]]))
+  return statusLine ? { hooks, statusLine: { type: 'command', command: statusLine, padding: 0 } } : { hooks }
 }

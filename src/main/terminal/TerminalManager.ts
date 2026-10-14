@@ -6,6 +6,7 @@ import { agentForProfile, mergeProfiles } from '../../shared/profiles'
 import { profileToInput, resolveProfileId } from './profileResolver'
 import { prepareLaunch } from './cli'
 import type { HookLaunch } from '../agentHooks/hookServer'
+import { effectiveClaudeStatusLine } from '../agentHooks/claudeStatusLine'
 
 export function applyProviderSecret(
   input: CreateTerminalInput,
@@ -144,7 +145,11 @@ export class TerminalManager {
     this.desktopSizes.set(tabId, { cols, rows })
     const remote = this.remoteSizes.get(tabId)
     const hooks = settings.agentHooks === false ? null : this.hookLaunch()
-    const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input, hooks ? { tabId, launch: hooks } : undefined)
+    // usage-meter: Claude limitleri icin status line; kullanicinin kendi status line'i sarmalanir, gorunumu degismez.
+    const hookLaunch = hooks && settings.claudeUsage && agentForProfile(settings, resolvedId) === 'claude'
+      ? { ...hooks, claudeSettingsPath: hooks.claudeUsageSettings(effectiveClaudeStatusLine(input.cwd)) }
+      : hooks
+    const launch = prepareLaunch(remote ? { ...input, cols: remote.cols, rows: remote.rows } : input, hookLaunch ? { tabId, launch: hookLaunch } : undefined)
     const result = this.core.create(tabId, launch)
     this.reportedSizes.delete(tabId)
     this.reportSize(tabId)

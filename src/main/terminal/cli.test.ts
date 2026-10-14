@@ -25,7 +25,7 @@ describe('CLI launch safety', () => {
     const ext = process.platform === 'win32' ? '.exe' : ''
     const claude = join(dir, `claude${ext}`), codex = join(dir, `codex${ext}`)
     writeFileSync(claude, fakeExecutable()); writeFileSync(codex, fakeExecutable())
-    const hooks = { tabId: 'tab1', launch: { claudeSettingsPath: 'C:\\App Data\\hooks.json', token: 't0k' } }
+    const hooks = { tabId: 'tab1', launch: { claudeSettingsPath: 'C:\\App Data\\hooks.json', claudeUsageSettings: () => 'u.json', token: 't0k' } }
     const c = prepareLaunch({ kind: 'custom', shell: claude, args: ['--resume', 'abc'], launchCommand: 'hi', env: { A: '1' } }, hooks)
     expect(c.args).toEqual(['--resume', 'abc', '--settings', 'C:\\App Data\\hooks.json', '--', 'hi'])
     expect(c.env).toEqual({ A: '1', TERMFLOW_TAB_ID: 'tab1', TERMFLOW_HOOK_TOKEN: 't0k' })
