@@ -219,6 +219,9 @@ const api = {
     loadSound: (file: string): Promise<Uint8Array | null> => ipcRenderer.invoke(IPC.ALERTS_LOAD_SOUND, file),
     setBadge: (badge: AttentionBadge): void => ipcRenderer.send(IPC.WINDOW_ATTENTION, badge)
   },
+  themes: {
+    pick: (): Promise<{ name: string; text: string } | { error: string } | null> => ipcRenderer.invoke(IPC.DIALOG_PICK_THEME)
+  },
   agentHooks: {
     onEvent: (callback: (tabId: string, event: AgentHookEvent) => void): (() => void) => {
       const handler = (_event: unknown, tabId: string, hookEvent: AgentHookEvent): void => callback(tabId, hookEvent)

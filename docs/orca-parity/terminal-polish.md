@@ -1,6 +1,6 @@
 # terminal-polish - Kucuk ama gunluk terminal iyilestirmeleri
 
-Durum: TASLAK 2026-10-14. Bagimli: agent-hooks (yalniz Copy Session ID). Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: agent-hooks (yalniz Copy Session ID). Ortak kurallar: [README.md](README.md).
 Her madde bagimsiz; ayri commit, ayri test.
 
 ## 1. Reset Terminal
@@ -44,5 +44,15 @@ Her madde bagimsiz; ayri commit, ayri test.
   Shift+Enter karar fonksiyonu (sekme turu x ayar), link menusu aksiyon listesi.
 - E2E: Reset Terminal, OSC 52 -> pano (pano kilit riski bilinen, `app.spec` notuna bak), tema ice aktarma.
 
-## Acik sorular
-- Ozel temalar tek `customTheme` mi kalsin, yoksa ice aktarilanlar icin adlandirilmis liste mi? (Oneri: liste.)
+## Uygulama notlari (2026-10-14)
+- Saf yardimcilar `src/renderer/src/terminal/terminalExtras.ts` (OSC 52, URL, Shift+Enter), tema ayristirici
+  `src/shared/themeImport.ts`; ikisi de testli. E2E `e2e/terminal-polish.spec.ts`.
+- Shift+Enter: Claude'a `ESC CR` (2.1.289'da gondermeden cok satira gectigi denendi), Codex/OpenCode'a `LF` (Ctrl+J,
+  belgelenmis; Codex limiti dolu oldugu icin canli denenmedi). Ayar tek anahtar `shiftEnterNewline` (varsayilan acik);
+  'always' secenegi eklenmedi (kabukta ESC CR anlamsiz).
+- Link: duz tik davranisi degismedi (web linki ve yol dogrudan acilir). Orca'nin duz tik menusu yerine mevcut sag tik
+  desenine "Open Link / Copy Link" eklendi (yollarda zaten Open/Reveal/Copy Path vardi). `linkClick` ayari eklenmedi.
+- Tema ice aktarma tek `customTheme`'in uzerine yazar ve onu secer (adlandirilmis liste eklenmedi).
+- Reset Terminal `term.reset()` (RIS): ekran ve gecmis temizlenir, PTY'ye bir sey yazilmaz.
+- OSC 52 her yazmada kucuk toast gosterir; okuma (`?`) reddedilir; ust sinir ~1 MB.
+- E2E OSC 52 testi gercek isletim sistemi panosuna yazar (app.spec'teki gibi).

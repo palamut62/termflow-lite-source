@@ -23,7 +23,9 @@ import { SelectionEdit } from './selectionEdit'
 import { InlineSuggest } from './inlineSuggest'
 import { motionEnabled } from '../motion'
 import { formatDroppedPaths } from './dropPaths'
-import { getPathAtMouse, registerPathLinkProvider, type PathMenuInfo } from './pathLinks'
+import { getPathAtMouse, getUrlAtMouse, registerPathLinkProvider, type PathMenuInfo } from './pathLinks'
+import { parseOsc52, shiftEnterSequence } from './terminalExtras'
+import { useToastStore } from '../store/toastStore'
 import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
 import { AsciiBackdrop } from './AsciiBackdrop'
@@ -73,6 +75,8 @@ interface ContextMenuState {
   block?: BlockMenuInfo | null
   /** İmleç altında çözülmüş bir yol varsa menünün en üstüne yol işlemleri eklenir. */
   path?: PathMenuInfo | null
+  /** İmleç altındaki web adresi (Open Link / Copy Link). */
+  link?: string | null
 }
 
 /**
@@ -138,6 +142,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   // xterm's own background goes see-through when a backdrop or an ASCII picture sits behind it.
   const transparent = backdropActive(settings) || !!asciiBackground
   const [menu, setMenu] = useState<ContextMenuState | null>(null)
+  const sessionId = useTerminalStore((s) => s.tabs.find((tab) => tab.id === tabId)?.agentHook?.sessionId)
   const speakingNow = useVoiceStore((s) => s.speaking !== 'idle')
 
   useEffect(() => {
@@ -216,6 +221,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       // cursorColor override: '' = tema default (PRD §32); backdrop'ta saydam zemin.
       theme: terminalTheme(themeColors, settings, transparent),
       allowTransparency: transparent,
+      minimumContrastRatio: settings.minimumContrastRatio,
       allowProposedApi: true,
       // Draw box-drawing / block glyphs procedurally instead of using the
       // font's own (often misaligned) glyphs — keeps TUI borders crisp.
@@ -321,6 +327,13 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
         applyHookEvent(tabId, 'codex', permissionMode, { state: 'working' })
       })
       : null
+    // OSC 52: SSH/tmux icindeki TUI'lerden kopyalama. Yalniz yazma; okuma istegi parseOsc52'de reddedilir.
+    const osc52 = term.parser.registerOscHandler(52, (payload) => {
+      if (!useSettingsStore.getState().settings.osc52Clipboard) return true
+      const text = parseOsc52(payload)
+      if (text) void navigator.clipboard.writeText(text).then(() => useToastStore.getState().show('Copied from terminal app', 'success')).catch(() => {})
+      return true
+    })
 
     // Data stream: buffer rehydration + live chunks (queue pattern — race yok).
     const onDataHandler = (data: string): void => {
@@ -547,6 +560,14 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     window.addEventListener('blur', onVoiceBlur)
     term.attachCustomKeyEventHandler((e) => {
       if (voice.handle(e)) return false
+      // Ajan giris kutusunda Shift+Enter gondermez, yeni satir ekler.
+      if (e.key === 'Enter' && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && useSettingsStore.getState().settings.shiftEnterNewline) {
+        const newline = shiftEnterSequence(tabAgent)
+        if (newline) {
+          if (e.type === 'keydown') window.termflow.pty.write(tabId, newline)
+          return false
+        }
+      }
       if (e.type !== 'keydown') return true
       if (inlineSuggest.handleKey(e)) return false
       // Ctrl+Up/Down: önceki/sonraki komuta git (yalnızca shell integration varken).
@@ -606,6 +627,11 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       const block: BlockMenuInfo | null = found
         ? { command: found.command, output: shellIntegration.outputOf(found), exitCode: found.exitCode }
         : null
+      const link = getUrlAtMouse(term, e)
+      if (link) {
+        setMenu({ x: e.clientX, y: e.clientY, hasSelection, path: null, block, link })
+        return
+      }
       if (!current.pathContextMenu) {
         if (current.rightClickBehavior === 'paste') {
           if (hasSelection) copySelection(term)
@@ -648,6 +674,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       bellSub.dispose()
       codexOsc?.dispose()
       codexTitle?.dispose()
+      osc52.dispose()
       voice.blur()
       term.textarea?.removeEventListener('blur', onVoiceBlur)
       window.removeEventListener('blur', onVoiceBlur)
@@ -705,6 +732,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     // xterm letterSpacing'i (px) native olarak destekler; hücre metriğini
     // değiştirdiği için aşağıdaki resize kanalı yeniden fit edecek.
     term.options.letterSpacing = settings.letterSpacing
+    term.options.minimumContrastRatio = settings.minimumContrastRatio
     const themeColors = resolveTheme(settings).colors
     term.options.theme = terminalTheme(themeColors, settings, transparent)
     // A font/size change alters the cell metrics, so the fit result may change;
@@ -721,6 +749,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     settings.cursorWidth,
     settings.cursorColor,
     settings.letterSpacing,
+    settings.minimumContrastRatio,
     settings.scrollback,
     settings.themeId,
     settings.customTheme,
@@ -827,6 +856,13 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
   const handleSelectAll = (): void => {
     termRef.current?.selectAll()
     closeMenu()
+  }
+  // Coken bir TUI'nin biraktigi modlari (fare izleme, alternatif ekran, uygulama tuslari) temizler; kabuk ayni kalir.
+  const handleResetTerminal = (): void => {
+    termRef.current?.reset()
+    scheduleResizeRef.current?.()
+    closeMenu()
+    termRef.current?.focus()
   }
   const handleClear = (): void => {
     termRef.current?.clear() // sadece görünüm; PTY geçmişine dokunulmaz
@@ -987,6 +1023,12 @@ ${block.output.slice(-8000)}
           onCopyOutput={handleCopyOutput}
           onRerun={handleRerun}
           onCopyForAgent={handleCopyForAgent}
+          link={menu.link ?? null}
+          onOpenLink={() => { if (menu.link) void window.termflow.system.openExternal(menu.link); closeMenu() }}
+          onCopyLink={() => { if (menu.link) void navigator.clipboard.writeText(menu.link).catch(() => {}); closeMenu() }}
+          sessionId={sessionId}
+          onCopySessionId={() => { if (sessionId) void navigator.clipboard.writeText(sessionId).catch(() => {}); closeMenu() }}
+          onResetTerminal={handleResetTerminal}
           onOpenPath={handleOpenPath}
           onRevealInFolder={handleRevealInFolder}
           onCopyPath={handleCopyPath}

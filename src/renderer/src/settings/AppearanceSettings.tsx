@@ -6,6 +6,7 @@ import { useToastStore } from '../store/toastStore'
 import type { AgentAnimationStyle, AgentCharacter, AgentWeather, BackdropMaterial, CursorEffect, MotionLevel, TerminalEffect, ThemeColors } from '../../../shared/types'
 import { ColorPicker, Field, NumberInput, Select, TextInput, Toggle } from './Settings'
 import { AsciiBackgroundSettings } from './AsciiBackgroundSettings'
+import { parseThemeFile } from '../../../shared/themeImport'
 
 const FONT_SUGGESTIONS = [
   'Cascadia Mono',
@@ -79,6 +80,7 @@ function ThemePreview({ colors }: { colors: ThemeColors }): React.JSX.Element {
 export function AppearanceSettings(): React.JSX.Element {
   const settings = useSettingsStore((s) => s.settings)
   const update = useSettingsStore((s) => s.update)
+  const toast = useToastStore((s) => s.show)
   // Sistem fontları (PRD §29): Local Font Access API varsa datalist'i doldurur,
   // yoksa sessizce FONT_SUGGESTIONS davranışında kalınır.
   const [systemFonts, setSystemFonts] = useState<string[]>([])
@@ -101,6 +103,16 @@ export function AppearanceSettings(): React.JSX.Element {
     }
   }, [])
 
+  const importTheme = async (): Promise<void> => {
+    const picked = await window.termflow.themes.pick()
+    if (!picked) return
+    if ('error' in picked) { toast(picked.error, 'error'); return }
+    const result = parseThemeFile(picked.name, picked.text)
+    if ('error' in result) { toast(result.error, 'error'); return }
+    await update({ customTheme: result.colors, themeId: 'custom' })
+    toast(`Imported ${result.name} as the Custom theme`, 'success')
+  }
+
   // Custom tema düzenleyici her zaman tam 20 renkle çalışır; yoksa dark palet.
   const customColors = settings.customTheme ?? getTheme(DEFAULT_THEME_ID).colors
 
@@ -121,6 +133,13 @@ export function AppearanceSettings(): React.JSX.Element {
           ))}
         </div>
       </section>
+
+      <Field label="Import theme" hint="Windows Terminal JSON, iTerm2 .itermcolors or Ghostty theme file. It replaces the Custom theme.">
+        <button className="settings-btn settings-btn-small" onClick={() => void importTheme()}>Import...</button>
+      </Field>
+      <Field label="Minimum contrast" hint="Raises text contrast against its background. 1 is off, 4.5 meets WCAG AA">
+        <NumberInput value={settings.minimumContrastRatio} min={1} max={21} step={0.5} onChange={(v) => void update({ minimumContrastRatio: v })} />
+      </Field>
 
       {settings.themeId === 'custom' && (
         <section>

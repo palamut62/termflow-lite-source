@@ -13,6 +13,14 @@ interface TerminalContextMenuProps {
   onOpenPath?: () => void
   onRevealInFolder?: () => void
   onCopyPath?: () => void
+  /** Imlec altindaki web adresi varsa menunun basinda link islemleri. */
+  link?: string | null
+  onOpenLink?: () => void
+  onCopyLink?: () => void
+  /** Ajanin bildirdigi oturum kimligi (agent-hooks). */
+  sessionId?: string
+  onCopySessionId?: () => void
+  onResetTerminal: () => void
   /** Sağ tıklanan komut bloğu (shell integration); yoksa bölüm gösterilmez. */
   block?: BlockMenuInfo | null
   onCopyCommand?: () => void
@@ -79,6 +87,18 @@ export function TerminalContextMenu(props: TerminalContextMenuProps): React.JSX.
 
   return (
     <div className="ctx-menu" ref={ref} role="menu" style={{ left: pos.x, top: pos.y }}>
+      {props.link && (
+        <>
+          <div className="ctx-menu-section" role="presentation">Link</div>
+          <button className="ctx-menu-item" role="menuitem" onClick={props.onOpenLink}>
+            Open Link
+          </button>
+          <button className="ctx-menu-item" role="menuitem" onClick={props.onCopyLink}>
+            Copy Link
+          </button>
+          <div className="ctx-menu-divider" />
+        </>
+      )}
       {props.path && (
         <>
           <div className="ctx-menu-section" role="presentation">Path</div>
@@ -137,6 +157,9 @@ export function TerminalContextMenu(props: TerminalContextMenuProps): React.JSX.
       <button className="ctx-menu-item" role="menuitem" onClick={props.onClear}>
         Clear
       </button>
+      <button className="ctx-menu-item" role="menuitem" onClick={props.onResetTerminal} title="Fix a terminal left in a broken state by a crashed program. The shell keeps running.">
+        Reset Terminal
+      </button>
       <div className="ctx-menu-divider" />
       <button className="ctx-menu-item" role="menuitem" onClick={props.onSearch}>
         Search
@@ -151,6 +174,11 @@ export function TerminalContextMenu(props: TerminalContextMenuProps): React.JSX.
       <button className="ctx-menu-item" role="menuitem" onClick={props.onMarkUnread}>
         Mark as Unread
       </button>
+      {props.sessionId && (
+        <button className="ctx-menu-item" role="menuitem" onClick={props.onCopySessionId}>
+          Copy Session ID
+        </button>
+      )}
       <div className="ctx-menu-divider" />
       <button className="ctx-menu-item" role="menuitem" onClick={props.onSettings}>
         Settings

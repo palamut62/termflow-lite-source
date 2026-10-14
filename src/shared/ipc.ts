@@ -96,6 +96,7 @@ export const IPC = {
   ALERTS_PICK_SOUND: 'alerts:pick-sound',
   ALERTS_LOAD_SOUND: 'alerts:load-sound',
   WINDOW_ATTENTION: 'window:attention',
+  DIALOG_PICK_THEME: 'dialog:pick-theme',
   APP_LAUNCH_CWD: 'app:launch-cwd',
   APP_LAUNCH_READY: 'app:launch-ready',
   APP_OPEN_PATH: 'app:open-path',

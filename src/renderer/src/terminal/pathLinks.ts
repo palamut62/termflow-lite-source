@@ -1,4 +1,5 @@
 import type { IDisposable, ILink, Terminal } from '@xterm/xterm'
+import { urlAt } from './terminalExtras'
 import type { ResolvedPath } from '../../../shared/ipc'
 
 /**
@@ -293,4 +294,12 @@ function cellFromMouseEvent(term: Terminal, e: MouseEvent): { col: number; row: 
   const row = Math.floor((e.clientY - rect.top) / cellHeight)
   if (col < 0 || row < 0 || col >= term.cols || row >= term.rows) return null
   return { col, row }
+}
+
+/** Sag tik konumundaki web adresi (terminal-polish: Open Link / Copy Link). */
+export function getUrlAtMouse(term: Terminal, e: MouseEvent): string | null {
+  const cell = cellFromMouseEvent(term, e)
+  if (!cell) return null
+  const line = term.buffer.active.getLine(term.buffer.active.viewportY + cell.row)
+  return line ? urlAt(line.translateToString(false), cell.col + 1) : null
 }

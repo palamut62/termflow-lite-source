@@ -90,6 +90,8 @@ export class SettingsStore {
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
     merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
+    const contrast = Number(merged.minimumContrastRatio)
+    merged.minimumContrastRatio = Number.isFinite(contrast) ? Math.min(21, Math.max(1, contrast)) : 1
     return merged
   }
 

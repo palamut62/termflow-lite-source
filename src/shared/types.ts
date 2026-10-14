@@ -380,6 +380,12 @@ export interface AppSettings {
   agentHooks: boolean
   /** Ajan bitti / seni bekliyor / hata: kategori basina sistem bildirimi ve ses. */
   agentAlerts: AgentAlertSettings
+  /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
+  osc52Clipboard: boolean
+  /** Ajan sekmesinde Shift+Enter gondermek yerine yeni satir ekler. */
+  shiftEnterNewline: boolean
+  /** xterm minimumContrastRatio: 1 = kapali, 4.5 = WCAG AA. */
+  minimumContrastRatio: number
   /** Ajan sekmelerinin sağında, ajan durumuna göre değişen karakter animasyonu. */
   agentCompanion: boolean
   /** Animasyon stili: gözleriyle tepki veren ASCII yüz ya da piksel-art sahneler. */
@@ -691,6 +697,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   mediaPreviews: 'all',
   commandNotifications: true,
   agentHooks: true,
+  osc52Clipboard: true,
+  shiftEnterNewline: true,
+  minimumContrastRatio: 1,
   agentAlerts: {
     needsInput: { system: true, sound: true },
     done: { system: true, sound: false },

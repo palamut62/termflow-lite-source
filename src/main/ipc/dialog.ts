@@ -1,9 +1,24 @@
 import { dialog, ipcMain, nativeImage, type BrowserWindow, type OpenDialogOptions } from 'electron'
-import { stat } from 'fs/promises'
+import { readFile, stat } from 'fs/promises'
+import { basename } from 'path'
 import { IPC } from '../../shared/ipc'
 import type { BackgroundPick } from '../../shared/types'
 
 export function registerDialogIpc(getWindow: () => BrowserWindow | null): void {
+  // Tema ice aktarma (terminal-polish): yalniz metin doner, ayristirma renderer'da (shared/themeImport).
+  ipcMain.handle(IPC.DIALOG_PICK_THEME, async (): Promise<{ name: string; text: string } | { error: string } | null> => {
+    const window = getWindow()
+    const options: OpenDialogOptions = {
+      properties: ['openFile'],
+      filters: [{ name: 'Terminal themes', extensions: ['json', 'itermcolors', 'conf', 'theme', 'txt', '*'] }]
+    }
+    const result = window && !window.isDestroyed() ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options)
+    const file = result.canceled ? undefined : result.filePaths[0]
+    if (!file) return null
+    if ((await stat(file)).size > 1024 * 1024) return { error: 'The theme file is larger than 1 MB.' }
+    return { name: basename(file), text: await readFile(file, 'utf8') }
+  })
+
   ipcMain.handle(IPC.DIALOG_OPEN_DIR, async () => {
     const window = getWindow()
     const result = window && !window.isDestroyed()
