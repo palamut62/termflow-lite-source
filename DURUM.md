@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-14 | son arac: Claude Code | dal: `main` | surum 1.23.0
+guncel: 2026-10-14 | son arac: Claude Code | dal: `feature/agent-hooks` (main'e alinmadi, push yok) | surum 1.23.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -30,34 +30,25 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.21.1 Telefon klavyesi (dokununca acilir, canli yazma, IME uyumlu), cift terminal cevabi giderildi, sekme cubugunda bagli telefon simgesi
 - [x] 1.22.0 Telefon: eslestirme ekraninda QR tarama (fotograf + jsQR), elle yazilabilir kod, masaustunde cihaz basina Reconnect QR (ayni kayit, yeni anahtar), ana ekran uygulamasi icin sabit dosya adlari + ETag
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
-- [ ] Orca karsilastirmasi: 13 modullu spec TASLAK `docs/orca-parity/` (README = harita + yapim sirasi), onay bekliyor
-- [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi (agent-hooks modulu bunu cozer)
+- [~] Orca karsilastirmasi (`docs/orca-parity/`, dal `feature/agent-hooks`, her modul ayri commit, spec'lerde "Uygulama notlari"): UYGULANDI agent-hooks, agent-attention, terminal-polish, scrollback-restore, agent-resume, usage-meter, jump-palette (Ctrl+Shift+J), worktree-setup + kullanici istegi agent-detect. Kalan: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention
 
 ## Son oturum (2026-10-14)
-- Telefon: terminalde dokunarak dikey kaydirma (gecmis yazilar) yoktu. `TerminalScreen.tsx` icinde `.term-wrap` uzerinde touchmove -> `term.scrollLines`; CSS `touch-action: pan-x` (yatay pan kalir). E2E `e2e/remote-scroll.spec.ts` (CDP dokunma). Push edildi; exe/surum yok (diger oturumda yapilacak)
-
-## Onceki oturum (2026-10-09)
-- 1.21.0 Remote Access yayinlandi (Tailscale + QR, canli terminal, ayarlar/profil/provider/SSH/Memory, ajan oturumu, proje); site f8 bolumu
-- 1.21.1: telefonda terminale dokununca klavye acilmiyordu. `src/remote/src/phoneInput.ts` (alan farki -> tus vurusu); telefondaki xterm onData'si artik gonderilmiyor (masaustuyle cift terminal cevabi ajan inputunu bozabiliyordu)
-- Telefondan acilan sekme telefon boyutunda dogar; abonelikte Windows'ta temiz ekran + ConPTY yeniden cizimi (Claude Code'da kayma yok). Sekme cubugu sag ustte bagli telefon simgesi (`RemoteIndicator`). Gercek Claude Code 2.1.289 ile telefon gorunumunde canli denendi
-
-- Duzeltme (surum 1.21.1 kaldi, yerel kurulum): telefon ikonlari `.gitignore` *.png yuzunden CI paketine girmiyordu (logo kirik); `public/` icin git-ignore guard testi. iPhone ana ekran uygulamasi Safari deposunu goremedigi icin eslesme kayboluyordu: QR altinda 10 karakterlik elle yazilabilir kod + telefonda kod alani
-
-- Duzeltme (surum 1.21.1, yerel kurulum): telefon artik varsayilan olarak masaustu boyutunu AYNALAR (masaustu daralmaz, Claude Code bozulmaz); "Fit" ile telefon boyutuna gecis, ayna modunda Zoom 1x-3x
-
-- 1.23.0 Voice Input: Space uzun basis -> kayit -> OpenRouter (tek istek, WAV) -> temiz metin `term.paste`. Canli deneme yapilamadi: OpenRouter hesabinda kredi yok (402), ucretsiz ses modelleri kredi ya da listelenmis uygulama istiyor; E2E sahte mikrofon + sahte sunucuyla gecti
+- Orca paritesi 8 modul (yukarida) uygulandi; Claude HTTP hook + Codex OSC 9 ile sekme durumu, dikkat noktasi/zil/rozet, Reset/OSC 52/Shift+Enter/tema ice aktarma, scrollback + `--resume` ile surdurme, limit gostergesi, atlama paleti, worktree kurulum adimlari
+- agent-detect (kullanici istegi): 16 ajanlik katalog (`BUILTIN_PROFILES`), kurulu olanlar PATH'ten (kayit defteri dahil) acilista ve odakta bulunur, tam yetki bayragi `--help`'ten dogrulandi; menuler, telefon ve Gezgin sag tik kendiliginden guncellenir. Canli: menuden Gemini CLI `gemini --yolo` acildi
+- Yazilan anahtarin kuyrugunun maskelenmemesi (PtyCore redactor en kisa onek) ve worktree modalinin pencereden tasmasi duzeltildi
 
 ## Yarim kalan / siradaki adim
-- `docs/orca-parity/README.md` acik sorulari (surum gruplamasi, `resumeSession` kalici yazma karari, OpenCode) cevaplanmali; onaydan sonra 1.24.0 = agent-hooks + agent-attention
+- Kalan 5 Orca modulu; sonra surum karari (plan 1.24-1.27, README "Yapim sirasi"), CHANGELOG, main'e alma ve push (sorulacak)
+- Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.22.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye yerel derleme sessiz kuruldu. iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect gercek telefonla denenmeli
 - 1.23.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye kuruldu. Voice Input gercek sesle denenmedi: OpenRouter'a kredi eklenince Ayarlar > Voice > Test ve Space basili tut ile denenmeli
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
-- Ertelenen aday: `tab.activity` 'Running' sorunu
 
 ## Acik sorunlar / bilinen sinirlar
 - E2E `session-rail` 'a collapsed group hides its sessions' 2026-10-09'da 1.22.0 kodunda da kiriliyor (grup basligi tiklamasi daraltmiyor); Voice'tan bagimsiz, incelenmeli
-- Durum cubugu/sekme durumu Claude Code ve Codex bostayken de 'Running' gosteriyor (karakter artik spinner'a bakiyor, sekme degil)
+- Sekme durumu Claude Code / Codex'te artik ajanin kendi olayindan (agent-hooks); OpenCode ve yeni katalog ajanlarinda hala cikti tahmini
+- E2E derleme sonrasi ilk acilista ara sira 30 sn `.tab` bekleme zaman asimi; tekrarda geciyor
 - E2E `app.spec` "pastes ..." iki testi gercek OS panosuna yazar; pano kilitliyken (2026-10-07) degisiklikten bagimsiz kirilir
 - CI E2E `afterEach app.close()` 60 sn teardown zaman asimi (1.6.1'den beri, kararsiz)
 - Birim testlerde bir test ara sira 5 sn zaman asimina dusuyor (tekrarda geciyor); `@vitest/coverage-v8` kurulu degil

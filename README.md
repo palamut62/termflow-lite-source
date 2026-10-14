@@ -28,6 +28,7 @@ TermFlow Lite opens straight into a terminal — no welcome screens, no setup wi
 - **Agent security profiles** - start Codex or Claude in Safe, Workspace, or Full Access mode with CLI-native permission flags pinned per tab
 - **Agent Inbox and timeline** - review redacted, persistent agent activity, approval waits, tool work, completion, and failure events across tabs
 - **Persistent agent event log** - keep a local JSONL audit trail without storing raw terminal input or API keys
+- **Installed agents detected automatically** - Claude Code, Codex, OpenCode, Gemini CLI, Qwen Code, GitHub Copilot CLI, Grok, Droid, Kimi, Pi, Codebuff, Cursor Agent, Amp, Aider and Crush appear in the New Tab menu (and the Explorer and phone menus) only when installed, each with its own full-access flag; installing or removing one updates the list on its own
 - **Agent session browser** - search saved Claude Code, Codex, and OpenCode conversations and resume with the profile/provider that created the session, or explicitly choose another compatible profile
 - **Project detection** - recognize Node.js, Python, Rust, Go, Docker, and Git projects and suggest matching tasks automatically
 - **GitHub** - browse repositories, review open pull requests, and open a pull request in its own worktree with any agent; authentication comes from your own `gh` CLI session and no token is ever stored

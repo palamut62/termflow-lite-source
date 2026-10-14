@@ -6,6 +6,8 @@ import { BUILTIN_PROFILES, defaultFullPermissionArgs } from '../../../shared/pro
 import { useSettingsStore } from '../store/settingsStore'
 import { Field, TextInput, Toggle } from './Settings'
 import { splitCommandLine, formatArguments } from '../../../shared/commandLine'
+import { agentKindForCommand } from '../../../shared/agentEvents'
+import { scanAgents } from '../agentDetect'
 
 interface EnvRow {
   key: string
@@ -97,6 +99,7 @@ export function ProfileSettings(): React.JSX.Element {
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState<ProfileDraft>(emptyDraft())
   const [error, setError] = useState('')
+  const [scanning, setScanning] = useState(false)
 
   const editing = editingId !== null || creating
 
@@ -144,6 +147,7 @@ export function ProfileSettings(): React.JSX.Element {
   const removeEnv = (idx: number): void => setDraft((d) => ({ ...d, env: d.env.filter((_, i) => i !== idx) }))
 
   const valid = isValid(draft)
+  const installed = settings.installedAgents
   const builtinIds = new Set(BUILTIN_PROFILES.map((profile) => profile.id))
   const effectiveBuiltins = BUILTIN_PROFILES.map(
     (profile) => settings.profiles.find((candidate) => candidate.id === profile.id) ?? profile
@@ -153,15 +157,24 @@ export function ProfileSettings(): React.JSX.Element {
   return (
     <section>
       <div className="settings-section-title">Command Profiles</div>
-      <p className="settings-note">Built-in command profiles launch with full permissions by default. Edit any profile to disable it or change its CLI-specific permission arguments. Reset restores the built-in defaults.</p>
+      <p className="settings-note">Agent CLIs installed on this computer are detected automatically and appear in the New Tab menu; the list updates when you install or remove one. Built-in profiles launch with full permissions by default. Edit any profile to disable it or change its CLI-specific permission arguments. Reset restores the built-in defaults.</p>
+      <div className="profile-form-actions">
+        <button className="settings-btn settings-btn-small" disabled={scanning} onClick={() => { setScanning(true); void scanAgents(true).finally(() => setScanning(false)) }}>
+          {scanning ? 'Scanning...' : 'Rescan installed agents'}
+        </button>
+        {installed && <span className="settings-note">{installed.length} of {BUILTIN_PROFILES.length} found</span>}
+      </div>
       {effectiveBuiltins.map((p) => {
         const isOverridden = settings.profiles.some((candidate) => candidate.id === p.id)
+        const found = !installed || installed.includes(p.id)
+        const access = agentKindForCommand(p.startupCommand) ? 'Uses session security mode'
+          : p.fullPermissions === false ? 'Asks for approval' : `Full access${p.fullPermissionArgs ? `: ${p.fullPermissionArgs}` : ''}`
         return editingId !== p.id && (
-          <div className="profile-row" key={p.id}>
+          <div className={`profile-row${found ? '' : ' profile-row-missing'}`} key={p.id}>
             <span className="menu-item-dot" style={{ background: p.color || '#6467f2' }} />
             <span className="profile-row-info">
-              <span className="profile-row-name">{p.name}</span>
-              <span className="profile-row-command">{p.startupCommand}{p.model ? ` · ${p.model}` : ''} · {'Uses session security mode'}</span>
+              <span className="profile-row-name">{p.name}{found ? '' : ' · Not installed'}</span>
+              <span className="profile-row-command">{p.startupCommand}{p.model ? ` · ${p.model}` : ''} · {access}</span>
             </span>
             <button className="settings-btn settings-btn-small" onClick={() => startEdit(p)}>Edit</button>
             {isOverridden && (

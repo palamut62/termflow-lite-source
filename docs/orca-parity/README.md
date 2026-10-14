@@ -24,6 +24,7 @@ uygulamayi kumanda eden CLI, Native Chat / CSV / Jupyter, hesap degistirici.
 | agent-race | Ayni prompt'u N ajana, her biri kendi worktree'sinde; karsilastir, birini tut | agent-attention, worktree-setup | [agent-race.md](agent-race.md) |
 | scheduled-prompts | Kayitli komutlara zamanlanmis ajan prompt'u, on kontrol, kacirilan calisma toleransi | agent-race (prompt'la baslatma) | [scheduled-prompts.md](scheduled-prompts.md) |
 | remote-attention | Telefonda "ajan bitti / onay bekliyor" bildirimi | agent-attention | [remote-attention.md](remote-attention.md) |
+| agent-detect | Kurulu ajan CLI'larini bulup tam yetkili profil olarak gostermek, kurulum degisince guncellemek (kullanici istegi) | - | [agent-detect.md](agent-detect.md) |
 
 Dongu yok; oklar tek yonlu.
 

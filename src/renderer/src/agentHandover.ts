@@ -1,4 +1,4 @@
-import { agentForProfile, mergeProfiles, providerProfileId } from '../../shared/profiles'
+import { agentForProfile, availableProfiles, providerProfileId } from '../../shared/profiles'
 import type { AgentKind, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, TerminalTab } from '../../shared/types'
 import { useTerminalStore } from './store/terminalStore'
 import { useHandoverStore } from './store/handoverStore'
@@ -12,7 +12,7 @@ export interface AgentProfileOption {
 }
 
 export function agentProfileOptions(settings: AppSettings): AgentProfileOption[] {
-  const profiles = mergeProfiles(settings.profiles).flatMap((profile) => {
+  const profiles = availableProfiles(settings.profiles, settings.installedAgents).flatMap((profile) => {
     const agent = agentForProfile(settings, profile.id)
     return agent ? [{ id: profile.id, name: profile.name, agent }] : []
   })

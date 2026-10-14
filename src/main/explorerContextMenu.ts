@@ -1,7 +1,7 @@
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { join } from 'path'
-import { mergeProfiles, providerProfileId } from '../shared/profiles'
+import { availableProfiles, providerProfileId } from '../shared/profiles'
 import type { AppSettings, ShellInfo } from '../shared/types'
 
 const execFileAsync = promisify(execFile)
@@ -22,7 +22,7 @@ export interface ExplorerMenuEntry {
 export function buildExplorerMenuEntries(settings: AppSettings, shells: ShellInfo[]): ExplorerMenuEntry[] {
   const entries: ExplorerMenuEntry[] = [{ key: '000-default', label: 'Default Profile' }]
   shells.forEach((item, index) => entries.push({ key: `1${String(index).padStart(2, '0')}-shell`, label: item.name, profileId: item.id, icon: item.command }))
-  mergeProfiles(settings.profiles).forEach((item, index) => entries.push({
+  availableProfiles(settings.profiles, settings.installedAgents).forEach((item, index) => entries.push({
     key: `2${String(index).padStart(2, '0')}-profile`, label: item.name, profileId: item.id,
     icon: item.id === 'ollama-serve' ? 'ollama' : ['claude', 'codex', 'opencode'].includes(item.id) ? item.id : undefined
   }))
@@ -37,7 +37,7 @@ export function buildExplorerMenuEntries(settings: AppSettings, shells: ShellInf
  * değiştiğinde senkronize edilir.
  */
 export function explorerMenuSignature(settings: AppSettings, shells: ShellInfo[]): string {
-  return JSON.stringify({ shells, profiles: settings.profiles, providers: settings.providerProfiles })
+  return JSON.stringify({ shells, profiles: settings.profiles, providers: settings.providerProfiles, installed: settings.installedAgents })
 }
 
 export function parseRegistryChildNames(stdout: string): string[] {

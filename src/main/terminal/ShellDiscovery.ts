@@ -264,6 +264,13 @@ function freshPath(): string | null {
   return pathCache.value
 }
 
+/** PATH a new terminal gets right now: registry PATH (installs since launch) + this process's PATH. */
+export function currentSearchPath(): string {
+  const current = process.env.Path || process.env.PATH || ''
+  const registryPath = freshPath()
+  return registryPath ? mergePathValues(registryPath, current) : current
+}
+
 /** Test seam: reset the module-level PATH cache. */
 export function __resetPathCacheForTests(): void {
   pathCache = null

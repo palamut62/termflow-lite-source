@@ -46,6 +46,7 @@ import { subscribeAgentHooks } from './terminal/agentHookEvents'
 import { startAttention } from './attention/alerts'
 import { startScrollbackAutosave } from './terminal/scrollbackRestore'
 import { persistedResume } from './terminal/agentResume'
+import { startAgentDetection } from './agentDetect'
 
 // StrictMode double-mounts effects in dev — the boot sequence must run once.
 let bootStarted = false
@@ -325,6 +326,11 @@ export default function App(): React.JSX.Element {
   // Remote Access: phones see the tab list and drive tabs through this bridge.
   useEffect(() => {
     if (loaded) return startRemoteBridge()
+  }, [loaded])
+
+  // Kurulu ajan CLI'lari: profiller kurulum degistikce kendiliginden guncellenir.
+  useEffect(() => {
+    if (loaded) return startAgentDetection()
   }, [loaded])
 
   // NOT: Pencere boyutu persistency'sinin tek sahibi main process'tir

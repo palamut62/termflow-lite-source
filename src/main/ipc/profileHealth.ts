@@ -7,9 +7,12 @@ import type { SettingsStore } from '../storage/SettingsStore'
 import type { ProviderSecretStore } from '../storage/ProviderSecretStore'
 import { cliInvocation, runCli } from '../terminal/cli'
 import { redactApiKeys } from '../../shared/secretRedaction'
+import { detectInstalledAgents } from '../agentDetect'
 
 export interface HealthCheck { label: string; ok: boolean; detail: string }
 export function registerProfileHealth(store: SettingsStore, secrets: ProviderSecretStore): void {
+  ipcMain.handle(IPC.AGENTS_DETECT, () => detectInstalledAgents())
+
   ipcMain.handle(IPC.PROFILE_HEALTH, async (_event, id: unknown, connection: unknown): Promise<HealthCheck[]> => {
     if (typeof id !== 'string') throw new Error('Select a profile.')
     const settings = store.get()

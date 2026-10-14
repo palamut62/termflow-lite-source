@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FolderOpen, GitBranch, Github, Settings as SettingsIcon } from 'lucide-react'
-import { mergeProfiles, providerProfileId, sshProfileId } from '../../../shared/profiles'
+import { availableProfiles, providerProfileId, sshProfileId } from '../../../shared/profiles'
 import { sshTarget } from '../../../shared/sshArgs'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
@@ -35,7 +35,8 @@ export function NewTabMenu({ anchor, onClose, onOpenAtPath, onOpenWorktree, onOp
   const allShells = useSettingsStore((s) => s.shells)
   const userProfiles = useSettingsStore((s) => s.settings.profiles)
   // Yerleşik CLI ajan profilleri + kullanıcı profilleri (tek liste).
-  const allProfiles = mergeProfiles(userProfiles)
+  const installedAgents = useSettingsStore((s) => s.settings.installedAgents)
+  const allProfiles = availableProfiles(userProfiles, installedAgents)
   const allProviders = useSettingsStore((s) => s.settings.providerProfiles)
   const allSsh = useSettingsStore((s) => s.settings.sshConnections) ?? []
   const [query, setQuery] = useState('')

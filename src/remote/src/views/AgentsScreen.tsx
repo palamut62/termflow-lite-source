@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bell, Bookmark, Bot, ChevronRight, History, Play, RefreshCw } from 'lucide-react'
-import { agentForProfile, mergeProfiles, providerProfileId } from '../../../shared/profiles'
+import { agentForProfile, availableProfiles, providerProfileId } from '../../../shared/profiles'
 import type { RemoteSavedCommand } from '../../../shared/remote'
 import type { AgentEvent, AgentKind, AgentPermissionMode, AgentSession, AppSettings } from '../../../shared/types'
 import { client, errorText, useRemote } from '../store'
@@ -13,7 +13,7 @@ const EVENT_ATTENTION = new Set<AgentEvent['kind']>(['approval', 'question', 'er
 
 /** Profiles and providers that start the given agent, for resuming its sessions. */
 function profilesFor(settings: AppSettings, agent: AgentKind): { id: string; name: string }[] {
-  const profiles = mergeProfiles(settings.profiles).filter((p) => agentForProfile(settings, p.id) === agent).map((p) => ({ id: p.id, name: p.name }))
+  const profiles = availableProfiles(settings.profiles, settings.installedAgents).filter((p) => agentForProfile(settings, p.id) === agent).map((p) => ({ id: p.id, name: p.name }))
   const providers = settings.providerProfiles
     .filter((p) => agentForProfile(settings, providerProfileId(p.id)) === agent)
     .map((p) => ({ id: providerProfileId(p.id), name: p.name }))

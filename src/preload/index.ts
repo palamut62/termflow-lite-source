@@ -119,6 +119,7 @@ const api = {
     set: (providerId: string, secret: string): Promise<boolean> => ipcRenderer.invoke(IPC.PROVIDER_SECRET_SET, providerId, secret),
     delete: (providerId: string): Promise<void> => ipcRenderer.invoke(IPC.PROVIDER_SECRET_DELETE, providerId)
   },
+  detectAgents: (): Promise<string[]> => ipcRenderer.invoke(IPC.AGENTS_DETECT),
   profileHealth: (id: string, connection = false): Promise<{ label: string; ok: boolean; detail: string }[]> => ipcRenderer.invoke(IPC.PROFILE_HEALTH, id, connection),
   // ---- Session (tab + split layout restore) ----
   session: {

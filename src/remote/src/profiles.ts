@@ -1,4 +1,4 @@
-import { mergeProfiles, providerProfileId, sshProfileId } from '../../shared/profiles'
+import { availableProfiles, providerProfileId, sshProfileId } from '../../shared/profiles'
 import type { AppSettings, ShellInfo } from '../../shared/types'
 import type { RemoteSettingsView } from '../../shared/remote'
 
@@ -14,7 +14,7 @@ export interface LaunchOption {
 export function launchOptions(settings: RemoteSettingsView, shells: ShellInfo[]): LaunchOption[] {
   return [
     ...shells.map((s): LaunchOption => ({ id: s.id, name: s.name, group: 'Shells', detail: s.command })),
-    ...mergeProfiles(settings.profiles).map((p): LaunchOption => ({ id: p.id, name: p.name, group: 'Agents & profiles', color: p.color, detail: p.startupCommand || p.command || undefined })),
+    ...availableProfiles(settings.profiles, settings.installedAgents).map((p): LaunchOption => ({ id: p.id, name: p.name, group: 'Agents & profiles', color: p.color, detail: p.startupCommand || p.command || undefined })),
     ...settings.providerProfiles.map((p): LaunchOption => ({ id: providerProfileId(p.id), name: p.name, group: 'Providers', color: p.color, detail: [p.command, p.model].filter(Boolean).join(' · ') })),
     ...(settings.sshConnections ?? []).map((c): LaunchOption => ({ id: sshProfileId(c.id), name: c.name, group: 'SSH', color: c.color, detail: `${c.user ? `${c.user}@` : ''}${c.host}${c.port ? `:${c.port}` : ''}` }))
   ]

@@ -4,7 +4,7 @@ import { useSavedCommandStore } from '../store/savedCommandStore'
 import { describeSchedule, nextRunAt, type CommandSchedule } from '../store/commandSchedule'
 import { useTerminalStore } from '../store/terminalStore'
 import { useSettingsStore } from '../store/settingsStore'
-import { mergeProfiles, providerProfileId } from '../../../shared/profiles'
+import { availableProfiles, mergeProfiles, providerProfileId } from '../../../shared/profiles'
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -112,7 +112,7 @@ export function SavedCommands(): React.JSX.Element {
         <select value={profileId} onChange={(event) => setProfileId(event.target.value)} aria-label="Run command in" aria-invalid={missingProfile} className={missingProfile ? 'is-invalid' : undefined}>
           <option value="">Select shell or agent...</option>
           {shells.length > 0 && <optgroup label="Shells">{shells.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</optgroup>}
-          {profiles.length > 0 && <optgroup label="Agents and profiles">{profiles.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</optgroup>}
+          {profiles.length > 0 && <optgroup label="Agents and profiles">{availableProfiles(settings.profiles, settings.installedAgents).map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</optgroup>}
           {settings.providerProfiles.length > 0 && <optgroup label="Providers">{settings.providerProfiles.map((item) => <option value={providerProfileId(item.id)} key={item.id}>{item.name}</option>)}</optgroup>}
         </select>
         <div className="saved-command-schedule-row">

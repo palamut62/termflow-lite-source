@@ -771,3 +771,6 @@ body {
 .jump-key { font: inherit; font-size: 10px; color: var(--tab-inactive-foreground); text-align: center; }
 .jump-dot { width: 7px; height: 7px; }
 .jump-item time { color: var(--tab-inactive-foreground); font-size: 10px; white-space: nowrap; }
+
+/* Kurulu olmayan yerlesik ajan profili (agent detection). */
+.profile-row-missing { opacity: 0.5; }

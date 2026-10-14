@@ -67,8 +67,41 @@ export const BUILTIN_PROFILES: readonly TerminalProfile[] = [
   { id: 'claude', name: 'Claude Code', command: '', startupCommand: 'claude', model: 'opus', color: '#d97757', fullPermissions: true, fullPermissionArgs: '--dangerously-skip-permissions' },
   { id: 'codex', name: 'Codex', command: '', startupCommand: 'codex', color: '#3b82f6', fullPermissions: true, fullPermissionArgs: '--dangerously-bypass-approvals-and-sandbox' },
   { id: 'opencode', name: 'OpenCode', command: '', startupCommand: 'opencode', color: '#3fb950', fullPermissions: true, fullPermissionArgs: '--auto' },
-  { id: 'ollama-serve', name: 'Ollama Serve', command: '', startupCommand: 'ollama serve', color: '#b48ead', fullPermissions: true, fullPermissionArgs: '' }
+  { id: 'ollama-serve', name: 'Ollama Serve', command: '', startupCommand: 'ollama serve', color: '#b48ead', fullPermissions: true, fullPermissionArgs: '' },
+  // Tam yetki bayraklari kurulu CLI'larin `--help` ciktisindan (2026-10-14).
+  { id: 'gemini', name: 'Gemini CLI', command: '', startupCommand: 'gemini', color: '#4285f4', fullPermissions: true, fullPermissionArgs: '--yolo' },
+  { id: 'qwen', name: 'Qwen Code', command: '', startupCommand: 'qwen', color: '#615ced', fullPermissions: true, fullPermissionArgs: '--yolo' },
+  { id: 'copilot', name: 'GitHub Copilot CLI', command: '', startupCommand: 'copilot', color: '#8957e5', fullPermissions: true, fullPermissionArgs: '--allow-all' },
+  { id: 'grok', name: 'Grok', command: '', startupCommand: 'grok', color: '#a3a3a3', fullPermissions: true, fullPermissionArgs: '--always-approve' },
+  { id: 'droid', name: 'Droid', command: '', startupCommand: 'droid', color: '#f97316', fullPermissions: true, fullPermissionArgs: '--auto high' },
+  { id: 'kimi', name: 'Kimi', command: '', startupCommand: 'kimi', color: '#22d3ee', fullPermissions: true, fullPermissionArgs: '--yolo' },
+  // Pi ve Codebuff onay sormaz; ek bayrak yok.
+  { id: 'pi', name: 'Pi', command: '', startupCommand: 'pi', color: '#e5c07b', fullPermissions: true, fullPermissionArgs: '' },
+  { id: 'codebuff', name: 'Codebuff', command: '', startupCommand: 'codebuff', color: '#10b981', fullPermissions: true, fullPermissionArgs: '' },
+  // shortcut: bu dordunun bayragi yerel kurulumla dogrulanmadi (belgelerden); kurulu bir makinede `--help` ile bakilmali.
+  { id: 'cursor-agent', name: 'Cursor Agent', command: '', startupCommand: 'cursor-agent', color: '#e5e5e5', fullPermissions: true, fullPermissionArgs: '--force' },
+  { id: 'amp', name: 'Amp', command: '', startupCommand: 'amp', color: '#f43f5e', fullPermissions: true, fullPermissionArgs: '--dangerously-allow-all' },
+  { id: 'aider', name: 'Aider', command: '', startupCommand: 'aider', color: '#14b8a6', fullPermissions: true, fullPermissionArgs: '--yes-always' },
+  { id: 'crush', name: 'Crush', command: '', startupCommand: 'crush', color: '#d946ef', fullPermissions: true, fullPermissionArgs: '--yolo' }
 ]
+
+/** Profilin calistirdigi program adi (`ollama serve` -> `ollama`, `C:\x\claude.cmd` -> `claude`). */
+export function profileExecutable(profile: Pick<TerminalProfile, 'command' | 'startupCommand'>): string {
+  const first = (profile.startupCommand?.trim() || profile.command.trim()).match(/^"([^"]+)"|^(\S+)/)?.slice(1).find(Boolean) ?? ''
+  return first.split(/[\\/]/).at(-1)!.toLowerCase().replace(/\.(cmd|exe|bat|ps1)$/, '')
+}
+
+/**
+ * Secicilerde gosterilen profiller: kurulu olmayan yerlesik ajan gizlenir, kullanicinin ayni
+ * programi calistiran kendi profili varsa yerlesik kopyasi da gizlenir. `installed` hic
+ * taranmadiysa (undefined) yerlesiklerin hepsi gorunur.
+ */
+export function availableProfiles(userProfiles: readonly TerminalProfile[], installed: readonly string[] | undefined): TerminalProfile[] {
+  const builtinIds = new Set(BUILTIN_PROFILES.map((b) => b.id))
+  const own = new Set(userProfiles.filter((p) => !builtinIds.has(p.id)).map(profileExecutable))
+  return mergeProfiles(userProfiles).filter((p) =>
+    !builtinIds.has(p.id) || ((!installed || installed.includes(p.id)) && !own.has(profileExecutable(p))))
+}
 
 /**
  * Yerleşik profiller + kullanıcı profilleri. Aynı id'de kullanıcının tanımı

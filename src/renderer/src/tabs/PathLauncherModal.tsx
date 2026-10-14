@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Bot, FolderOpen, TerminalSquare, X } from 'lucide-react'
-import { mergeProfiles, providerProfileId } from '../../../shared/profiles'
+import { availableProfiles, providerProfileId } from '../../../shared/profiles'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import type { AgentPermissionMode } from '../../../shared/types'
@@ -11,7 +11,7 @@ export function PathLauncherModal({ onClose }: { onClose: () => void }): React.J
   const settings = useSettingsStore((s) => s.settings)
   const options = useMemo(() => [
     ...shells.map((shell) => ({ id: shell.id, name: shell.name, group: 'Shells' })),
-    ...mergeProfiles(settings.profiles).map((profile) => ({ id: profile.id, name: profile.name, group: 'Profiles' })),
+    ...availableProfiles(settings.profiles, settings.installedAgents).map((profile) => ({ id: profile.id, name: profile.name, group: 'Profiles' })),
     ...settings.providerProfiles.map((provider) => ({ id: providerProfileId(provider.id), name: provider.name, group: 'Providers' }))
   ], [settings.profiles, settings.providerProfiles, shells])
   const [profileId, setProfileId] = useState(options[0]?.id ?? settings.defaultProfileId)

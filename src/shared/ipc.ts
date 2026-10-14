@@ -31,6 +31,7 @@ export const IPC = {
   PROVIDER_SECRET_STATUS: 'provider-secret:status', // (providerId) -> boolean
   PROVIDER_SECRET_HEALTH: 'provider-secret:health',
   PROFILE_HEALTH: 'profile:health',
+  AGENTS_DETECT: 'agents:detect', // () -> kurulu yerlesik ajan profil id'leri
   PROVIDER_SECRET_SET: 'provider-secret:set', // (providerId, secret) -> boolean
   PROVIDER_SECRET_DELETE: 'provider-secret:delete', // (providerId) -> void
   SESSION_GET: 'session:get', // -> PersistedSession | null

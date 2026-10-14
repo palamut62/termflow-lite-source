@@ -348,6 +348,8 @@ export interface AppSettings {
   autoCheckUpdates: boolean
   /** Yeni ajan sekmelerinin varsayılan güvenlik profili. */
   defaultAgentPermissionMode: AgentPermissionMode
+  /** Son taramada kurulu bulunan yerlesik ajan profilleri; undefined = hic taranmadi (hepsi gorunur). */
+  installedAgents?: string[]
   /**
    * Arayüz animasyon yoğunluğu. 'off' tüm geçişleri kapatır; sistemin
    * "reduce motion" tercihi her zaman 'off' gibi davranır.

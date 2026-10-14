@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Bot, FolderOpen, GitBranch, Loader2, Trash2, X } from 'lucide-react'
-import { mergeProfiles, providerProfileId } from '../../../shared/profiles'
+import { availableProfiles, providerProfileId } from '../../../shared/profiles'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import type { AgentPermissionMode } from '../../../shared/types'
@@ -32,7 +32,7 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
   const shells = useSettingsStore((s) => s.shells)
   const settings = useSettingsStore((s) => s.settings)
   const options = useMemo(() => [
-    ...mergeProfiles(settings.profiles).map((profile) => ({ id: profile.id, name: profile.name, group: 'Profiles' })),
+    ...availableProfiles(settings.profiles, settings.installedAgents).map((profile) => ({ id: profile.id, name: profile.name, group: 'Profiles' })),
     ...settings.providerProfiles.map((provider) => ({ id: providerProfileId(provider.id), name: provider.name, group: 'Providers' })),
     ...shells.map((shell) => ({ id: shell.id, name: shell.name, group: 'Shells' }))
   ], [settings.profiles, settings.providerProfiles, shells])

@@ -91,6 +91,8 @@ export class SettingsStore {
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
     merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
+    if (!Array.isArray(settings.installedAgents)) delete merged.installedAgents
+    else merged.installedAgents = settings.installedAgents.filter((id): id is string => typeof id === 'string').slice(0, 100)
     const setups = settings.worktreeSetup && typeof settings.worktreeSetup === 'object' ? Object.entries(settings.worktreeSetup) : []
     merged.worktreeSetup = Object.fromEntries(setups.slice(0, 100).flatMap(([key, value]) => {
       const steps = normalizeSetupSteps(value)

@@ -23,9 +23,9 @@ export function isWindowsExecutable(file: string): boolean {
   finally { if (fd !== undefined) closeSync(fd) }
 }
 
-export function executablePath(command: string): string {
+export function executablePath(command: string, searchPath = process.env.Path || process.env.PATH || ''): string {
   const paths = isAbsolute(command) ? [''] : [
-    ...((process.env.Path || process.env.PATH || '').split(delimiter)),
+    ...searchPath.split(delimiter),
     ...(process.platform === 'win32' ? [join(process.env.APPDATA || '', 'npm')] : [])
   ]
   const extensions = process.platform === 'win32' && !extname(command) ? ['.exe', '.cmd', '.bat', ''] : ['']

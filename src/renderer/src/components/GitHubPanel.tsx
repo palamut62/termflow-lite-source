@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { GitBranch, GitPullRequest, Github, Loader2, Lock, RefreshCw, X } from 'lucide-react'
-import { mergeProfiles, providerProfileId } from '../../../shared/profiles'
+import { availableProfiles, providerProfileId } from '../../../shared/profiles'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import { openNewWorktree } from '../store/worktreeSetupStore'
@@ -36,7 +36,7 @@ export function GitHubPanel({ onClose }: { onClose: () => void }): React.JSX.Ele
   const [error, setError] = useState('')
 
   const profileOptions = [
-    ...mergeProfiles(settings.profiles).map((p) => ({ id: p.id, name: p.name })),
+    ...availableProfiles(settings.profiles, settings.installedAgents).map((p) => ({ id: p.id, name: p.name })),
     ...settings.providerProfiles.map((p) => ({ id: providerProfileId(p.id), name: p.name })),
     ...shells.map((s) => ({ id: s.id, name: s.name }))
   ]
