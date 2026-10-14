@@ -30,7 +30,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.21.1 Telefon klavyesi (dokununca acilir, canli yazma, IME uyumlu), cift terminal cevabi giderildi, sekme cubugunda bagli telefon simgesi
 - [x] 1.22.0 Telefon: eslestirme ekraninda QR tarama (fotograf + jsQR), elle yazilabilir kod, masaustunde cihaz basina Reconnect QR (ayni kayit, yeni anahtar), ana ekran uygulamasi icin sabit dosya adlari + ETag
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
-- [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi
+- [ ] Orca karsilastirmasi: 13 modullu spec TASLAK `docs/orca-parity/` (README = harita + yapim sirasi), onay bekliyor
+- [ ] Siradaki aday: sekme durumunun (`tab.activity`) ajan spinner'ina bakmasi (agent-hooks modulu bunu cozer)
 
 ## Son oturum (2026-10-14)
 - Telefon: terminalde dokunarak dikey kaydirma (gecmis yazilar) yoktu. `TerminalScreen.tsx` icinde `.term-wrap` uzerinde touchmove -> `term.scrollLines`; CSS `touch-action: pan-x` (yatay pan kalir). E2E `e2e/remote-scroll.spec.ts` (CDP dokunma). Push edildi; exe/surum yok (diger oturumda yapilacak)
@@ -47,6 +48,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - 1.23.0 Voice Input: Space uzun basis -> kayit -> OpenRouter (tek istek, WAV) -> temiz metin `term.paste`. Canli deneme yapilamadi: OpenRouter hesabinda kredi yok (402), ucretsiz ses modelleri kredi ya da listelenmis uygulama istiyor; E2E sahte mikrofon + sahte sunucuyla gecti
 
 ## Yarim kalan / siradaki adim
+- `docs/orca-parity/README.md` acik sorulari (surum gruplamasi, `resumeSession` kalici yazma karari, OpenCode) cevaplanmali; onaydan sonra 1.24.0 = agent-hooks + agent-attention
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
 - 1.22.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye yerel derleme sessiz kuruldu. iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect gercek telefonla denenmeli
 - 1.23.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye kuruldu. Voice Input gercek sesle denenmedi: OpenRouter'a kredi eklenince Ayarlar > Voice > Test ve Space basili tut ile denenmeli
