@@ -1,6 +1,6 @@
 # TermFlow Agent IDE - PRD
 
-Durum: TASLAK 2026-10-14 (Claude Code, Opus 5.5). Onay bekliyor.
+Durum: ONAYLANDI 2026-10-14 (kararlar bolum 12'de). Faz 0 basladi, dal `feature/agent-ide`.
 Referans: Orca (onorca.dev, Stably AI) masaustu uygulamasi v1.4.x, bu PC'de kurulu (`%LOCALAPPDATA%\Programs\orca`).
 Gorseller: `docs/agent-ide/img/` (Orca'dan 2026-10-14'te alinan ekran goruntuleri).
 
@@ -303,18 +303,25 @@ Not: `docs/orca-parity` yol haritasindaki 1.25-1.27 surum numaralari bu PRD ile 
 modulleri (worktree-note, hibernate, race, scheduled-prompts, remote-attention) ilgili IDE fazina katilir
 (worktree-note -> Faz 1 agac karti, agent-race -> Faz 2 "Create more", scheduled-prompts -> Faz 3).
 
-## 12. Acik sorular (kullaniciya)
-1. Tek uygulama + mod gecisi mi (bu PRD'nin varsayimi), yoksa ayni repodan ayri exe/urun
-   ("TermFlow Agent IDE") mi? Ayri urun = ayri kurucu, ayri site bolumu, ayni motor.
-2. IDE modu da freeware mi, yoksa ileride ucretli katman mi?
-3. Faz 5 (gomulu tarayici / design mode / orchestration) yapilacak mi?
-4. Linear destegi Faz 3'te mi, sonra mi?
-5. Yeni kurulumda ilk acilis secim karti (F0.4) istenir mi?
+## 12. Kararlar (kullanici, 2026-10-14)
+1. **Ayri urun:** ayni repodan ikinci exe, "TermFlow Agent IDE". TermFlow Lite hic degismez (yalniz terminal,
+   mod gecisi yok). Agent IDE exe'si iki modlu: IDE gorunumunde acilir, `Ctrl+Shift+I` ile terminal gorunumune gecer.
+   Bolum 7'deki F0.1-F0.4 yalniz IDE surumu icin gecerlidir.
+   - Ayrim derleme zamaninda: `TERMFLOW_EDITION=ide` -> `__TERMFLOW_EDITION__` (`src/shared/edition.ts`).
+   - IDE kimligi: appId `com.palamut62.termflowagentide`, productName "TermFlow Agent IDE", ayri userData (ayarlar,
+     oturum, hafiza Lite ile karismaz), ayri tek-ornek kilidi, kurucu adi `TermFlow-Agent-IDE-<surum>-<arch>`, cikti `dist-ide/`.
+   - IDE surumunde Explorer sag tik menusu ve otomatik guncelleme simdilik kapali (Lite'in registry anahtarlarini ezmemek;
+     yayin reposu henuz yok).
+2. **Freeware**, Lite ile ayni lisans.
+3. **Faz 5 ertelendi**; Faz 4 bitince yeniden karar.
+4. **Linear sonra** (Faz 3 yalniz GitHub).
+5. **Ilk acilis karti:** yalniz IDE exe'sinde, yeni kurulumda (Terminal / Agent IDE secimi).
+6. **Yayin:** yeni public repo (oneri `palamut62/termflow-agent-ide`); repo ilk yayindan once kullanici onayiyla acilir.
 
 ## 13. Devir notu (sonraki oturum icin)
 - Repo: `C:\Users\umuti\Projects\termflow-lite\termflow-lite` (kaynak PRIVATE `palamut62/termflow-lite-source`).
   Once `DURUM.md`, sonra `PROJE-REHBER.md` "Hangi istek icin nereye bakilir" tablosu.
-- Bu PRD henuz onaylanmadi. Ilk adim: bolum 12'deki sorulari kullaniciya sor, cevaplari buraya isle.
+- PRD onaylandi (bolum 12). IDE derlemesi: `npm run dev:ide`, `npm run build:ide`, `npm run dist:win:ide`.
 - Onaydan sonra: Faz 0 icin spec-driven calis (bu dosya yeterli), sonra `App.tsx` govdesini
   `shells/TerminalShell.tsx`'e davranis degistirmeden tasi ve `npm run verify` + mevcut E2E'leri yesil tut.
   Bu tasima ayri commit olsun ("TerminalShell'e tasi, davranis ayni").
