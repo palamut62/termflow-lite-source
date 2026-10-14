@@ -1,13 +1,13 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-14 | son arac: Claude Code | dal: `main` | surum 1.24.0
+guncel: 2026-10-14 | son arac: Claude Code | dal: `main` | surum 1.24.1
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
 
 ## Ne bu proje
 Minimal, hizli, cok ozellestirilebilir capraz platform (Windows/Linux) terminal; gelistiriciler ve CLI ajan kullanicilari icin.
-Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.24.0 (freeware, kapali kaynak).
+Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.24.1 (freeware, kapali kaynak).
 Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamut62/termflow-lite`. Site: termflowlite.lol (Vercel, `website/`).
 
 ## Calistir / test et

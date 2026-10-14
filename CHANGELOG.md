@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.24.1 - 2026-10-14
+
+- Memory update frequency: Settings > Memory > Update lets you pick every hour, day or week (it was fixed at 30 minutes). Only sessions that are new or changed since the last check are analysed; with none, nothing is sent to the model, and the last real run's usage stays visible.
+- Limits are on by default and show what is left, like Codex: a one-line strip under the terminal with the 5-hour and weekly limit side by side, in your terminal colours (amber at 80% used, red at 95%). Turn it off with Limit strip in Settings > Agent Security.
+- Fixed: Claude Code limits never reached TermFlow on Windows. The Claude limit helper no longer starts curl in the background.
+- Fixed: the limits popover showed Codex while a Claude tab was active; the active agent now comes first.
+
 ## 1.24.0 - 2026-10-14
 
 - Installed agent CLIs are found for you: Claude Code, Codex, OpenCode, Gemini CLI, Qwen Code, Copilot CLI, Grok, Droid, Kimi, Pi, Codebuff, Cursor Agent, Amp, Aider and Crush appear in the New Tab menu (and in the Explorer and phone menus) only when installed, each opening with its full-access flag. Installing or removing one updates the list on its own; Settings > Profiles has Rescan.
