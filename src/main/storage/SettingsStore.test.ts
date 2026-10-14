@@ -39,6 +39,11 @@ describe('SettingsStore', () => {
     expect(new SettingsStore(file()).get().memory).toEqual({ enabled: true, model: 'x/y', excludedProjects: [] })
   })
 
+  it('keeps worktree setup steps but drops paths that leave the repository', () => {
+    writeFileSync(file(), JSON.stringify({ worktreeSetup: { 'c:/app': { copyFiles: ['.env', '../secret'], commands: ['npm ci'] }, broken: 'x' } }), 'utf-8')
+    expect(new SettingsStore(file()).get().worktreeSetup).toEqual({ 'c:/app': { copyFiles: ['.env'], commands: ['npm ci'], enabled: true } })
+  })
+
   it('rejects an unknown backdrop material', () => {
     writeFileSync(file(), JSON.stringify({ ...DEFAULT_SETTINGS, backdrop: 'glass' }), 'utf-8')
     expect(new SettingsStore(file()).get().backdrop).toBe('none')

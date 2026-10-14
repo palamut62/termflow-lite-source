@@ -6,6 +6,9 @@ import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import type { AgentPermissionMode } from '../../../shared/types'
 import type { WorktreeEntry } from '../../../shared/ipc'
+import { isSafeCopyPattern, setupKey, type WorktreeSetupSteps } from '../../../shared/worktreeSetup'
+import { openNewWorktree } from '../store/worktreeSetupStore'
+import { Toggle } from '../settings/Settings'
 
 /** Comparable path: forward slashes, case-insensitive (Windows). */
 function samePath(path: string): string {
@@ -16,6 +19,8 @@ function samePath(path: string): string {
 function branchSuffix(): string {
   return Math.random().toString(36).slice(2, 7)
 }
+
+const toLines = (text: string): string[] => text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
 
 /**
  * Starts an agent (or shell) in its own git worktree — an isolated checkout of
@@ -43,6 +48,13 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
   const [error, setError] = useState('')
   const [existing, setExisting] = useState<WorktreeEntry[]>([])
   const [removing, setRemoving] = useState<string | null>(null)
+  // Depo basina kurulum adimlari: kayitli olan ya da (kayit yoksa) kilit dosyasina gore oneri.
+  const [setupCopy, setSetupCopy] = useState('')
+  const [setupCommands, setSetupCommands] = useState('')
+  const [setupEnabled, setSetupEnabled] = useState(true)
+  const [suggestion, setSuggestion] = useState<Pick<WorktreeSetupSteps, 'copyFiles' | 'commands'> | null>(null)
+  const unsafePath = toLines(setupCopy).find((line) => !isSafeCopyPattern(line))
+  const setupCount = toLines(setupCopy).length + toLines(setupCommands).length
   const tabs = useTerminalStore((s) => s.tabs)
   const openPaths = new Set(tabs.map((tab) => (tab.worktree ? samePath(tab.worktree.path) : '')).filter(Boolean))
 
@@ -73,6 +85,15 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
       if (info && !baseRef.trim()) setBaseRef(info.branch)
       if (info) void refreshExisting(info.root)
       else setExisting([])
+      const saved = info ? useSettingsStore.getState().settings.worktreeSetup[setupKey(info.root)] : undefined
+      setSetupCopy(saved?.copyFiles.join('\n') ?? '')
+      setSetupCommands(saved?.commands.join('\n') ?? '')
+      setSetupEnabled(saved?.enabled ?? true)
+      setSuggestion(null)
+      if (info && !saved) {
+        const suggested = await window.termflow.worktree.suggestSetup(info.root)
+        if (!cancelled && (suggested.copyFiles.length > 0 || suggested.commands.length > 0)) setSuggestion(suggested)
+      }
     }, 250)
     return () => { cancelled = true; clearTimeout(timer) }
     // baseRef is only seeded once; re-running on its change would fight the user.
@@ -93,13 +114,19 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
       setBusy(false)
       return
     }
-    useTerminalStore.getState().addTab(profileId, true, undefined, undefined, permissionMode, {
+    const steps: WorktreeSetupSteps = { copyFiles: toLines(setupCopy), commands: toLines(setupCommands), enabled: setupEnabled }
+    const key = setupKey(repo.root)
+    const all = useSettingsStore.getState().settings.worktreeSetup
+    if (all[key] || steps.copyFiles.length > 0 || steps.commands.length > 0) {
+      void useSettingsStore.getState().update({ worktreeSetup: { ...all, [key]: steps } })
+    }
+    onClose()
+    openNewWorktree({
       repoRoot: repo.root,
       path: result.worktree.path,
       branch: result.worktree.branch ?? branch.trim(),
       createdByApp: true
-    })
-    onClose()
+    }, profileId, permissionMode, steps)
   }
 
   const openExisting = (entry: WorktreeEntry): void => {
@@ -125,7 +152,7 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
     setRemoving(null)
   }
 
-  const canCreate = !!repo && branch.trim().length > 0 && !busy
+  const canCreate = !!repo && branch.trim().length > 0 && !busy && !unsafePath
 
   return createPortal(
     <div className="settings-backdrop path-launch-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}>
@@ -172,6 +199,25 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
           <select id="worktree-permission" className="settings-input settings-select path-launch-select" value={permissionMode} onChange={(event) => setPermissionMode(event.target.value as AgentPermissionMode)}>
             <option value="safe">Safe - read only</option><option value="workspace">Workspace - project writes</option><option value="full">Full Access</option>
           </select>
+
+          {repo && (
+            <details className="worktree-setup">
+              <summary>Setup steps{setupCount > 0 ? ` (${setupCount})` : ''}</summary>
+              <p className="path-launch-hint">Run in every new worktree of this repository before the agent starts. Saved when you create the worktree.</p>
+              {suggestion && (
+                <p className="path-launch-hint">
+                  Suggested: {[...suggestion.copyFiles, ...suggestion.commands].join(', ')}{' '}
+                  <button className="settings-btn" onClick={() => { setSetupCopy(suggestion.copyFiles.join('\n')); setSetupCommands(suggestion.commands.join('\n')); setSuggestion(null) }}>Use suggestion</button>
+                </p>
+              )}
+              <label className="path-launch-label" htmlFor="worktree-setup-copy">Copy from the repository (one path or pattern per line)</label>
+              <textarea id="worktree-setup-copy" className="settings-input worktree-setup-text" value={setupCopy} onChange={(event) => setSetupCopy(event.target.value)} placeholder={'.env*\nconfig/local.json'} rows={2} spellCheck={false} />
+              {unsafePath && <p className="path-launch-error" role="alert">Paths must stay inside the repository: {unsafePath}</p>}
+              <label className="path-launch-label" htmlFor="worktree-setup-commands">Commands (run in order, in the new worktree)</label>
+              <textarea id="worktree-setup-commands" className="settings-input worktree-setup-text" value={setupCommands} onChange={(event) => setSetupCommands(event.target.value)} placeholder="npm ci" rows={2} spellCheck={false} />
+              <div className="worktree-setup-toggle"><Toggle checked={setupEnabled} onChange={setSetupEnabled} label="Run these steps for new worktrees" /> Run these steps for new worktrees</div>
+            </details>
+          )}
 
           {existing.length > 0 && (
             <>

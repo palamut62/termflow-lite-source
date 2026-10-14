@@ -1,6 +1,6 @@
 # worktree-setup - Worktree kurulum adimlari
 
-Durum: TASLAK 2026-10-14. Bagimli: yok. Ortak kurallar: [README.md](README.md).
+Durum: UYGULANDI 2026-10-14 (dal `feature/agent-hooks`). Bagimli: yok. Ortak kurallar: [README.md](README.md).
 
 ## Amac
 Ajan basina worktree bugun var (`.termflow-worktrees/`), ama yeni checkout'ta `node_modules` ve `.env`
@@ -35,3 +35,17 @@ worktree'de ajan baslamadan once otomatik calissin.
 1. Ayar modeli + ana surec kopyalama (guvenli yol) + testler.
 2. Komut calistirma + canli cikti + basarisizlik secenekleri.
 3. Oneriler + GitHub PR akisi + Ayarlar listesi.
+
+## Uygulama notlari (2026-10-14)
+- Kod: kural ve oneri `src/shared/worktreeSetup.ts` (+test; arayuz ve ana surec ayni `isSafeCopyPattern`), kopyalama ve
+  komut `src/main/worktreeSetup.ts` (+entegrasyon testi), IPC `ipc/worktree.ts` (`worktree:setup-*`), arayuz
+  `store/worktreeSetupStore.ts` (`openNewWorktree`) + `tabs/WorktreeSetupDialog.tsx`, ayar `worktreeSetup` (anahtar `setupKey`).
+- Ana surec yalniz o deponun ana agac disindaki worktree'sine yazar; kopyalamada son parca `lstat` ile duzenli dosya,
+  gercek yol (`realpath`) kok icinde olmali. Hedef varsa atlanir.
+- Komutlar sistem kabugunda (`shell: true`: Windows cmd, digerleri sh), kullanicinin profil kabugunda degil. Iptal ve
+  10 dk zaman asimi surec agacini durdurur (Windows `taskkill /T`, Unix surec grubu).
+- Cikti kucuk xterm yerine `<pre>`: ana surec ANSI'yi siler ve anahtarlari maskeler (`stripAnsi` + `redactApiKeys`).
+- Adimlar "Create & open" ile depo icin kaydedilir; oneri (kilit dosyasi, `.env`) yalniz "Use suggestion" ile alana gelir.
+  Var olan worktree'yi "Open" ile acmak kurulumu tekrar calistirmaz. GitHub PR akisi `gh pr checkout` sonrasi ayni diyalogu kullanir.
+- Ayarlar > Workspaces > Worktree Setup: depo listesi, ac/kapa, sil (duzenleme modalda).
+- E2E: `e2e/worktree.spec.ts` son iki test. Modal uzun icerikte artik pencere icinde kayiyor (eskiden butonlar ekran disina tasiyordu).

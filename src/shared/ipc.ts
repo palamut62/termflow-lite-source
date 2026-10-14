@@ -1,6 +1,7 @@
 // IPC channel names + payload types (TermFlow Lite)
 
 import type { AgentEvent, AgentSession, AgentSessionRef, AppSettings, RenderMode, ShellInfo, UpdateStatus } from './types'
+import type { WorktreeSetupSteps } from './worktreeSetup'
 
 export const IPC = {
   PTY_CREATE: 'pty:create', // (tabId, profileId, cols, rows, cwd?) -> { pid }
@@ -58,6 +59,10 @@ export const IPC = {
   WORKTREE_LIST: 'worktree:list', // (repoRoot) -> WorktreeEntry[]
   WORKTREE_CREATE: 'worktree:create', // (WorktreeCreateRequest) -> WorktreeOutcome
   WORKTREE_REMOVE: 'worktree:remove', // (WorktreeRemoveRequest) -> { ok } | { ok: false, error }
+  WORKTREE_SETUP_SUGGEST: 'worktree:setup-suggest', // (repoRoot) -> { copyFiles, commands }
+  WORKTREE_SETUP_RUN: 'worktree:setup-run', // (WorktreeSetupRequest) -> WorktreeSetupOutcome
+  WORKTREE_SETUP_CANCEL: 'worktree:setup-cancel', // send (runId)
+  WORKTREE_SETUP_OUTPUT: 'worktree:setup-output', // main -> renderer (runId, text)
   GITHUB_STATUS: 'github:status', // () -> GitHubStatus
   GITHUB_REPOS: 'github:repos', // (limit) -> GitHubRepo[]
   GITHUB_CURRENT_REPO: 'github:current-repo', // (cwd) -> 'owner/name' | ''
@@ -222,6 +227,16 @@ export interface WorktreeRemoveRequest {
 
 export type WorktreeOutcome = { ok: true; worktree: WorktreeEntry } | { ok: false; error: string }
 export type WorktreeRemoveOutcome = { ok: true } | { ok: false; error: string }
+
+export interface WorktreeSetupRequest {
+  runId: string
+  repoRoot: string
+  worktreePath: string
+  steps: WorktreeSetupSteps
+}
+
+/** `step` 0 = dosya kopyalama, 1..n = komutlar. */
+export type WorktreeSetupOutcome = { ok: true } | { ok: false; step: number; error: string }
 
 /**
  * Availability of the user's GitHub CLI. TermFlow stores no token of its own:

@@ -123,3 +123,55 @@ test('keeps the checkout when the user declines cleanup', async () => {
   await expect(win.locator('[aria-label="Worktree cleanup"]')).toHaveCount(0)
   expect(existsSync(join(sandbox, '.termflow-worktrees', 'my-app', 'tf-e2e-3', 'README.md'))).toBe(true)
 })
+
+test('runs the setup steps in a new worktree before the tab opens', async () => {
+  writeFileSync(join(repo, '.env'), 'API=1\n')
+  writeFileSync(join(repo, 'package-lock.json'), '{}')
+  const tabsBefore = await win.locator('.tab').count()
+  await openWorktreeDialog()
+  await win.fill('#worktree-repo', repo)
+  await expect(win.locator('.path-launch-hint').first()).toContainText('on main')
+  await win.click('text=Setup steps')
+  await expect(win.getByText('Suggested: .env*, npm ci')).toBeVisible()
+
+  // A path that leaves the repository cannot be saved.
+  await win.fill('#worktree-setup-copy', '../secret')
+  await expect(win.getByRole('alert')).toContainText('inside the repository')
+  await expect(win.getByRole('button', { name: 'Create & open' })).toBeDisabled()
+
+  await win.fill('#worktree-setup-copy', '.env*')
+  await win.fill('#worktree-setup-commands', `node -e "require('fs').writeFileSync('setup-ran.txt','ok')"`)
+  await win.fill('#worktree-branch', 'tf/e2e-setup')
+  await win.click('text=Create & open')
+
+  await expect(win.locator('.tab')).toHaveCount(tabsBefore + 1, { timeout: 20_000 })
+  const checkout = join(sandbox, '.termflow-worktrees', 'my-app', 'tf-e2e-setup')
+  expect(existsSync(join(checkout, '.env'))).toBe(true)
+  expect(existsSync(join(checkout, 'setup-ran.txt'))).toBe(true)
+
+  // Saved per repository: the next dialog shows the same steps.
+  await openWorktreeDialog()
+  await win.fill('#worktree-repo', repo)
+  await win.click('text=Setup steps')
+  await expect(win.locator('#worktree-setup-copy')).toHaveValue('.env*')
+})
+
+test('a failing setup step offers to open a shell in the worktree', async () => {
+  const tabsBefore = await win.locator('.tab').count()
+  await openWorktreeDialog()
+  await win.fill('#worktree-repo', repo)
+  await expect(win.locator('.path-launch-hint').first()).toContainText('on main')
+  await win.click('text=Setup steps')
+  await win.fill('#worktree-setup-commands', 'node -e "process.exit(2)"')
+  await win.fill('#worktree-branch', 'tf/e2e-fail')
+  await win.click('text=Create & open')
+
+  const dialog = win.getByRole('dialog', { name: 'Worktree setup' })
+  await expect(dialog.getByRole('alert')).toContainText('Setup failed at step 1', { timeout: 20_000 })
+  await expect(dialog.getByRole('alert')).toContainText('Exited with code 2')
+  await win.screenshot({ path: 'test-results/worktree-setup-failed.png' })
+  await dialog.getByRole('button', { name: 'Open shell here' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(win.locator('.tab')).toHaveCount(tabsBefore + 1)
+  await expect(win.locator('.status-worktree')).toBeVisible()
+})

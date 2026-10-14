@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
 import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
 import { DEFAULT_SETTINGS, type AppSettings } from '../../shared/types'
+import { normalizeSetupSteps } from '../../shared/worktreeSetup'
 
 const WRITE_DEBOUNCE_MS = 300
 
@@ -90,6 +91,11 @@ export class SettingsStore {
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
     merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
+    const setups = settings.worktreeSetup && typeof settings.worktreeSetup === 'object' ? Object.entries(settings.worktreeSetup) : []
+    merged.worktreeSetup = Object.fromEntries(setups.slice(0, 100).flatMap(([key, value]) => {
+      const steps = normalizeSetupSteps(value)
+      return steps ? [[key, steps]] : []
+    }))
     const contrast = Number(merged.minimumContrastRatio)
     merged.minimumContrastRatio = Number.isFinite(contrast) ? Math.min(21, Math.max(1, contrast)) : 1
     return merged

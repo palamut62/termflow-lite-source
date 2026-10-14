@@ -37,6 +37,8 @@ export function redactApiKeys(value: string, knownKeys: Iterable<string> = findA
 // CSI, OSC (BEL ya da ST ile biten) ve iki baytlik ESC dizileri.
 const ANSI_SEQUENCE = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_])/g
 
+export const stripAnsi = (value: string): string => value.replace(ANSI_SEQUENCE, '')
+
 /**
  * Terminal ciktisi icin: kabuk renklendirmesi bir anahtarin ortasina ANSI dizisi koyabilir
  * (PSReadLine). Anahtarlar ANSI'siz metinde bulunur, ciktida aralarindaki dizilerle birlikte maskelenir.

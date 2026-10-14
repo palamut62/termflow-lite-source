@@ -4,6 +4,7 @@ import { resolveDefaultProfileId, useSettingsStore } from './store/settingsStore
 import { dataHandlers, exitHandlers, resolveStartupCwd, useTerminalStore } from './store/terminalStore'
 import { TabBar } from './tabs/TabBar'
 import { WorktreeCleanupDialog } from './tabs/WorktreeCleanupDialog'
+import { WorktreeSetupDialog } from './tabs/WorktreeSetupDialog'
 import { SessionRail } from './components/SessionRail'
 import { TerminalView } from './terminal/TerminalView'
 import { PaneLeaf } from './terminal/PaneLeaf'
@@ -383,6 +384,7 @@ export default function App(): React.JSX.Element {
       <Toasts />
       <VoiceIndicator />
       <WorktreeCleanupDialog />
+      <WorktreeSetupDialog />
     </div>
     {widgetActive && <WidgetView />}
     </>

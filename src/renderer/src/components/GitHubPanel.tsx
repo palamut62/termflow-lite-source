@@ -4,6 +4,7 @@ import { GitBranch, GitPullRequest, Github, Loader2, Lock, RefreshCw, X } from '
 import { mergeProfiles, providerProfileId } from '../../../shared/profiles'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
+import { openNewWorktree } from '../store/worktreeSetupStore'
 import type { GitHubPullRequest, GitHubRepo, GitHubStatus } from '../../../shared/ipc'
 
 type Tab = 'prs' | 'repos'
@@ -131,14 +132,14 @@ export function GitHubPanel({ onClose }: { onClose: () => void }): React.JSX.Ele
       return
     }
 
-    useTerminalStore.getState().addTab(profileId, true, undefined, undefined, undefined, {
+    setBusyPr(null)
+    onClose()
+    openNewWorktree({
       repoRoot: info.root,
       path: created.worktree.path,
       branch: `pr-${pr.number}`,
       createdByApp: true
-    })
-    setBusyPr(null)
-    onClose()
+    }, profileId)
   }
 
   const unavailable = status && (!status.installed || !status.authenticated)

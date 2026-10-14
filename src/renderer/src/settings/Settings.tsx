@@ -25,7 +25,7 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
   { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={14} />, keywords: 'shift enter newline osc 52 clipboard copy ssh tmux default profile startup directory scrollback shell integration osc 133 command blocks inline suggestions autosuggest media previews image video thumbnail exit code duration notifications bell sounds keyboard click copy on select right click clickable paths confirm before close restore session tray quake hotkey hide on blur' },
   { id: 'profiles', label: 'Profiles', icon: <UserRound size={14} />, keywords: 'custom command profiles arguments icon color startup command starting directory default model permissions environment variables' },
   { id: 'health', label: 'Profile Health', icon: <ShieldCheck size={14} />, keywords: 'profile health check missing cli' },
-  { id: 'workspaces', label: 'Workspaces', icon: <SquareTerminal size={14} />, keywords: 'project workspaces folders' },
+  { id: 'workspaces', label: 'Workspaces', icon: <SquareTerminal size={14} />, keywords: 'project workspaces folders worktree setup copy env install' },
   { id: 'backup', label: 'Backup & Restore', icon: <Server size={14} />, keywords: 'backup restore import export json' },
   { id: 'providers', label: 'Providers', icon: <Bot size={14} />, keywords: 'ai providers api key base url model cli command permissions' },
   { id: 'memory', label: 'Memory', icon: <Brain size={14} />, keywords: 'agent memory session history summary openrouter model project unfinished mcp connect claude codex opencode exclude' },

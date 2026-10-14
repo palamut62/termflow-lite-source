@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WeatherPlace, type WeatherReading, type DirListing, type AttentionBadge } from '../shared/ipc'
+import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WorktreeSetupOutcome, type WorktreeSetupRequest, type WeatherPlace, type WeatherReading, type DirListing, type AttentionBadge } from '../shared/ipc'
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentHookEvent } from '../shared/agentHooks'
 import type { AgentUsage } from '../shared/usage'
@@ -150,7 +150,15 @@ const api = {
     repoInfo: (cwd: string): Promise<GitRepoInfo | null> => ipcRenderer.invoke(IPC.WORKTREE_REPO_INFO, cwd),
     list: (repoRoot: string): Promise<WorktreeEntry[]> => ipcRenderer.invoke(IPC.WORKTREE_LIST, repoRoot),
     create: (request: WorktreeCreateRequest): Promise<WorktreeOutcome> => ipcRenderer.invoke(IPC.WORKTREE_CREATE, request),
-    remove: (request: WorktreeRemoveRequest): Promise<WorktreeRemoveOutcome> => ipcRenderer.invoke(IPC.WORKTREE_REMOVE, request)
+    remove: (request: WorktreeRemoveRequest): Promise<WorktreeRemoveOutcome> => ipcRenderer.invoke(IPC.WORKTREE_REMOVE, request),
+    suggestSetup: (repoRoot: string): Promise<{ copyFiles: string[]; commands: string[] }> => ipcRenderer.invoke(IPC.WORKTREE_SETUP_SUGGEST, repoRoot),
+    runSetup: (request: WorktreeSetupRequest): Promise<WorktreeSetupOutcome> => ipcRenderer.invoke(IPC.WORKTREE_SETUP_RUN, request),
+    cancelSetup: (runId: string): void => ipcRenderer.send(IPC.WORKTREE_SETUP_CANCEL, runId),
+    onSetupOutput: (cb: (runId: string, text: string) => void): (() => void) => {
+      const h = (_e: unknown, runId: string, text: string): void => cb(runId, text)
+      ipcRenderer.on(IPC.WORKTREE_SETUP_OUTPUT, h)
+      return () => ipcRenderer.removeListener(IPC.WORKTREE_SETUP_OUTPUT, h)
+    }
   },
   /** GitHub through the user's own gh CLI; TermFlow stores no token. */
   github: {

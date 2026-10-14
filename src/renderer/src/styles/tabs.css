@@ -307,6 +307,10 @@
   border-radius: 6px;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
   overflow: hidden;
+  /* Uzun icerik (worktree Setup steps) kayar; ust bilgi ve butonlar gorunur kalir. */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
 }
 
 .path-launch-content {
@@ -314,6 +318,8 @@
   flex-direction: column;
   gap: 8px;
   padding: 18px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .path-launch-label {
@@ -584,3 +590,23 @@
   cursor: pointer;
 }
 .attention-bell-clear:hover { opacity: 1; }
+
+/* Worktree kurulum adimlari (worktree-setup). */
+.worktree-setup { display: flex; flex-direction: column; gap: 6px; }
+.worktree-setup summary { cursor: pointer; font-size: 12px; padding: 4px 0; }
+.worktree-setup[open] summary { margin-bottom: 4px; }
+.worktree-setup-text { width: 100%; min-height: 44px; resize: vertical; font-family: var(--terminal-font-family, monospace); }
+.worktree-setup-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.worktree-setup-output {
+  margin: 0;
+  height: 220px;
+  overflow: auto;
+  padding: 8px;
+  font-family: var(--terminal-font-family, monospace);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--terminal-background, #000);
+  border: 1px solid var(--widget-border);
+}
+.worktree-setup-status { display: flex; align-items: center; gap: 6px; margin-right: auto; font-size: 12px; opacity: 0.8; }

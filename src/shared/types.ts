@@ -1,4 +1,5 @@
 import type { AgentHookState } from './agentHooks'
+import type { WorktreeSetupSteps } from './worktreeSetup'
 // Shared data models between main and renderer (TermFlow Lite, PRD §14)
 
 export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'custom'
@@ -380,7 +381,8 @@ export interface AppSettings {
   agentHooks: boolean
   /** Ajan bitti / seni bekliyor / hata: kategori basina sistem bildirimi ve ses. */
   agentAlerts: AgentAlertSettings
-  /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
+  /** Depo basina worktree kurulum adimlari; anahtar `setupKey(repoRoot)`. */
+  worktreeSetup: Record<string, WorktreeSetupSteps>
   /** Yeniden acilista her sekmenin son ciktisini geri getir (userData/scrollback, anahtarlar maskeli). */
   restoreScrollback: boolean
   /** Yeniden acilista ajan sekmeleri kendi konusmasiyla surer (yalniz { agent, id } kaydedilir). */
@@ -389,6 +391,7 @@ export interface AppSettings {
   usageDisplay: 'off' | 'used' | 'remaining'
   /** Claude limitleri icin status line yardimcisi (Claude'un alt bilgi ipuclarini gizler; istege bagli). */
   claudeUsage: boolean
+  /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
   osc52Clipboard: boolean
   /** Ajan sekmesinde Shift+Enter gondermek yerine yeni satir ekler. */
   shiftEnterNewline: boolean
@@ -720,6 +723,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     volume: 60,
     soundFile: ''
   },
+  worktreeSetup: {},
   agentCompanion: true,
   agentAnimationStyle: 'face',
   agentCharacter: 'auto',
