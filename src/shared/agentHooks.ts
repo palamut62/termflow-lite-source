@@ -88,9 +88,10 @@ export function agentHookArgs(agent: AgentKind, args: readonly string[], claudeS
  */
 export function claudeStatusLineCommand(url: string, platform: string, userCommand?: string | null): string {
   const curl = platform === 'win32' ? 'curl.exe' : 'curl'
-  const send = `${curl} -s -m 2 -o /dev/null -H "x-termflow-token: $TERMFLOW_HOOK_TOKEN" --data-binary @- ${url}`
+  const send = `${curl} -s -m 1 -o /dev/null -H "x-termflow-token: $TERMFLOW_HOOK_TOKEN" --data-binary @- ${url}`
   if (!userCommand) return send
-  return `i=$(cat); (printf '%s' "$i" | ${send} &); printf '%s' "$i" | ${userCommand}`
+  // Arka plana atilan curl Windows'ta status line sureciyle birlikte oldurulur; yerel istek kisa, sirayla gider.
+  return `i=$(cat); printf '%s' "$i" | ${send}; printf '%s' "$i" | ${userCommand}`
 }
 
 /** userData/agent-hooks/claude-settings.json icerigi; token ve sekme env'den gelir, dosyada sir yok. */
