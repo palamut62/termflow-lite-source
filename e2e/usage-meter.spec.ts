@@ -40,7 +40,7 @@ test('the status bar shows the active Codex tab limits from the local session fi
   const userData = join(folder, 'user-data')
   mkdirSync(userData)
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({
-    gpuAcceleration: 'off', motion: 'off', showTips: false, closeToTray: false, confirmBeforeClose: false, restoreSession: false, agentCompanion: false,
+    gpuAcceleration: 'off', motion: 'off', showTips: false, closeToTray: false, confirmBeforeClose: false, restoreSession: false, agentCompanion: false, usageCard: false,
     defaultAgentPermissionMode: 'full', defaultProfileId: 'fake-codex', profiles: [{ id: 'fake-codex', name: 'Fake Codex', command, args: [], fullPermissions: false }]
   }))
   app = await electron.launch({ args: ['.', '--no-sandbox'], env: { ...process.env, USERPROFILE: home, HOME: home, TERMFLOW_E2E: '1', TERMFLOW_E2E_USER_DATA: userData } })
@@ -51,13 +51,6 @@ test('the status bar shows the active Codex tab limits from the local session fi
   // Default: remaining percent, like Codex's own footer.
   await expect(meter).toHaveText(/5h 15% left · 7d 88% left/, { timeout: 15_000 })
   await expect(meter).toHaveClass(/usage-warn/)
-  // One-line strip under the terminal, both windows side by side: 5h at 85% used (amber), 7d at 12% (green).
-  const strip = win.locator('.usage-strip')
-  await expect(strip.locator('.usage-strip-warn')).toContainText('15% left')
-  await expect(strip.locator('.usage-strip-ok')).toContainText('88% left')
-  const rows = await strip.locator('.usage-strip-item').evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)))
-  expect(new Set(rows).size).toBe(1)
-  await win.screenshot({ path: 'test-results/usage-strip.png' })
   await meter.click()
   await expect(win.locator('.usage-popover')).toContainText(/resets in (2h 59m|3h 0m)/)
 
@@ -67,4 +60,16 @@ test('the status bar shows the active Codex tab limits from the local session fi
   await win.locator('select').filter({ has: win.locator('option[value="used"]') }).selectOption('used')
   await win.keyboard.press('Escape')
   await expect(meter).toHaveText(/5h 85% · 7d 12%/)
+
+  // Limit strip on: one line under the terminal, both windows side by side, and the status bar button hides.
+  await win.keyboard.press('Control+,')
+  await win.locator('.settings-nav-item', { hasText: 'Agent Security' }).click()
+  await win.getByLabel('Limit strip').click()
+  await win.keyboard.press('Escape')
+  const strip = win.locator('.usage-strip')
+  await expect(strip.locator('.usage-strip-warn')).toContainText('5h')
+  await expect(strip.locator('.usage-strip-ok')).toContainText('7d')
+  await expect(meter).toHaveCount(0)
+  const tops = await strip.locator('.usage-strip-item').evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)))
+  expect(new Set(tops).size).toBe(1)
 })

@@ -59,6 +59,8 @@ export function UsageMeter(): React.JSX.Element | null {
   const windows = current ? liveWindows(current.windows, now) : []
   // Limit kaynagi olan ajanlar (Claude, Codex) veri gelmeden de gorunur; yoksa neden belli olmaz.
   if (!agent || (windows.length === 0 && agent !== 'claude' && agent !== 'codex')) return null
+  // Serit gorunurken ayni bilgi durum cubugunda tekrarlanmaz (yer tutucu ve diger ajanlar icin kalir).
+  if (windows.length > 0 && settings.usageCard) return null
   const level = windows.length ? usageLevel(windows[0].usedPercent) : 'ok'
   const title = windows.length === 0 ? (agent === 'claude' && !settings.claudeUsage ? 'Turn on "Claude limits" in Settings > Agent Security' : 'Appears after the first reply of this session') : windows.map((w) => `${w.label}: ${Math.round(w.usedPercent)}% used, resets in ${formatResetIn(w.resetsAt, now)}`).join('\n')
 
