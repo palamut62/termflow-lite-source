@@ -11,6 +11,9 @@
  */
 
 const env = process.env
+// Agent IDE ayri urun (docs/agent-ide/PRD.md bolum 12): ayri appId, ad, cikti klasoru ve yayin reposu.
+const IDE = env.TERMFLOW_EDITION === 'ide'
+const SLUG = IDE ? 'TermFlow-Agent-IDE' : 'TermFlow-Lite'
 
 /** Returns the trimmed value of an env var, or undefined when unset/blank. */
 function envValue(name) {
@@ -94,15 +97,15 @@ function resolveLinuxArtifactName() {
   // everything later belongs to other flags (e.g. `--publish never`).
   const next = argv[linuxIndex + 1]
   if (!next || next.startsWith('--')) return undefined
-  if (next === 'AppImage') return 'TermFlow-Lite-${version}-x86_64.${ext}'
-  if (next === 'deb') return 'TermFlow-Lite-${version}-amd64.${ext}'
+  if (next === 'AppImage') return `${SLUG}-\${version}-x86_64.\${ext}`
+  if (next === 'deb') return `${SLUG}-\${version}-amd64.\${ext}`
   return undefined
 }
 
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
-  appId: 'com.palamut62.termflowlite',
-  productName: 'TermFlow Lite',
+  appId: IDE ? 'com.palamut62.termflowagentide' : 'com.palamut62.termflowlite',
+  productName: IDE ? 'TermFlow Agent IDE' : 'TermFlow Lite',
   // GitHub Releases hem dağıtım hem de electron-updater'ın kaynağıdır. Bu blok
   // sayesinde NSIS (`latest.yml`) ve AppImage (`latest-linux.yml`) hedefleri
   // güncelleme metadata'sı üretir; bu dosyalar release'e YÜKLENMELİDİR
@@ -114,11 +117,12 @@ module.exports = {
   publish: {
     provider: 'github',
     owner: 'palamut62',
-    repo: 'termflow-lite',
+    // shortcut: IDE reposu henuz yok; ilk yayindan once kullanici onayiyla acilir, o zamana kadar IDE updater kapali.
+    repo: IDE ? 'termflow-agent-ide' : 'termflow-lite',
     releaseType: 'release'
   },
   directories: {
-    output: 'dist',
+    output: IDE ? 'dist-ide' : 'dist',
     buildResources: 'resources'
   },
   files: ['out/**', '!**/*.map'],
@@ -133,7 +137,7 @@ module.exports = {
   win: {
     icon: 'resources/icon.ico',
     target: ['nsis', 'zip'],
-    artifactName: 'TermFlow-Lite-${version}-${arch}.${ext}',
+    artifactName: `${SLUG}-\${version}-\${arch}.\${ext}`,
     ...resolveWindowsSigning()
   },
   nsis: {
@@ -142,7 +146,8 @@ module.exports = {
     installerIcon: 'resources/icon.ico',
     uninstallerIcon: 'resources/icon.ico',
     installerHeaderIcon: 'resources/icon.ico',
-    include: 'build/installer.nsh'
+    // installer.nsh Lite'in Explorer menu anahtarlarini yazar; IDE kurucusu onlara dokunmamali.
+    ...(IDE ? {} : { include: 'build/installer.nsh' })
   },
   linux: {
     icon: 'resources/icon.png',

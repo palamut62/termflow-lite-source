@@ -25,8 +25,9 @@ interface MenuState {
  * tab's working directory (shell integration reports every cd), reads one
  * folder level at a time and opens files on double click.
  */
-export function FilePanel(): React.JSX.Element | null {
-  const open = useFilePanelStore((s) => s.open)
+/** `embedded`: Agent IDE sag panelinin Explorer sekmesi; her zaman acik, kapatma dugmesi yok. */
+export function FilePanel({ embedded = false }: { embedded?: boolean } = {}): React.JSX.Element | null {
+  const open = useFilePanelStore((s) => s.open) || embedded
   const showHidden = useFilePanelStore((s) => s.showHidden)
   const filter = useFilePanelStore((s) => s.filter)
   const cwd = useTerminalStore((s) => {
@@ -67,14 +68,14 @@ export function FilePanel(): React.JSX.Element | null {
   }
 
   return (
-    <aside className="file-panel" aria-label="Files">
+    <aside className={embedded ? 'file-panel file-panel-embedded' : 'file-panel'} aria-label="Files">
       <header className="file-panel-head">
         <span className="file-panel-title" title={cwd}>{cwd ? folderName(cwd) : 'Files'}</span>
         <button className="file-panel-icon" onClick={() => store.setShowHidden(!showHidden)} title={showHidden ? 'Hide hidden files' : 'Show hidden files (.git, node_modules, dotfiles)'} aria-pressed={showHidden}>
           {showHidden ? <Eye size={13} /> : <EyeOff size={13} />}
         </button>
         <button className="file-panel-icon" onClick={() => store.refresh()} title="Refresh" aria-label="Refresh"><RefreshCw size={13} /></button>
-        <button className="file-panel-icon" onClick={() => store.hide()} title="Close (Ctrl+Shift+E)" aria-label="Close files"><X size={13} /></button>
+        {!embedded && <button className="file-panel-icon" onClick={() => store.hide()} title="Close (Ctrl+Shift+E)" aria-label="Close files"><X size={13} /></button>}
       </header>
       <input
         className="file-panel-filter"

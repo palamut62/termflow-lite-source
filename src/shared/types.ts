@@ -1,3 +1,4 @@
+import { EDITION } from './edition'
 import type { AgentHookState } from './agentHooks'
 import type { WorktreeSetupSteps } from './worktreeSetup'
 // Shared data models between main and renderer (TermFlow Lite, PRD §14)
@@ -6,6 +7,15 @@ export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'cus
 export type TabActivity = 'running' | 'waiting' | 'unread' | 'completed' | 'error'
 export type AgentKind = 'claude' | 'codex' | 'opencode'
 /** Ajanin dikkat istedigi okunmamis olay (agent-attention). */
+export type IdeRightTab = 'explorer' | 'agents'
+export interface IdeSettings {
+  /** Kullanicinin ekledigi proje klasorleri (depo kokleri), siraya gore. */
+  projects: string[]
+  sidebarWidth: number
+  rightWidth: number
+  rightOpen: boolean
+  rightTab: IdeRightTab
+}
 export type TabAttention = 'needs-input' | 'done' | 'error'
 export interface AlertChannel { system: boolean; sound: boolean }
 export interface AgentAlertSettings {
@@ -329,6 +339,12 @@ export interface AppSettings {
    * Uzun ömürlü ajan oturumları tab bar'a sığmadığında okunabilirliği korur.
    */
   showSessionRail: boolean
+  /** Yerlesim: terminal (Lite'in kendisi) ya da Agent IDE. Lite surumunde her zaman 'terminal'. */
+  uiMode: 'terminal' | 'ide'
+  /** Agent IDE ilk acilis karti cevaplandi (yalniz IDE surumu, yeni kurulum). */
+  uiModeChosen: boolean
+  /** Agent IDE yerlesimi (PRD F1): eklenen projeler, panel genislikleri, sag panel sekmesi. */
+  ide: IdeSettings
   /** Rail genişliği (px), sürüklenerek ayarlanır. */
   sessionRailWidth: number
   /**
@@ -650,7 +666,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     'ctrl+-': 'font-decrease',
     'ctrl+0': 'font-reset',
     'ctrl+alt+b': 'toggle-broadcast',
-    'ctrl+shift+j': 'jump-palette'
+    'ctrl+shift+j': 'jump-palette',
+    ...(EDITION === 'ide' ? { 'ctrl+shift+i': 'toggle-ui-mode' } : {})
   },
   profiles: [],
   providerProfiles: [
@@ -701,6 +718,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   windowHeight: 700,
   restoreSession: true,
   showSessionRail: false,
+  uiMode: EDITION === 'ide' ? 'ide' : 'terminal',
+  uiModeChosen: false,
+  ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer' },
   sessionRailWidth: 220,
   closeToTray: true,
   quakeMode: false,

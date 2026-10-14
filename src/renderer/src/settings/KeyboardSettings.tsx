@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { DEFAULT_SETTINGS } from '../../../shared/types'
 import { normalizeShortcut } from '../shortcuts'
 import { useSettingsStore } from '../store/settingsStore'
+import { EDITION } from '../../../shared/edition'
 
 interface ActionDef {
   id: string
@@ -19,7 +20,8 @@ const ACTIONS: ActionDef[] = [
   { id: 'font-decrease', label: 'Decrease Font Size' },
   { id: 'font-reset', label: 'Reset Font Size' },
   { id: 'toggle-broadcast', label: 'Toggle Broadcast Input' },
-  { id: 'jump-palette', label: 'Jump to Tab or Session' }
+  { id: 'jump-palette', label: 'Jump to Tab or Session' },
+  ...(EDITION === 'ide' ? [{ id: 'toggle-ui-mode', label: 'Switch Agent IDE / Terminal Layout' }] : [])
 ]
 
 /** 'ctrl+shift+t' → 'Ctrl+Shift+T' görüntü formatı. */

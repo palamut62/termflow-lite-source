@@ -8,6 +8,8 @@ import { defineConfig } from '@playwright/test'
  */
 export default defineConfig({
   testDir: 'e2e',
+  // Agent IDE senaryolari IDE derlemesiyle calisir: npm run test:e2e:ide (playwright.ide.config.ts).
+  testIgnore: ['**/ide-*.spec.ts'],
   timeout: 60_000,
   workers: 1,
   reporter: 'line',

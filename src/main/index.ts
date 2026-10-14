@@ -50,6 +50,7 @@ import { createTray, destroyTray, isTrayActive, refreshTrayMenu } from './tray'
 import { invokeRecorded, recordIpcHandlers } from './remote/ipcRegistry'
 import { RemoteController } from './remote/RemoteController'
 import { AgentHookServer } from './agentHooks/hookServer'
+import { EDITION, PRODUCT } from '../shared/edition'
 import { readClaudeUsage, readCodexUsage } from './usage/agentUsage'
 import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
@@ -71,6 +72,11 @@ protocol.registerSchemesAsPrivileged([
 // get a throwaway pid-scoped userData dir so they never touch the real
 // settings.json. Must run before any userData use — including the
 // single-instance lock below.
+// Agent IDE ayri urun: kendi adi ve userData'si (ayarlar, oturum, hafiza Lite ile karismaz, tek-ornek kilidi ayri).
+if (EDITION === 'ide') {
+  app.setName(PRODUCT.name)
+  app.setPath('userData', join(app.getPath('appData'), PRODUCT.name))
+}
 if (process.env.TERMFLOW_E2E === '1') {
   app.setPath('userData', process.env.TERMFLOW_E2E_USER_DATA || join(app.getPath('temp'), `termflow-lite-e2e-${process.pid}`))
 }
@@ -328,7 +334,7 @@ app.whenReady().then(() => {
   // Remote Access reuses the validated IPC handlers; record them before any registration.
   recordIpcHandlers()
   // Windows bildirimleri kısayoldaki AppUserModelID ile eşleşmeli (electron-builder appId).
-  if (process.platform === 'win32') app.setAppUserModelId('com.palamut62.termflowlite')
+  if (process.platform === 'win32') app.setAppUserModelId(PRODUCT.appId)
   configureShellIntegration(app.isPackaged
     ? join(process.resourcesPath, 'resources', 'shell-integration')
     : join(__dirname, '../../resources/shell-integration'))
@@ -369,7 +375,8 @@ app.whenReady().then(() => {
   // İmza yalnızca BAŞARILI sync sonrası güncellenir — hatalı deneme tekrarlanır.
   let lastMenuSignature: string | null = null
   const refreshContextMenu = (): void => {
-    if (!app.isPackaged || !settingsStore) return
+    // shortcut: IDE surumu Explorer menusu yazmaz (Lite'in TermFlowLite anahtarlarini ezerdi); ayri anahtarlar Faz 3+.
+    if (!app.isPackaged || !settingsStore || EDITION === 'ide') return
     const signature = explorerMenuSignature(settingsStore.get(), currentShells)
     if (signature === lastMenuSignature) return
     void syncExplorerContextMenu(process.execPath, process.resourcesPath, settingsStore.get(), currentShells)

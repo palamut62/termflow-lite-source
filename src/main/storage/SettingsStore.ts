@@ -3,6 +3,7 @@ import { dirname } from 'path'
 import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
 import { DEFAULT_SETTINGS, MEMORY_INTERVAL_MS, type AppSettings } from '../../shared/types'
 import { normalizeSetupSteps } from '../../shared/worktreeSetup'
+import { EDITION } from '../../shared/edition'
 
 const WRITE_DEBOUNCE_MS = 300
 
@@ -37,6 +38,22 @@ function normalizeVoiceSettings(value: unknown): AppSettings['voice'] {
     speak: { enabled: speak.enabled === true, model: speak.model === 'ema' ? 'ema' : 'antalia', speed, studioDir }
   }
 }
+function normalizeIde(value: unknown): AppSettings['ide'] {
+  const input: Partial<AppSettings['ide']> = value && typeof value === 'object' ? value : {}
+  const width = (raw: unknown, fallback: number, min: number, max: number): number =>
+    typeof raw === 'number' && Number.isFinite(raw) ? Math.round(Math.min(max, Math.max(min, raw))) : fallback
+  const projects = Array.isArray(input.projects)
+    ? [...new Set(input.projects.filter((p): p is string => typeof p === 'string' && p.trim().length > 0 && p.length <= 1024))].slice(0, 100)
+    : []
+  return {
+    projects,
+    sidebarWidth: width(input.sidebarWidth, 260, 200, 400),
+    rightWidth: width(input.rightWidth, 300, 220, 560),
+    rightOpen: input.rightOpen !== false,
+    rightTab: input.rightTab === 'agents' ? 'agents' : 'explorer'
+  }
+}
+
 function normalizeAgentAlerts(value: unknown): AppSettings['agentAlerts'] {
   const fallback = DEFAULT_SETTINGS.agentAlerts
   const input: Partial<AppSettings['agentAlerts']> = value && typeof value === 'object' ? value : {}
@@ -92,6 +109,9 @@ export class SettingsStore {
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
     merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
+    merged.ide = normalizeIde(settings.ide)
+    // Agent IDE yalniz IDE surumunde; Lite her zaman terminal yerlesimi.
+    if (EDITION !== 'ide' || merged.uiMode !== 'ide') merged.uiMode = 'terminal'
     if (!Array.isArray(settings.installedAgents)) delete merged.installedAgents
     else merged.installedAgents = settings.installedAgents.filter((id): id is string => typeof id === 'string').slice(0, 100)
     const setups = settings.worktreeSetup && typeof settings.worktreeSetup === 'object' ? Object.entries(settings.worktreeSetup) : []

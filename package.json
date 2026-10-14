@@ -30,7 +30,12 @@
     "package:verify": "npm run package && node scripts/verify-artifacts.mjs",
     "release:tag": "node scripts/release-tag.mjs",
     "release:verify": "node scripts/verify-release-assets.mjs",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "dev:ide": "node scripts/ide.mjs dev",
+    "build:ide": "node scripts/ide.mjs build",
+    "dist:win:ide": "node scripts/ide.mjs build && node scripts/ide.mjs dist:win",
+    "dist:linux:ide": "node scripts/ide.mjs build && node scripts/ide.mjs dist:linux",
+    "test:e2e:ide": "node scripts/ide.mjs build && playwright test --config playwright.ide.config.ts"
   },
   "dependencies": {
     "@lydell/node-pty": "^1.2.0-beta.12",

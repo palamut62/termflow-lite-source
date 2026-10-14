@@ -2,16 +2,12 @@ import { useEffect, useRef } from 'react'
 import { DEFAULT_SETTINGS } from '../../shared/types'
 import { resolveDefaultProfileId, useSettingsStore } from './store/settingsStore'
 import { dataHandlers, exitHandlers, resolveStartupCwd, useTerminalStore } from './store/terminalStore'
-import { TabBar } from './tabs/TabBar'
 import { WorktreeCleanupDialog } from './tabs/WorktreeCleanupDialog'
 import { WorktreeSetupDialog } from './tabs/WorktreeSetupDialog'
-import { SessionRail } from './components/SessionRail'
-import { TerminalView } from './terminal/TerminalView'
-import { PaneLeaf } from './terminal/PaneLeaf'
 import { Settings } from './settings/Settings'
-import { FilePanel } from './components/FilePanel'
 import { useFilePanelStore } from './store/filePanelStore'
-import { StatusBar } from './components/StatusBar'
+import { AppShell } from './shells/AppShell'
+import { LayoutChoice, toggleRightPanel, toggleUiMode } from './shells/uiMode'
 import { CommandHistory } from './components/CommandHistory'
 import { useCommandHistoryStore } from './store/commandHistoryStore'
 import { TaskPalette } from './components/TaskPalette'
@@ -20,7 +16,6 @@ import { JumpPalette } from './components/JumpPalette'
 import { trackTabRecency, useJumpPaletteStore } from './store/jumpPaletteStore'
 import { AgentSessions } from './components/AgentSessions'
 import { useAgentSessionStore } from './store/agentSessionStore'
-import { paneTerminalIds, type PaneNode } from './paneUtils'
 import { matchShortcut } from './shortcuts'
 import type { AppLaunchRequest } from '../../shared/ipc'
 import { SavedCommands } from './components/SavedCommands'
@@ -53,19 +48,13 @@ let bootStarted = false
 
 export default function App(): React.JSX.Element {
   const loaded = useSettingsStore((s) => s.loaded)
-  const tabHeight = useSettingsStore((s) => s.settings.tabHeight)
   const widgetActive = useWidgetStore((s) => s.active)
   const widgetFrozen = useWidgetStore((s) => s.frozen)
-  const showSessionRail = useSettingsStore((s) => s.settings.showSessionRail)
+  const uiMode = useSettingsStore((s) => s.settings.uiMode)
   const themeId = useSettingsStore((s) => s.settings.themeId)
   const settingsOpen = useSettingsStore((s) => s.settingsOpen)
-  const tabs = useTerminalStore((s) => s.tabs)
-  const activeTabId = useTerminalStore((s) => s.activeTabId)
   const pendingCloseTabId = useTerminalStore((s) => s.pendingCloseTabId)
-  const splitDirection = useTerminalStore((s) => s.splitDirection)
   const splitTabIds = useTerminalStore((s) => s.splitTabIds)
-  const splitRatio = useTerminalStore((s) => s.splitRatio)
-  const paneTree = useTerminalStore((s) => s.paneTree)
   const historyOpen = useCommandHistoryStore((s) => s.open)
   const taskPaletteOpen = useTaskPaletteStore((s) => s.open)
   const jumpPaletteOpen = useJumpPaletteStore((s) => s.open)
@@ -205,6 +194,13 @@ export default function App(): React.JSX.Element {
         e.stopPropagation()
         return
       }
+      // Agent IDE: Ctrl+Shift+E / Ctrl+Shift+A sag paneli Explorer / Agents sekmesinde acar-kapatir.
+      if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && useSettingsStore.getState().settings.uiMode === 'ide' && ['e', 'a'].includes(e.key.toLowerCase())) {
+        toggleRightPanel(e.key.toLowerCase() === 'e' ? 'explorer' : 'agents')
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
       // Ctrl+Shift+E: the file panel for the active tab's folder.
       if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && e.key.toLowerCase() === 'e') {
         useFilePanelStore.getState().toggle()
@@ -287,6 +283,9 @@ export default function App(): React.JSX.Element {
         case 'jump-palette':
           useJumpPaletteStore.getState().toggle()
           break
+        case 'toggle-ui-mode':
+          toggleUiMode()
+          break
         default:
           return
       }
@@ -341,40 +340,16 @@ export default function App(): React.JSX.Element {
     if (loaded) useSettingsStore.getState().applyTheme()
   }, [themeId, loaded])
 
-  // Split düzeninde ağaç dışı (arka plan) sekmeleri: gizli TerminalView olarak
-  // mount edilirler (PTY yaşar); setActiveTab onları aktif yaprağa getirir.
-  const paneTabIds = paneTree ? new Set(paneTerminalIds(paneTree)) : null
-  const backgroundTabs = paneTabIds ? tabs.filter((tab) => !paneTabIds.has(tab.id)) : []
-
   return (
     <>
     {/* Widget view: the full app stays mounted at its last size, off screen,
         so terminals never refit and their PTYs/agents keep running. */}
     <div
-      className="app"
+      className={uiMode === 'ide' ? 'app ui-ide' : 'app'}
       aria-hidden={widgetFrozen ? true : undefined}
       style={widgetFrozen ? { position: 'fixed', left: -100000, top: 0, width: widgetFrozen.width, height: widgetFrozen.height, visibility: 'hidden' } : undefined}
     >
-      <TabBar height={tabHeight} />
-      <div className="app-body">
-      {showSessionRail && <SessionRail />}
-      <div className="terminal-area" style={{ '--split-percent': `${splitRatio * 100}%` } as React.CSSProperties}>
-        {/* Tüm tab'lar mount kalır (mount = PTY create); aktif olmayanlar CSS ile
-            gizlenir ama layout boyutunu korur, böylece arka plandaki process
-            ölmez ve gizli terminal doğru cols/rows'a fit olmaya devam eder.
-            Split düzeninde ağaç dışı sekmeler de gizli mount edilir — aksi halde
-            PTY'leri hiç spawn edilmezdi (zamanlanmış komutlar sessizce
-            hiç çalışmıyordu). */}
-        {paneTree ? (
-          <>
-            <PaneRenderer pane={paneTree} path={[]} activeTabId={activeTabId} />
-            {backgroundTabs.map((tab) => <TerminalView key={tab.id} tabId={tab.id} active={false} visible={false} />)}
-          </>
-        ) : tabs.map((tab) => <TerminalView key={tab.id} tabId={tab.id} active={tab.id === activeTabId} />)}
-      </div>
-      <FilePanel />
-      </div>
-      <StatusBar />
+      <AppShell />
       {historyOpen && <CommandHistory />}
       {savedCommandsOpen && <SavedCommands />}
       {agentSessionsOpen && <AgentSessions />}
@@ -386,6 +361,7 @@ export default function App(): React.JSX.Element {
       {handover && <HandoverDialog />}
       {wrappedOpen && <Wrapped />}
       {loaded && <TipCard />}
+      {loaded && <LayoutChoice />}
       <MediaViewer />
       <Toasts />
       <VoiceIndicator />
@@ -404,43 +380,6 @@ function resolveLaunchProfile(request: AppLaunchRequest | null, settings: typeof
     settings.providerProfiles.some((provider) => `provider:${provider.id}` === request.profileId) ||
     ['claude', 'codex', 'opencode', 'ollama-serve'].includes(request.profileId)
   return available ? request.profileId : resolveDefaultProfileId(settings, shells)
-}
-
-function PaneRenderer({ pane, path, activeTabId }: { pane: PaneNode; path: number[]; activeTabId: string | null }): React.JSX.Element {
-  if (pane.type === 'leaf') {
-    return <PaneLeaf terminalId={pane.terminalId} active={pane.terminalId === activeTabId} />
-  }
-  const basis = (ratio: number): React.CSSProperties => ({ flex: `${ratio} 1 0`, minWidth: 0, minHeight: 0, position: 'relative', overflow: 'hidden' })
-  return <div className={`pane-tree-split pane-tree-${pane.dir}`}>
-    <div style={basis(pane.ratio)}><PaneRenderer pane={pane.a} path={[...path, 0]} activeTabId={activeTabId} /></div>
-    <PaneDivider direction={pane.dir} path={path} ratio={pane.ratio} />
-    <div style={basis(1 - pane.ratio)}><PaneRenderer pane={pane.b} path={[...path, 1]} activeTabId={activeTabId} /></div>
-  </div>
-}
-
-function PaneDivider({ direction, path, ratio }: { direction: 'vertical' | 'horizontal'; path: number[]; ratio: number }): React.JSX.Element {
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
-    event.preventDefault()
-    const divider = event.currentTarget
-    const container = divider.parentElement
-    if (!container) return
-    divider.setPointerCapture(event.pointerId)
-    const onMove = (move: PointerEvent): void => {
-      const rect = container.getBoundingClientRect()
-      const ratio = direction === 'vertical'
-        ? (move.clientX - rect.left) / rect.width
-        : (move.clientY - rect.top) / rect.height
-      useTerminalStore.getState().setPaneRatio(path, ratio)
-    }
-    const onUp = (up: PointerEvent): void => {
-      try { divider.releasePointerCapture(up.pointerId) } catch { /* already released */ }
-      divider.removeEventListener('pointermove', onMove)
-      divider.removeEventListener('pointerup', onUp)
-    }
-    divider.addEventListener('pointermove', onMove)
-    divider.addEventListener('pointerup', onUp)
-  }
-  return <div className={`pane-tree-divider pane-tree-divider-${direction}`} onPointerDown={onPointerDown} role="separator" aria-label="Resize split terminals" aria-valuenow={Math.round(ratio * 100)} />
 }
 
 /**

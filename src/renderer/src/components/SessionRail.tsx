@@ -4,6 +4,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 import { buildRailGroups, groupAttention, type RailGroup } from '../sessionRail'
 import { TabIcon } from '../tabs/TabIcon'
+import { useRepoRoots } from '../useRepoRoots'
 import { ATTENTION_LABELS } from '../attention/AttentionBell'
 
 const MIN_WIDTH = 150
@@ -21,38 +22,8 @@ export function SessionRail(): React.JSX.Element {
   const tabs = useTerminalStore((s) => s.tabs)
   const activeTabId = useTerminalStore((s) => s.activeTabId)
   const width = useSettingsStore((s) => s.settings.sessionRailWidth)
-  const [repoRoots, setRepoRoots] = useState<Map<string, string>>(new Map())
+  const repoRoots = useRepoRoots(tabs)
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
-
-  // Distinct launch directories that still need a repository lookup.
-  const pendingPaths = useMemo(() => {
-    const paths = new Set<string>()
-    for (const tab of tabs) {
-      const cwd = tab.worktree ? '' : tab.launchCwd || tab.cwd || ''
-      if (cwd && !repoRoots.has(cwd)) paths.add(cwd)
-    }
-    return [...paths]
-  }, [tabs, repoRoots])
-
-  useEffect(() => {
-    if (pendingPaths.length === 0) return
-    let cancelled = false
-    void (async () => {
-      const resolved: [string, string][] = []
-      for (const path of pendingPaths) {
-        const info = await window.termflow.worktree.repoInfo(path)
-        // Cache the miss as the path itself so a non-repo folder is asked once.
-        resolved.push([path, info?.root ?? path])
-      }
-      if (cancelled) return
-      setRepoRoots((previous) => {
-        const next = new Map(previous)
-        for (const [key, value] of resolved) next.set(key, value)
-        return next
-      })
-    })()
-    return () => { cancelled = true }
-  }, [pendingPaths])
 
   const groups = useMemo(() => buildRailGroups(tabs, activeTabId, repoRoots), [tabs, activeTabId, repoRoots])
 

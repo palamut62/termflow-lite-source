@@ -25,6 +25,12 @@ describe('SettingsStore', () => {
     expect(existsSync(file())).toBe(false) // nothing written until update/flush
   })
 
+  it('keeps TermFlow Lite in the terminal layout even if a settings file asks for the IDE', () => {
+    writeFileSync(file(), JSON.stringify({ uiMode: 'ide' }))
+    const settings = new SettingsStore(file()).get()
+    expect(settings.uiMode).toBe('terminal')
+    expect(Object.values(settings.shortcuts)).not.toContain('toggle-ui-mode')
+  })
   it('migrates the legacy blur toggle to an acrylic backdrop', () => {
     const legacy: Partial<AppSettings> = { ...DEFAULT_SETTINGS, blur: true }
     delete legacy.backdrop

@@ -2,6 +2,7 @@ import type { UpdateStatus } from '../../../shared/types'
 import { useSettingsStore } from '../store/settingsStore'
 import { useUpdateStore } from '../store/updateStore'
 import { Field, Toggle } from './Settings'
+import { PRODUCT } from '../../../shared/edition'
 
 /** Durum -> kullanıcıya gösterilecek metin. */
 function statusText(status: UpdateStatus): string {
@@ -39,7 +40,7 @@ export function AboutSettings(): React.JSX.Element {
   return (
     <section>
       <div className="about-hero">
-        <div className="about-title">TermFlow Lite</div>
+        <div className="about-title">{PRODUCT.name}</div>
         <div className="about-slogan">Minimal. Fast. Customizable.</div>
         <div className="about-version">Version {__APP_VERSION__}</div>
       </div>

@@ -1,4 +1,5 @@
 import { app, Menu, Tray, nativeImage } from 'electron'
+import { PRODUCT } from '../shared/edition'
 
 /**
  * Sistem tepsisi (PRD §30 üslubunda): pencere kapatıldığında uygulama arka
@@ -25,7 +26,7 @@ function buildMenu(): Menu {
   const visible = handlers ? handlers.isWindowVisible() : false
   return Menu.buildFromTemplate([
     {
-      label: visible ? 'Hide TermFlow Lite' : 'Show TermFlow Lite',
+      label: visible ? `Hide ${PRODUCT.name}` : `Show ${PRODUCT.name}`,
       click: () => {
         if (!handlers) return
         if (handlers.isWindowVisible()) handlers.onHide()
@@ -34,7 +35,7 @@ function buildMenu(): Menu {
     },
     { type: 'separator' },
     {
-      label: 'Quit TermFlow Lite',
+      label: `Quit ${PRODUCT.name}`,
       click: () => handlers?.onQuit()
     }
   ])
@@ -77,7 +78,7 @@ export function createTray(iconPath: string, next: TrayHandlers): void {
     tray = null
     return
   }
-  tray.setToolTip('TermFlow Lite')
+  tray.setToolTip(PRODUCT.name)
   tray.setContextMenu(buildMenu())
   // Windows/Linux'ta tek tık pencereyi aç-kapat; macOS'ta tık menüyü açar.
   tray.on('click', () => {

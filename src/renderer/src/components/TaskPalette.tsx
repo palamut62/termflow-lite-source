@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Clock3, Code2, GitBranch, PictureInPicture2, Play, Search, Settings, TerminalSquare } from 'lucide-react'
+import { Box, Clock3, PanelsTopLeft, Code2, GitBranch, PictureInPicture2, Play, Search, Settings, TerminalSquare } from 'lucide-react'
 import { useWidgetStore } from '../widget/widgetStore'
 import type { ProjectInfo } from '../../../shared/ipc'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { useCommandHistoryStore } from '../store/commandHistoryStore'
 import { useTaskPaletteStore } from '../store/taskPaletteStore'
 import { useTerminalStore } from '../store/terminalStore'
+import { EDITION } from '../../../shared/edition'
+import { toggleUiMode } from '../shells/uiMode'
 
 interface PaletteItem {
   id: string
@@ -51,6 +53,7 @@ export function TaskPalette(): React.JSX.Element {
       { id: 'new-terminal', label: 'Terminal: New terminal', detail: 'Create a new default terminal', icon: <TerminalSquare size={14} />, action: () => useTerminalStore.getState().addTab(resolveDefaultProfileId(settingsStore.settings, settingsStore.shells)) },
       { id: 'history', label: 'Terminal: Command history', detail: 'Open saved command history', icon: <Clock3 size={14} />, action: () => useCommandHistoryStore.getState().show() },
       { id: 'settings', label: 'Application: Settings', detail: 'Open TermFlow Lite settings', icon: <Settings size={14} />, action: () => settingsStore.openSettings() },
+      ...(EDITION === 'ide' ? [{ id: 'ui-mode', label: settingsStore.settings.uiMode === 'ide' ? 'View: Switch to Terminal layout' : 'View: Switch to Agent IDE layout', detail: 'Ctrl+Shift+I. Running terminals and agents keep going', icon: <PanelsTopLeft size={14} />, action: toggleUiMode }] : []),
       { id: 'widget', label: 'Window: Widget view', detail: 'Compact status widget in the top-right corner; sessions keep running', icon: <PictureInPicture2 size={14} />, action: () => void useWidgetStore.getState().enter() }
     ]
     const detected = (project?.tasks ?? []).map((task) => ({ ...task, detail: task.command, icon: <Code2 size={14} /> }))

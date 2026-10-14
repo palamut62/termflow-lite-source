@@ -7,6 +7,7 @@
 @import './blocks.css';
 @import './wrapped.css';
 @import './media.css';
+@import './ide.css';
 
 * {
   box-sizing: border-box;
@@ -799,3 +800,34 @@ body {
 .usage-strip-bar > span { display: block; height: 100%; background: var(--usage-color); }
 .usage-strip-text { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 760px) { .usage-strip-text { display: none; } }
+
+/* Agent IDE ilk acilis karti (yalniz IDE surumu). */
+.layout-choice {
+  width: min(640px, 92vw);
+  padding: 24px;
+  background: var(--menu-background);
+  color: var(--app-foreground);
+  border: 1px solid var(--widget-border);
+  border-radius: 8px;
+  outline: none;
+}
+.layout-choice h2 { margin: 0 0 6px; font-size: 18px; }
+.layout-choice p { margin: 0 0 18px; font-size: 13px; opacity: 0.75; }
+.layout-choice-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.layout-choice-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  background: var(--app-background);
+  color: inherit;
+  border: 1px solid var(--widget-border);
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.layout-choice-option:hover, .layout-choice-option:focus-visible { border-color: var(--accent-color); outline: none; }
+.layout-choice-option strong { font-size: 14px; }
+.layout-choice-option span { font-size: 12px; opacity: 0.75; line-height: 1.45; }
