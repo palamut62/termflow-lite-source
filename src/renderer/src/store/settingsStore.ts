@@ -105,8 +105,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     const surface = tabBarSurface(theme)
     const backdrop = backdropActive(s)
     window.termflow?.window?.setTitleBarOverlay({
-      // Backdrop açıkken native düğme şeridi de malzemeyi göstersin.
-      color: backdrop ? '#00000000' : normalizeHex(surface.background, '#1e1e1e'),
+      // Backdrop açıkken native düğme şeridi de malzemeyi göstersin. Agent IDE'de düğmelerin altında sekme
+      // şeridi değil sağ panel ya da sayfa durur; saydam şerit onların zeminine karışır (Orca gibi).
+      color: backdrop || s.uiMode === 'ide' ? '#00000000' : normalizeHex(surface.background, '#1e1e1e'),
       symbolColor: normalizeHex(surface.foreground, '#cccccc'),
       height: Math.max(1, s.tabHeight - TAB_BAR_BORDER)
     })

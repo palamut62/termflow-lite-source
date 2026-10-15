@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
 import { ArrowLeft, ArrowRight, ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Play, Plus, Rows2, PanelLeft, PanelRight, Smartphone } from 'lucide-react'
 import { useWidgetStore } from '../widget/widgetStore'
@@ -14,6 +14,8 @@ import { useSavedCommandStore } from '../store/savedCommandStore'
 import { useToastStore } from '../store/toastStore'
 import { IdeMenu, MenuItem, anchorOf, type MenuAnchor } from '../shells/ide/IdeMenu'
 import { canGo, go, onHistoryChange } from '../shells/ide/tabHistory'
+import { scopedTabs, useWorkspaceScopeStore } from '../shells/ide/workspaceScope'
+import type { TerminalTab as TerminalTabModel } from '../../../shared/types'
 import { AttentionBell } from '../attention/AttentionBell'
 import { effectiveMotion } from '../motion'
 import { phonesLabel, useConnectedPhones } from '../remoteStatus'
@@ -89,8 +91,7 @@ function IdeTabBarActions({ rightOpen }: { rightOpen: boolean }): React.JSX.Elem
 const TAB_COLORS = ['#3b82f6', '#a855f7', '#ec4899', '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#94a3b8']
 
 /** Agent IDE sekme sag tik menusu (Orca 4.9). */
-function TabContextMenu({ tabId, anchor, onClose }: { tabId: string; anchor: MenuAnchor; onClose: () => void }): React.JSX.Element {
-  const tabs = useTerminalStore((s) => s.tabs)
+function TabContextMenu({ tabs, tabId, anchor, onClose }: { tabs: TerminalTabModel[]; tabId: string; anchor: MenuAnchor; onClose: () => void }): React.JSX.Element {
   const index = tabs.findIndex((t) => t.id === tabId)
   const tab = tabs[index]
   const store = useTerminalStore.getState()
@@ -144,8 +145,11 @@ const WINDOWS_OVERLAY_WIDTH = 140
 const MACOS_TRAFFIC_LIGHTS_WIDTH = 78
 
 export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
-  const tabs = useTerminalStore((s) => s.tabs)
+  const allTabs = useTerminalStore((s) => s.tabs)
   const activeTabId = useTerminalStore((s) => s.activeTabId)
+  const scope = useWorkspaceScopeStore((s) => s.byTab)
+  // Agent IDE (Orca): serit yalniz etkin worktree'nin sekmelerini gosterir; Terminal gorunumu hepsini.
+  const tabs = useMemo(() => (ide ? scopedTabs(allTabs, scope, activeTabId) : allTabs), [ide, allTabs, scope, activeTabId])
   const splitDirection = useTerminalStore((s) => s.splitDirection)
   const showSessionRail = useSettingsStore((s) => s.settings.showSessionRail)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -205,7 +209,9 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
   // opens the NewTabMenu with every shell + custom profile.
   const newTab = (): void => {
     const { settings, shells } = useSettingsStore.getState()
-    useTerminalStore.getState().addTab(resolveDefaultProfileId(settings, shells))
+    // IDE: the new terminal belongs to the worktree on screen, so it stays in this strip (Orca).
+    const worktreePath = ide && activeTabId ? scope.get(activeTabId) : undefined
+    useTerminalStore.getState().addTab(resolveDefaultProfileId(settings, shells), true, worktreePath)
   }
 
   const handleDragEnd = (): void => {
@@ -315,7 +321,7 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
       {pathLauncherOpen && <PathLauncherModal onClose={() => setPathLauncherOpen(false)} />}
       {worktreeLauncherOpen && <WorktreeLauncherModal onClose={() => setWorktreeLauncherOpen(false)} />}
       {githubOpen && <GitHubPanel onClose={() => setGithubOpen(false)} />}
-      {tabMenu && <TabContextMenu tabId={tabMenu.tabId} anchor={tabMenu.anchor} onClose={() => setTabMenu(null)} />}
+      {tabMenu && <TabContextMenu tabs={tabs} tabId={tabMenu.tabId} anchor={tabMenu.anchor} onClose={() => setTabMenu(null)} />}
     </div>
   )
 }

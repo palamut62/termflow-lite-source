@@ -13,6 +13,8 @@ import { HiddenWorktreesDialog } from './HiddenWorktreesDialog'
 import { WorktreeDetailsDialog, saveWorktreeMeta } from './WorktreeDetailsDialog'
 import { WorkspaceBoard } from './WorkspaceBoard'
 import { useIdePageStore } from './pages/idePageStore'
+import { lastUsedTab, scopeMapEquals, useWorkspaceScopeStore } from './workspaceScope'
+import { lastSeen } from '../../store/jumpPaletteStore'
 
 const AGENT_NAMES = { claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode' } as const
 const STATE_LABELS: Record<SessionState, string> = { working: 'Working', 'needs-input': 'Needs input', done: 'Done', error: 'Error', idle: 'Idle' }
@@ -167,10 +169,19 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
   /** Worktree'ye tiklaninca: oturumu varsa ilkine gider, yoksa o klasorde yeni sekme acar. */
   const openWorktree = (worktree: IdeWorktree): void => {
     if (worktree.meta.sleeping) saveWorktreeMeta(worktree.path, { sleeping: undefined })
-    const first = worktree.sessions[0]
-    if (first) useTerminalStore.getState().setActiveTab(first.tabId)
+    // Orca: worktree'nin kendi sekmelerine don (en son bakilan); terminali hic yoksa bir tane ac.
+    const last = lastUsedTab(worktree.sessions.map((s) => s.tabId), lastSeen)
+    if (last) useTerminalStore.getState().setActiveTab(last)
     else openTerminalAt(worktree.path)
   }
+
+  // Sekme -> worktree eslemesi: IDE sekme seridi yalniz etkin worktree'nin sekmelerini gosterir.
+  useEffect(() => {
+    const byTab = new Map<string, string>()
+    for (const project of tree) for (const worktree of project.worktrees) for (const session of worktree.sessions) byTab.set(session.tabId, worktree.path)
+    const store = useWorkspaceScopeStore.getState()
+    if (!scopeMapEquals(store.byTab, byTab)) store.set(byTab)
+  }, [tree])
 
   // Yukari/asagi ok: agac satirlari arasinda odak (role=tree).
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {

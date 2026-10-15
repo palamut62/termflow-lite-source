@@ -50,11 +50,19 @@ test('the tree shows the project, its worktrees and the open terminal', async ()
   await expect(tree.locator('.ide-tree-session')).toHaveCount(1)
   await win.screenshot({ path: 'test-results/ide-workspace.png' })
 
-  // A worktree without a terminal opens one in its folder.
+  // A worktree without a terminal opens one in its folder; the strip then shows only that worktree's tabs (Orca).
   await tree.locator('.ide-tree-worktree', { hasText: 'fix-login' }).click()
-  await expect(win.locator('.tab')).toHaveCount(2)
   await expect(tree.locator('.ide-card-child', { hasText: 'fix-login' }).locator('.ide-tree-session')).toHaveCount(1)
+  await expect(win.locator('.tab')).toHaveCount(1)
   await expect(tree.locator('.ide-tree-active')).toHaveCount(1)
+  // "+" opens the new terminal in the same worktree, so it stays in this strip.
+  await win.locator('.new-tab-btn').click()
+  await expect(win.locator('.tab')).toHaveCount(2)
+  await expect(tree.locator('.ide-card-child', { hasText: 'fix-login' }).locator('.ide-tree-session')).toHaveCount(2)
+  // Back to main: its own single tab, no new terminal.
+  await tree.locator('.ide-tree-worktree', { hasText: 'main' }).first().click()
+  await expect(win.locator('.tab')).toHaveCount(1)
+  await expect(win.locator('.terminal-area .terminal-view')).toHaveCount(3)
 })
 
 test('the right panel lists files, switches to Agents and hides with its shortcut', async () => {
@@ -222,6 +230,12 @@ test('settings open as a full page with groups, stats and a test notification', 
   await expect(settings.getByText('Agent sessions started')).toBeVisible()
   await settings.getByRole('button', { name: 'Notifications' }).click()
   await expect(settings.getByRole('button', { name: 'Send test notification' })).toBeVisible()
+  // Appearance has several sections; on the full page they stack in one column, never side by side.
+  await settings.getByRole('button', { name: 'Appearance' }).click()
+  const lefts = await settings.locator('.settings-content > *').evaluateAll((els) => els.filter((el) => el.getBoundingClientRect().height > 0).map((el) => Math.round(el.getBoundingClientRect().left)))
+  expect(lefts.length).toBeGreaterThan(1)
+  expect(new Set(lefts).size).toBe(1)
+  await win.screenshot({ path: 'test-results/ide-settings-appearance.png' })
   await win.keyboard.press('Control+f')
   await expect(settings.getByRole('searchbox', { name: 'Search settings' })).toBeFocused()
   await win.screenshot({ path: 'test-results/ide-settings.png' })

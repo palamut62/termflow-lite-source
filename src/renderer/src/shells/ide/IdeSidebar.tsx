@@ -94,7 +94,6 @@ export function IdeSidebar(): React.JSX.Element {
         <span className="ide-sidebar-top-spacer" />
         <button className="ide-icon-btn" onClick={() => window.dispatchEvent(new Event('termflow:ide-reveal'))} title="Reveal active workspace" aria-label="Reveal active workspace"><Crosshair size={14} /></button>
         <button className="ide-icon-btn" onClick={() => window.dispatchEvent(new Event('termflow:ide-board'))} title="Workspace board" aria-label="Workspace board"><Kanban size={14} /></button>
-        <button className="ide-icon-btn" onClick={toggleUiMode} title="Switch to Terminal layout (Ctrl+Shift+I)" aria-label="Switch to Terminal layout"><SquareTerminal size={14} /></button>
       </div>
       <ResizeHandle edge="right" width={ide.sidebarWidth} min={200} max={400} label="Resize projects sidebar" onChange={(sidebarWidth) => saveIde({ sidebarWidth })} />
 

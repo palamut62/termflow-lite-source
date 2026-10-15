@@ -92,7 +92,7 @@
 .ide-bell-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--term-yellow); }
 
 .ide-sidebar-foot {
-  display: flex; align-items: center; gap: 2px; padding: 6px 8px; border-top: 1px solid var(--widget-border);
+  display: flex; align-items: center; gap: 2px; padding: 3px 6px; border-top: 1px solid var(--widget-border);
 }
 
 /* ---------- Proje agaci (Orca kartlari) ---------- */
@@ -268,12 +268,15 @@
 
 /* ---------- Alt cubuk (Orca): notr zemin, solda limitler; gezinme dugmeleri kenar cubugunda ---------- */
 .ui-ide .status-bar {
-  background: var(--ide-sidebar);
+  background: var(--ide-strip);
   color: var(--ide-muted);
   border-top: 1px solid var(--widget-border);
 }
 .ui-ide .status-bar > button.status-action:not(.status-item) { display: none; }
 .ui-ide .status-bar > .usage-meter { order: -1; }
+/* Orca alt cubugu sade: cikti grafigi ve profil secici yok (devir pane araclarinda, Hand off). */
+.ui-ide .status-bar > .status-pulse, .ui-ide .status-bar > .status-agent-profile { display: none; }
+.ui-ide .status-bar > .ide-term-count { display: inline-flex; align-items: center; gap: 3px; }
 
 /* Pane sag ustu (Orca): devret, bol, kapat; fare pane uzerindeyken. */
 .ide-pane-toolbar {
@@ -443,8 +446,8 @@ button.ide-link-chip:hover, button.ide-link-chip:focus-visible { color: var(--id
 .settings-fullpage { padding: 0; align-items: stretch; background: var(--app-background, var(--terminal-background)); }
 .settings-fullpage .settings-panel { width: 100%; height: 100%; max-width: none; border: 0; border-radius: 0; box-shadow: none; }
 .settings-fullpage .settings-nav { width: 240px; }
-.settings-fullpage .settings-content { display: flex; justify-content: center; }
-.settings-fullpage .settings-content > .settings-section { width: min(760px, 100%); }
+.settings-fullpage .settings-content { display: flex; flex-direction: column; align-items: center; }
+.settings-fullpage .settings-content > * { width: min(760px, 100%); flex-shrink: 0; }
 .settings-back { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; -webkit-app-region: no-drag; }
 .settings-nav-group { padding: 12px 10px 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.55; }
 .stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 12px 0 16px; }
@@ -504,7 +507,7 @@ button.ide-link-chip:hover, button.ide-link-chip:focus-visible { color: var(--id
 
 /* ---------- Floating Workspace ---------- */
 .ide-floating-btn {
-  position: fixed; right: 18px; bottom: 40px; z-index: 50; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  position: fixed; right: 18px; bottom: 64px; z-index: 50; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
   border-radius: 50%; border: 1px solid var(--ide-card-border); background: var(--ide-sidebar); color: var(--ide-fg); cursor: pointer; opacity: 0.85;
 }
 .ide-floating-btn:hover, .ide-floating-btn:focus-visible { opacity: 1; outline: none; border-color: var(--ide-fg); }
