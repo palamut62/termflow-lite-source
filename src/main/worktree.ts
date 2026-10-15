@@ -133,6 +133,17 @@ export interface WorktreeCreateInput {
    * when something else (e.g. `gh pr checkout`) picks the branch afterwards.
    */
   detach?: boolean
+  /** Sparse checkout (cone mode): only these top-level folders are checked out. */
+  sparsePaths?: string[]
+}
+
+/** Sparse paths from the renderer: relative folders only, never options or parent traversal. */
+export function validSparsePaths(paths: unknown): string[] | null {
+  if (paths === undefined) return []
+  if (!Array.isArray(paths) || paths.length > 50) return null
+  const clean = paths.map((p) => (typeof p === 'string' ? p.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') : ''))
+  const ok = clean.every((p) => p.length > 0 && p.length <= 300 && !p.startsWith('-') && !p.includes(':') && !p.split('/').includes('..') && !/[*?[\]!]/.test(p))
+  return ok ? clean : null
 }
 
 export type WorktreeOutcome = { ok: true; worktree: WorktreeEntry } | { ok: false; error: string }
@@ -163,6 +174,9 @@ export async function createWorktree(input: WorktreeCreateInput): Promise<Worktr
   if (!isAbsolute(path)) return { ok: false, error: 'Worktree path must be absolute.' }
   if (existsSync(path)) return { ok: false, error: `Path already exists: ${path}` }
 
+  const sparse = validSparsePaths(input.sparsePaths)
+  if (!sparse) return { ok: false, error: 'Invalid sparse checkout paths.' }
+
   try {
     const branchExists = input.detach
       ? false
@@ -171,9 +185,21 @@ export async function createWorktree(input: WorktreeCreateInput): Promise<Worktr
     if (input.detach) args = ['worktree', 'add', '--detach', path, ...(baseRef ? [baseRef] : [])]
     else if (branchExists) args = ['worktree', 'add', path, branch]
     else args = ['worktree', 'add', '-b', branch, path, ...(baseRef ? [baseRef] : [])]
+    // Sparse: create without files, then `sparse-checkout set` checks out only the chosen folders.
+    if (sparse.length > 0) args.splice(2, 0, '--no-checkout')
     await git(repoRoot, args)
   } catch (error) {
     return { ok: false, error: gitError(error) }
+  }
+  if (sparse.length > 0) {
+    try {
+      await git(path, ['sparse-checkout', 'set', '--cone', ...sparse])
+      // --no-checkout left the index empty; this fills it and writes only the sparse folders.
+      await git(path, ['checkout'])
+    } catch (error) {
+      await git(repoRoot, ['worktree', 'remove', '--force', path]).catch(() => undefined)
+      return { ok: false, error: gitError(error) }
+    }
   }
 
   const created = (await listWorktrees(repoRoot)).find((entry) => normalizePath(entry.path) === normalizePath(path))

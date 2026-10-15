@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, protocol, shell } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, powerSaveBlocker, protocol, shell } from 'electron'
 import { dirname, isAbsolute, join } from 'path'
 import { DEFAULT_SETTINGS, type AppSettings } from '../shared/types'
 import { applyQuakeBounds, applyWindowAppearance, restoreNormalBounds, titleBarOptions } from './window'
@@ -56,6 +56,7 @@ import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
 import { stopStudio } from './voice/speak'
 import type { ShellInfo } from '../shared/types'
+import { appMemory, readResources } from './resources'
 
 // Dev: project resources/. Packaged: extraResources under process.resourcesPath.
 const APP_ICON = app.isPackaged
@@ -476,6 +477,14 @@ app.whenReady().then(() => {
     const request = initialLaunchRequest
     initialLaunchRequest = null
     return request
+  })
+  // Agent IDE durum cubugu: Resource Manager, Ports, Keep computer awake.
+  ipcMain.handle(IPC.SYSTEM_RESOURCES, async () => readResources(manager?.pids() ?? []))
+  ipcMain.handle(IPC.SYSTEM_APP_MEMORY, () => appMemory())
+  let awakeId: number | null = null
+  ipcMain.handle(IPC.SYSTEM_KEEP_AWAKE, (_event, active: unknown) => {
+    if (active === true && awakeId === null) awakeId = powerSaveBlocker.start('prevent-app-suspension')
+    if (active !== true && awakeId !== null) { powerSaveBlocker.stop(awakeId); awakeId = null }
   })
   ipcMain.handle(IPC.SYSTEM_OPEN_EXTERNAL, async (_event, value: unknown): Promise<boolean> => {
     if (typeof value !== 'string' || value.length > 8192) return false

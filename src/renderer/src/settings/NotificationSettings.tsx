@@ -39,6 +39,12 @@ export function NotificationSettings(): React.JSX.Element {
         {!agentHooks && ' Turn on "Agent status from the agent" in Agent Security for this to work.'}
         {' '}Notifications for long shell commands are under Terminal.
       </p>
+      <Field label="Test" hint="Shows a system notification now, so you can check Windows Focus / Do Not Disturb settings">
+        <button
+          className="settings-btn settings-btn-small"
+          onClick={() => window.termflow.window.notify({ tabId: '', title: 'TermFlow test notification', body: 'Agent notifications will look like this.' })}
+        >Send test notification</button>
+      </Field>
       {CATEGORIES.map((category) => (
         <Field key={category.key} label={category.label} hint={category.hint}>
           <div className="settings-inline">

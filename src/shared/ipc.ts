@@ -56,6 +56,13 @@ export const IPC = {
   UPDATE_INSTALL: 'update:install', // () — uygulamayı kapatıp kurar
   UPDATE_STATUS: 'update:status', // main -> renderer UpdateStatus
   GIT_STATUS: 'git:status',
+  SCM_STATE: 'scm:state', // (cwd) -> ScmState | null
+  SCM_RUN: 'scm:run', // (cwd, ScmAction) -> GhOutcome
+  SCM_CHECKS: 'scm:checks', // (cwd) -> ScmChecks
+  SCM_DIFF: 'scm:diff', // (cwd, base) -> ScmDiff
+  SCM_REFS: 'scm:refs', // (cwd) -> string[]
+  NOTES_READ: 'notes:read', // (worktreePath) -> string
+  NOTES_WRITE: 'notes:write', // (worktreePath, text) -> boolean
   WORKTREE_REPO_INFO: 'worktree:repo-info', // (cwd) -> GitRepoInfo | null
   WORKTREE_LIST: 'worktree:list', // (repoRoot) -> WorktreeEntry[]
   WORKTREE_CREATE: 'worktree:create', // (WorktreeCreateRequest) -> WorktreeOutcome
@@ -70,9 +77,11 @@ export const IPC = {
   GITHUB_PULL_REQUESTS: 'github:pull-requests', // (repo, cwd?) -> GitHubPullRequest[]
   GITHUB_PR_CHECKOUT: 'github:pr-checkout', // (worktreePath, number, repo?) -> GhOutcome
   GITHUB_CLONE: 'github:clone', // (nameWithOwner, targetPath) -> GhOutcome
+  GITHUB_TASKS: 'github:tasks', // (kind, filter, search, repo, cwd?) -> GitHubTask[]
   WEATHER_GEOCODE: 'weather:geocode', // (city) -> WeatherPlace | null
   WEATHER_CURRENT: 'weather:current', // (latitude, longitude) -> WeatherReading | null
   FILES_LIST: 'files:list', // (dir, showHidden) -> DirListing | null — one level, read-only
+  FILES_SEARCH: 'files:search', // (dir, FileSearchQuery) -> FileSearchResult — git grep
   TASKS_DISCOVER: 'tasks:discover',
   PROJECT_DETECT: 'project:detect',
   AGENT_SESSIONS_LIST: 'agent-sessions:list',
@@ -115,6 +124,9 @@ export const IPC = {
   APP_LAUNCH_READY: 'app:launch-ready',
   APP_OPEN_PATH: 'app:open-path',
   SYSTEM_OPEN_EXTERNAL: 'system:open-external',
+  SYSTEM_RESOURCES: 'system:resources', // () -> ResourceSnapshot (surec tablosu + dinlenen portlar)
+  SYSTEM_APP_MEMORY: 'system:app-memory', // () -> bytes (yalniz Electron surecleri, ucuz)
+  SYSTEM_KEEP_AWAKE: 'system:keep-awake', // (active: boolean) -> void
   // Terminaldeki tıklanabilir dosya/klasör yolları (PRD ek).
   SYSTEM_RESOLVE_PATH: 'system:resolve-path', // (candidate, cwd) -> ResolvedPath | null
   SYSTEM_OPEN_PATH: 'system:open-path', // (path) -> boolean — varsayılan uygulamayla aç
@@ -192,6 +204,33 @@ export interface GitStatus {
   changedFiles: number
 }
 
+/** Agent IDE Source Control paneli (PRD 4.9, F2.3). */
+export interface ScmFile {
+  path: string
+  /** `git status --porcelain` X (index) ve Y (calisma agaci) harfleri. */
+  index: string
+  work: string
+}
+export interface ScmCommit { hash: string; subject: string; author: string; when: string }
+export interface ScmState {
+  branch: string
+  upstream: string
+  ahead: number
+  behind: number
+  files: ScmFile[]
+  commits: ScmCommit[]
+}
+export type ScmAction =
+  | { kind: 'stage' | 'unstage'; paths: string[] }
+  | { kind: 'commit'; message: string }
+  | { kind: 'push' }
+  | { kind: 'create-pr' }
+/** Unified diff text (git format) for the review page; `base` = Change Base Ref, empty = HEAD. */
+export interface ScmDiff { text: string; truncated?: boolean; base?: string; error?: string }
+export interface ScmCheck { name: string; state: string; link: string; workflow: string }
+/** `pr: false`: aktif dalin PR'i yok; `error`: gh yok ya da basarisiz. */
+export interface ScmChecks { pr: boolean; checks: ScmCheck[]; error?: string }
+
 /** Repository root plus the branch currently checked out there. */
 export interface GitRepoInfo {
   root: string
@@ -216,6 +255,8 @@ export interface WorktreeCreateRequest {
   path?: string
   /** Check out detached, leaving the branch choice to a later step. */
   detach?: boolean
+  /** Sparse checkout (cone mode) folders; validated in main. */
+  sparsePaths?: string[]
 }
 
 export interface WorktreeRemoveRequest {
@@ -257,6 +298,19 @@ export interface DirListing {
   truncated: boolean
   hidden: number
 }
+
+/** Agent IDE Resource Manager + Ports. memory: bytes; cpu: % of all cores over the last poll interval. */
+export interface ResourceSnapshot {
+  app: { memory: number; cpu: number }
+  terminals: { id: string; memory: number; cpu: number; processes: number }[]
+  /** terminalId: portu dinleyen surec bir terminalin agacindaysa (workspace portu); yoksa harici. */
+  ports: { port: number; address: string; pid: number; terminalId?: string }[]
+}
+
+/** Explorer "Contents" search (Agent IDE). include/exclude: comma separated globs. */
+export interface FileSearchQuery { text: string; caseSensitive?: boolean; word?: boolean; regex?: boolean; include?: string; exclude?: string }
+export interface FileSearchFile { path: string; absolute: string; matches: { line: number; text: string }[] }
+export interface FileSearchResult { files: FileSearchFile[]; truncated: boolean; error?: string }
 
 /** A city resolved for live weather (coordinates rounded to two decimals). */
 export interface WeatherPlace {
@@ -300,6 +354,23 @@ export interface GitHubPullRequest {
 }
 
 export type GhOutcome = { ok: true } | { ok: false; error: string }
+
+/** Agent IDE Tasks sayfasi (PRD F3.1): issue ya da PR satiri. */
+export type GitHubTaskKind = 'issues' | 'prs'
+export type GitHubTaskFilter = 'open' | 'mine' | 'review' | 'closed'
+export interface GitHubTask {
+  number: number
+  title: string
+  author: string
+  assignees: string[]
+  state: string
+  updatedAt: string
+  url: string
+  labels: string[]
+  /** Yalniz PR. */
+  branch?: string
+  draft?: boolean
+}
 
 export interface ProjectTask {
   id: string

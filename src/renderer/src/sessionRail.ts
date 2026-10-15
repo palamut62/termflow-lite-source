@@ -62,10 +62,13 @@ export function buildRailGroups(
   const groups = new Map<string, RailGroup>()
   for (const tab of tabs) {
     const path = groupPathFor(tab, repoRoots)
-    let group = groups.get(path)
+    // git reports roots as `C:/x` while tab folders are `C:\x`: one key, so a group (and its
+    // collapsed state) survives the root lookup finishing.
+    const key = path.replace(/\\/g, '/').replace(/\/+$/, '')
+    let group = groups.get(key)
     if (!group) {
-      group = { key: path, label: pathLabel(path), path, sessions: [] }
-      groups.set(path, group)
+      group = { key, label: pathLabel(path), path, sessions: [] }
+      groups.set(key, group)
     }
     group.sessions.push({
       id: tab.id,

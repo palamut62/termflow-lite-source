@@ -9,6 +9,8 @@ import type { WorktreeEntry } from '../../../shared/ipc'
 import { isSafeCopyPattern, setupKey, type WorktreeSetupSteps } from '../../../shared/worktreeSetup'
 import { openNewWorktree } from '../store/worktreeSetupStore'
 import { Toggle } from '../settings/Settings'
+import { saveWorktreeMeta } from '../shells/ide/WorktreeDetailsDialog'
+import { describeTarget, parseWorktreeTarget } from './worktreeTarget'
 
 /** Comparable path: forward slashes, case-insensitive (Windows). */
 function samePath(path: string): string {
@@ -28,7 +30,8 @@ const toLines = (text: string): string[] => text.split(/\r?\n/).map((line) => li
  * without overwriting each other. Closing the tab offers to remove the
  * checkout again (WorktreeCleanupDialog).
  */
-export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): React.JSX.Element {
+/** `initialBranch` / `initialRepoPath`: Agent IDE Tasks sayfasindan "Start worktree" (#PR ya da issue URL'si). */
+export function WorktreeLauncherModal({ onClose, initialBranch, initialRepoPath }: { onClose: () => void; initialBranch?: string; initialRepoPath?: string }): React.JSX.Element {
   const shells = useSettingsStore((s) => s.shells)
   const settings = useSettingsStore((s) => s.settings)
   const options = useMemo(() => [
@@ -39,14 +42,21 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
 
   const [profileId, setProfileId] = useState(options[0]?.id ?? settings.defaultProfileId)
   const [permissionMode, setPermissionMode] = useState<AgentPermissionMode>(settings.defaultAgentPermissionMode)
-  const [repoPath, setRepoPath] = useState(useTerminalStore.getState().workspaceCwd ?? '')
+  const [repoPath, setRepoPath] = useState(initialRepoPath || (useTerminalStore.getState().workspaceCwd ?? ''))
   const [repo, setRepo] = useState<{ root: string; branch: string } | null>(null)
   const [repoError, setRepoError] = useState('')
-  const [branch, setBranch] = useState(`tf/agent-${branchSuffix()}`)
+  const [branch, setBranch] = useState(initialBranch || `tf/agent-${branchSuffix()}`)
   const [baseRef, setBaseRef] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [existing, setExisting] = useState<WorktreeEntry[]>([])
+  // Advanced (Orca): agacta parent, karta not; "Create more" modali acik tutar.
+  const [allWorktrees, setAllWorktrees] = useState<WorktreeEntry[]>([])
+  const [parent, setParent] = useState('')
+  const [note, setNote] = useState('')
+  const [sparse, setSparse] = useState('')
+  const [createMore, setCreateMore] = useState(false)
+  const target = parseWorktreeTarget(branch)
   const [removing, setRemoving] = useState<string | null>(null)
   // Depo basina kurulum adimlari: kayitli olan ya da (kayit yoksa) kilit dosyasina gore oneri.
   const [setupCopy, setSetupCopy] = useState('')
@@ -62,11 +72,15 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
   // the user's own worktrees are never listed for removal here.
   const refreshExisting = async (root: string): Promise<void> => {
     const all = await window.termflow.worktree.list(root)
+    setAllWorktrees(all.filter((entry) => !entry.bare && samePath(entry.path) !== samePath(root)))
     setExisting(all.filter((entry) => samePath(entry.path).includes('/.termflow-worktrees/')))
   }
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent): void => { if (event.key === 'Escape' && !busy) onClose() }
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && !busy) onClose()
+      if (event.key === 'Enter' && event.ctrlKey) { event.preventDefault(); document.querySelector<HTMLButtonElement>('.worktree-create-btn')?.click() }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose, busy])
@@ -101,30 +115,45 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
   }, [repoPath])
 
   const create = async (): Promise<void> => {
-    if (!repo || busy) return
+    if (!repo || busy || !target) return
     setBusy(true)
     setError('')
-    const result = await window.termflow.worktree.create({
-      repoRoot: repo.root,
-      branch: branch.trim(),
-      baseRef: baseRef.trim() || undefined
-    })
+    const prBranch = target.kind === 'pr' ? `pr-${target.number}` : ''
+    const result = await window.termflow.worktree.create(target.kind === 'pr'
+      ? { repoRoot: repo.root, branch: prBranch, detach: true }
+      : { repoRoot: repo.root, branch: target.branch, baseRef: baseRef.trim() || undefined, sparsePaths: toLines(sparse).length > 0 ? toLines(sparse) : undefined })
     if (!result.ok) {
       setError(result.error)
       setBusy(false)
       return
     }
+    // PR: detached checkout'a gh ile PR'i al (GitHubPanel ile ayni akis); basarisizsa bos worktree silinir.
+    if (target.kind === 'pr') {
+      const checkout = await window.termflow.github.checkoutPr(result.worktree.path, target.number, target.repo)
+      if (!checkout.ok) {
+        await window.termflow.worktree.remove({ repoRoot: repo.root, path: result.worktree.path, force: true })
+        setError(checkout.error)
+        setBusy(false)
+        return
+      }
+    }
+    if (note.trim() || parent) saveWorktreeMeta(result.worktree.path, { note: note.trim() || undefined, parent: parent || undefined })
     const steps: WorktreeSetupSteps = { copyFiles: toLines(setupCopy), commands: toLines(setupCommands), enabled: setupEnabled }
     const key = setupKey(repo.root)
     const all = useSettingsStore.getState().settings.worktreeSetup
     if (all[key] || steps.copyFiles.length > 0 || steps.commands.length > 0) {
       void useSettingsStore.getState().update({ worktreeSetup: { ...all, [key]: steps } })
     }
-    onClose()
+    if (createMore) {
+      setBranch(`tf/agent-${branchSuffix()}`)
+      setNote('')
+      setBusy(false)
+      void refreshExisting(repo.root)
+    } else onClose()
     openNewWorktree({
       repoRoot: repo.root,
       path: result.worktree.path,
-      branch: result.worktree.branch ?? branch.trim(),
+      branch: prBranch || (result.worktree.branch ?? (target.kind === 'branch' ? target.branch : branch.trim())),
       createdByApp: true
     }, profileId, permissionMode, steps)
   }
@@ -152,7 +181,7 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
     setRemoving(null)
   }
 
-  const canCreate = !!repo && branch.trim().length > 0 && !busy && !unsafePath
+  const canCreate = !!repo && !!target && !busy && !unsafePath
 
   return createPortal(
     <div className="settings-backdrop path-launch-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}>
@@ -180,11 +209,14 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
             {repo ? `${repo.root} — on ${repo.branch}` : repoError || 'Pick a folder inside a git repository.'}
           </p>
 
-          <label className="path-launch-label" htmlFor="worktree-branch"><GitBranch size={14} /> New branch</label>
+          <label className="path-launch-label" htmlFor="worktree-branch"><GitBranch size={14} /> Name, branch, #PR or GitHub URL</label>
           <input id="worktree-branch" className="settings-input" value={branch} onChange={(event) => setBranch(event.target.value)} />
+          <p className="path-launch-hint">{describeTarget(target)}</p>
 
+          {target?.kind !== 'pr' && <>
           <label className="path-launch-label" htmlFor="worktree-base">Start from</label>
           <input id="worktree-base" className="settings-input" value={baseRef} onChange={(event) => setBaseRef(event.target.value)} placeholder="HEAD" />
+          </>}
 
           <label className="path-launch-label" htmlFor="worktree-profile"><Bot size={14} /> Agent, provider or shell</label>
           <select id="worktree-profile" className="settings-input settings-select path-launch-select" value={profileId} onChange={(event) => setProfileId(event.target.value)}>
@@ -199,6 +231,21 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
           <select id="worktree-permission" className="settings-input settings-select path-launch-select" value={permissionMode} onChange={(event) => setPermissionMode(event.target.value as AgentPermissionMode)}>
             <option value="safe">Safe - read only</option><option value="workspace">Workspace - project writes</option><option value="full">Full Access</option>
           </select>
+
+          {repo && (
+            <details className="worktree-setup">
+              <summary>Advanced</summary>
+              <label className="path-launch-label" htmlFor="worktree-parent">Parent worktree (nests it in the sidebar)</label>
+              <select id="worktree-parent" className="settings-input settings-select path-launch-select" value={parent} onChange={(event) => setParent(event.target.value)}>
+                <option value="">{repo.branch} (primary)</option>
+                {allWorktrees.map((entry) => <option key={entry.path} value={entry.path}>{entry.branch ?? entry.path}</option>)}
+              </select>
+              <label className="path-launch-label" htmlFor="worktree-note">Note</label>
+              <textarea id="worktree-note" className="settings-input worktree-setup-text" value={note} onChange={(event) => setNote(event.target.value)} placeholder="What is this worktree for?" rows={2} />
+              <label className="path-launch-label" htmlFor="worktree-sparse">Sparse checkout (one folder per line, empty = whole repository)</label>
+              <textarea id="worktree-sparse" className="settings-input worktree-setup-text" value={sparse} onChange={(event) => setSparse(event.target.value)} placeholder={'packages/web\ndocs'} rows={2} disabled={target?.kind === 'pr'} title={target?.kind === 'pr' ? 'Pull request worktrees use a full checkout' : undefined} />
+            </details>
+          )}
 
           {repo && (
             <details className="worktree-setup">
@@ -250,8 +297,9 @@ export function WorktreeLauncherModal({ onClose }: { onClose: () => void }): Rea
           {error && <p className="path-launch-error" role="alert">{error}</p>}
         </div>
         <div className="path-launch-actions">
+          <span className="worktree-create-more"><Toggle checked={createMore} onChange={setCreateMore} label="Create more" /> Create more</span>
           <button className="settings-btn" onClick={onClose} disabled={busy}>Cancel</button>
-          <button className="settings-btn settings-btn-primary" disabled={!canCreate} onClick={create}>
+          <button className="settings-btn settings-btn-primary worktree-create-btn" disabled={!canCreate} onClick={create} title="Ctrl+Enter">
             {busy ? <><Loader2 size={13} className="spin" /> Creating...</> : 'Create & open'}
           </button>
         </div>

@@ -3,10 +3,10 @@
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { execFileSync } from 'child_process'
-import { mkdtempSync, rmSync, existsSync, writeFileSync, readdirSync } from 'fs'
+import { mkdirSync, mkdtempSync, rmSync, existsSync, writeFileSync, readdirSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { createWorktree, defaultWorktreePath, listWorktrees, readRepoInfo, removeWorktree } from './worktree'
+import { createWorktree, defaultWorktreePath, listWorktrees, readRepoInfo, removeWorktree, validSparsePaths } from './worktree'
 
 function hasGit(): boolean {
   try {
@@ -161,5 +161,32 @@ describeGit('worktree git integration', () => {
     const result = await createWorktree({ repoRoot: repo, branch: 'tf/existing' })
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.worktree.branch).toBe('tf/existing')
+  })
+
+  it('sparse checkout leaves out folders that were not asked for', async () => {
+    const git = (args: string[]): void => { execFileSync('git', args, { cwd: repo, windowsHide: true, stdio: 'ignore' }) }
+    mkdirSync(join(repo, 'web'), { recursive: true })
+    mkdirSync(join(repo, 'api'), { recursive: true })
+    writeFileSync(join(repo, 'web', 'index.html'), '<p></p>\n')
+    writeFileSync(join(repo, 'api', 'main.py'), 'print(1)\n')
+    git(['add', '.'])
+    git(['commit', '-m', 'folders'])
+    const result = await createWorktree({ repoRoot: repo, branch: 'tf/sparse', sparsePaths: ['web'] })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(existsSync(join(result.worktree.path, 'web', 'index.html'))).toBe(true)
+    expect(existsSync(join(result.worktree.path, 'api'))).toBe(false)
+    // Cone mode keeps top-level files.
+    expect(existsSync(join(result.worktree.path, 'README.md'))).toBe(true)
+    expect(execFileSync('git', ['status', '--porcelain'], { cwd: result.worktree.path, encoding: 'utf8' })).toBe('')
+  })
+
+  it('rejects option-like or escaping sparse paths', async () => {
+    expect(validSparsePaths(['web/', ' api '])).toEqual(['web', 'api'])
+    expect(validSparsePaths(['--stdin'])).toBeNull()
+    expect(validSparsePaths(['../x'])).toBeNull()
+    expect(validSparsePaths(['C:/x'])).toBeNull()
+    const result = await createWorktree({ repoRoot: repo, branch: 'tf/bad-sparse', sparsePaths: ['-x'] })
+    expect(result).toEqual({ ok: false, error: 'Invalid sparse checkout paths.' })
   })
 })

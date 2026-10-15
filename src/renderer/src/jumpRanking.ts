@@ -10,6 +10,23 @@ const RESULT_LIMIT = 30
 export type JumpItem =
   | { kind: 'tab'; tab: TerminalTab; at: number }
   | { kind: 'session'; session: AgentSession; at: number }
+  | { kind: 'command'; command: JumpCommand; at: number }
+
+/** Agent IDE paleti (PRD F2.2): worktree'ler, ayarlar, aksiyonlar. `keywords` yalniz aramaya girer. */
+export interface JumpCommand { id: string; group: 'worktrees' | 'settings' | 'actions'; label: string; detail: string; keywords?: string; run: () => void }
+/** Tab tusuyla donen kaynak suzgeci. */
+export const JUMP_SOURCES = ['all', 'tabs', 'worktrees', 'sessions', 'settings', 'actions'] as const
+export type JumpSource = (typeof JUMP_SOURCES)[number]
+
+/** Bos sorgu: verilen sira; sorgu: etiket > aciklama > anahtar kelime puani. */
+export function searchCommands(query: string, commands: readonly JumpCommand[]): JumpItem[] {
+  const q = query.trim()
+  const scored = commands.map((command) => ({
+    command,
+    score: q ? Math.max(3 * matchScore(q, command.label), 2 * matchScore(q, command.detail), q.length > 2 && command.keywords?.toLowerCase().includes(q.toLowerCase()) ? 1 : 0) : 1
+  }))
+  return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, RESULT_LIMIT).map(({ command }) => ({ kind: 'command', command, at: 0 }))
+}
 
 function tabItem(tab: TerminalTab, lastSeen: Map<string, number>): JumpItem {
   // Bekleyen sekmede "ne zaman" olayin zamanidir, son bakilan an degil.

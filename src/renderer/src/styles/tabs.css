@@ -610,3 +610,7 @@
   border: 1px solid var(--widget-border);
 }
 .worktree-setup-status { display: flex; align-items: center; gap: 6px; margin-right: auto; font-size: 12px; opacity: 0.8; }
+
+/* Sekme rengi (Agent IDE sekme menusu): ust kenarda ince renk seridi. */
+.tab.tab-colored { box-shadow: inset 0 2px 0 var(--tab-color); }
+.worktree-create-more { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; font-size: 12px; opacity: 0.85; }

@@ -208,6 +208,18 @@ describe('closeTab', () => {
     expect(killMock).not.toHaveBeenCalled()
   })
 
+  it('closeTabs keeps running tabs while confirmBeforeClose is on, closes them when it is off', () => {
+    const idle = useTerminalStore.getState().addTab('bash')
+    const busy = useTerminalStore.getState().addTab('sh')
+    const keep = useTerminalStore.getState().addTab('bash')
+    useTerminalStore.getState().applyAgentHook(busy, { state: 'working', sessionId: 's1' })
+    expect(useTerminalStore.getState().closeTabs([idle, busy])).toBe(1)
+    expect(useTerminalStore.getState().tabs.map((t) => t.id)).toEqual([busy, keep])
+    useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS, confirmBeforeClose: false } })
+    expect(useTerminalStore.getState().closeTabs([busy])).toBe(0)
+    expect(useTerminalStore.getState().tabs.map((t) => t.id)).toEqual([keep])
+  })
+
   it('is a no-op for an unknown id', () => {
     const t1 = useTerminalStore.getState().addTab('bash')
     useTerminalStore.getState().closeTab('nope')

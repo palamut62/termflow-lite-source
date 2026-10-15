@@ -31,12 +31,22 @@ export function percentText(w: UsageWindow, mode: 'used' | 'remaining'): string 
 }
 
 /** usage-meter (docs/orca-parity/usage-meter.md): aktif ajan sekmesinin limitleri, tiklayinca hepsi. */
+const POPOVER_WIDTH = 340
+
+/**
+ * Popover'in sol kenari: dugmenin sagina hizalanir ama pencereden tasmaz. Disari tasan bir popover odak alinca
+ * Chromium overflow:hidden govdeyi yatay kaydirir ve tum uygulama sola kayar (Agent IDE'de limitler solda).
+ */
+export function popoverLeft(anchor: { left: number; right: number }, width: number, viewport = window.innerWidth): number {
+  return Math.round(Math.max(8, Math.min(anchor.right - width, viewport - width - 8)))
+}
+
 export function UsageMeter(): React.JSX.Element | null {
   const mode = useSettingsStore((s) => s.settings.usageDisplay)
   const settings = useSettingsStore((s) => s.settings)
   const activeProfile = useTerminalStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.profileId)
   const [usage, refresh] = useAgentUsage(mode !== 'off')
-  const [open, setOpen] = useState<{ bottom: number; right: number } | null>(null)
+  const [open, setOpen] = useState<{ bottom: number; left: number } | null>(null)
   const rootRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -74,14 +84,14 @@ export function UsageMeter(): React.JSX.Element | null {
         onClick={(event) => {
           const rect = event.currentTarget.getBoundingClientRect()
           refresh()
-          setOpen((v) => (v ? null : { bottom: window.innerHeight - rect.top + 4, right: Math.max(4, window.innerWidth - rect.right) }))
+          setOpen((v) => (v ? null : { bottom: window.innerHeight - rect.top + 4, left: popoverLeft(rect, POPOVER_WIDTH) }))
         }}
       >
         <Gauge size={12} />
         {windows.length ? windows.map((w) => `${w.label} ${percentText(w, mode)}`).join(' · ') : 'Limits'}
       </button>
       {open && (
-        <div className="usage-popover" role="dialog" aria-label="Agent usage" style={{ bottom: open.bottom, right: open.right }}>
+        <div className="usage-popover" role="dialog" aria-label="Agent usage" style={{ bottom: open.bottom, left: open.left }}>
           {agent && !current && <div className="usage-agent"><div className="usage-agent-name">{AGENT_NAMES[agent]}</div><div className="usage-note">{agent === 'claude' && !settings.claudeUsage ? 'Turn on "Claude limits" in Settings > Agent Security (Pro/Max).' : 'No limit data yet. It appears after the first reply of a session.'}</div></div>}
           {[...usage].sort((a, b) => Number(b.agent === agent) - Number(a.agent === agent)).map((u) => {
             const live = liveWindows(u.windows, now)

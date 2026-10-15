@@ -28,6 +28,7 @@ const PERMISSION_LABELS: Record<AgentPermissionMode, string> = {
 const CONFIRM_RESET_MS = 6000
 
 import { UsageMeter } from '../usage/UsageMeter'
+import { IdeStatusExtras } from '../shells/ide/IdeStatusExtras'
 
 /** Shown while a paired phone is connected through Remote Access; opens its settings. */
 function RemoteBadge(): React.JSX.Element | null {
@@ -98,6 +99,7 @@ export function StatusBar(): React.JSX.Element {
   const activeTabId = useTerminalStore((s) => s.activeTabId)
   const broadcastInput = useTerminalStore((s) => s.broadcastInput)
   const settings = useSettingsStore((s) => s.settings)
+  const uiMode = settings.uiMode
   const active = tabs.find((tab) => tab.id === activeTabId)
   const ssh = active ? sshFromProfileId(settings, active.profileId) : undefined
   const cwd = active?.cwd || active?.launchCwd || ''
@@ -201,6 +203,7 @@ export function StatusBar(): React.JSX.Element {
       )}
       {git && <span className="status-item status-git" title={`${git.changedFiles} changed file${git.changedFiles === 1 ? '' : 's'}`}><GitBranch size={12} />{git.branch}{git.changedFiles > 0 ? ` (${git.changedFiles})` : ''}</span>}
       <OutputPulse />
+      {uiMode === 'ide' && <IdeStatusExtras />}
       <span className="status-item">{tabs.length} tab{tabs.length === 1 ? '' : 's'}</span>
       <UsageMeter />
       <RemoteBadge />

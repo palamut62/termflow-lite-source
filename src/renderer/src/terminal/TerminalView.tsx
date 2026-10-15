@@ -8,7 +8,7 @@ import { WebglAddon } from '@xterm/addon-webgl'
 import { ImageAddon } from '@xterm/addon-image'
 import { ligatureJoiner } from './ligatures'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
-import { broadcastTargetIds, dataHandlers, exitHandlers, restartHandlers, searchAddons, useTerminalStore } from '../store/terminalStore'
+import { broadcastTargetIds, dataHandlers, exitHandlers, pasteHandlers, restartHandlers, searchAddons, useTerminalStore } from '../store/terminalStore'
 import { useCommandHistoryStore } from '../store/commandHistoryStore'
 import { resolveTheme } from '../themes/themes'
 import { backdropActive, isLightColor, terminalTheme } from '../backdrop'
@@ -28,6 +28,7 @@ import { parseOsc52, shiftEnterSequence } from './terminalExtras'
 import { SerializeAddon } from '@xterm/addon-serialize'
 import { markScrollbackDirty, registerSerializer, restoreScrollback } from './scrollbackRestore'
 import { useToastStore } from '../store/toastStore'
+import { PaneToolbar } from '../shells/ide/PaneToolbar'
 import { TerminalContextMenu } from './TerminalContextMenu'
 import { TerminalSearch } from './TerminalSearch'
 import { AsciiBackdrop } from './AsciiBackdrop'
@@ -241,6 +242,12 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
     const searchAddon = new SearchAddon()
     term.loadAddon(searchAddon)
     searchAddons.set(tabId, searchAddon) // TerminalSearch lookup (Faz 7)
+    // Without bracketed paste a multi-line paste would run each line in the shell, so refuse instead.
+    pasteHandlers.set(tabId, (text) => {
+      if (text.includes('\n') && !term.modes.bracketedPasteMode) return false
+      term.paste(text)
+      return true
+    })
     // scrollback-restore: yalniz normal buffer'in son 2000 satiri (TUI'nin alternatif ekrani degil).
     const serializeAddon = new SerializeAddon()
     term.loadAddon(serializeAddon)
@@ -706,6 +713,7 @@ export function TerminalView({ tabId, active, visible = active, splitPane, split
       dataHandlers.delete(tabId)
       exitHandlers.delete(tabId)
       searchAddons.delete(tabId)
+      pasteHandlers.delete(tabId)
       forgetActivity(tabId)
       // Unmount artık yalnızca tab kapanınca olur; tab kapanışı zaten pty.kill
       // çağırdığı için ayrıca bir mod değişikliğine gerek yok. createdPtys'ten
@@ -1002,6 +1010,7 @@ ${block.output.slice(-8000)}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {visible && <PaneToolbar tabId={tabId} />}
       {asciiBackground && (
         <AsciiBackdrop
           background={asciiBackground}

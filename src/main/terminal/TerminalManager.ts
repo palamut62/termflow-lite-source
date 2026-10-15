@@ -176,6 +176,11 @@ export class TerminalManager {
   }
 
   /** Current PTY size, or null when the terminal does not exist. */
+  /** Canli PTY kok surecleri (Agent IDE Resource Manager). */
+  pids(): { id: string; pid: number }[] {
+    return this.core.pids()
+  }
+
   size(id: string): Size | null {
     return this.core.size(id)
   }

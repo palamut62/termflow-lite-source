@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ghError, parseAuthAccount, parsePullRequests, parseRepos, prBranchName } from './github'
+import { ghError, parseAuthAccount, parsePullRequests, parseRepos, parseTasks, prBranchName, taskArgs } from './github'
 
 describe('parseRepos', () => {
   it('maps gh repo list output', () => {
@@ -91,5 +91,27 @@ describe('ghError', () => {
 
   it('falls back to a generic message', () => {
     expect(ghError({})).toBe('gh command failed')
+  })
+})
+
+describe('Agent IDE tasks', () => {
+  it('builds gh args with filters and a single --search= value', () => {
+    expect(taskArgs('issues', 'mine', '', '')).toEqual(['issue', 'list', '--json', 'number,title,author,assignees,state,updatedAt,url,labels', '--limit', '50', '--state', 'open', '--assignee', '@me'])
+    const pr = taskArgs('prs', 'review', '--web login', 'o/r')
+    expect(pr.slice(-3)).toEqual(['--search=review-requested:@me --web login', '--repo', 'o/r'])
+    expect(taskArgs('prs', 'closed', '', '')).toContain('closed')
+  })
+
+  it('parses issue and PR rows', () => {
+    const out = JSON.stringify([
+      { number: 5, title: 'Bug', author: { login: 'a' }, assignees: [{ login: 'b' }], state: 'OPEN', updatedAt: '2026-10-01', url: 'https://x/5', labels: [{ name: 'bug' }] },
+      { number: 6, title: 'PR', author: { login: 'c' }, assignees: [], state: 'OPEN', updatedAt: '', url: '', labels: [], headRefName: 'fix', isDraft: true },
+      { number: 0 }
+    ])
+    expect(parseTasks(out)).toEqual([
+      { number: 5, title: 'Bug', author: 'a', assignees: ['b'], state: 'OPEN', updatedAt: '2026-10-01', url: 'https://x/5', labels: ['bug'] },
+      { number: 6, title: 'PR', author: 'c', assignees: [], state: 'OPEN', updatedAt: '', url: '', labels: [], branch: 'fix', draft: true }
+    ])
+    expect(parseTasks('nope')).toEqual([])
   })
 })

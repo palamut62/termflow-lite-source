@@ -2,8 +2,11 @@ import { execFile } from 'child_process'
 import { existsSync, statSync } from 'fs'
 import { isAbsolute } from 'path'
 import { promisify } from 'util'
-import { ipcMain } from 'electron'
-import { IPC, type GitStatus } from '../../shared/ipc'
+import { app, ipcMain } from 'electron'
+import { join } from 'path'
+import { IPC, type GhOutcome, type GitStatus, type ScmAction, type ScmChecks, type ScmDiff, type ScmState } from '../../shared/ipc'
+import { listScmRefs, readScmChecks, readScmDiff, readScmState, runScmAction } from '../scm'
+import { readNote, writeNote } from '../notes'
 
 const execFileAsync = promisify(execFile)
 
@@ -31,4 +34,13 @@ export function registerGitIpc(): void {
       return null
     }
   })
+
+  ipcMain.handle(IPC.SCM_STATE, async (_event, cwd: string): Promise<ScmState | null> => readScmState(cwd))
+  ipcMain.handle(IPC.SCM_RUN, async (_event, cwd: string, action: ScmAction): Promise<GhOutcome> => runScmAction(cwd, action))
+  ipcMain.handle(IPC.SCM_CHECKS, async (_event, cwd: string): Promise<ScmChecks> => readScmChecks(cwd))
+  ipcMain.handle(IPC.SCM_DIFF, async (_event, cwd: string, base: string): Promise<ScmDiff> => readScmDiff(cwd, typeof base === 'string' ? base : ''))
+  ipcMain.handle(IPC.SCM_REFS, async (_event, cwd: string): Promise<string[]> => listScmRefs(cwd))
+  const notesDir = (): string => join(app.getPath('userData'), 'notes')
+  ipcMain.handle(IPC.NOTES_READ, (_event, path: string): string => readNote(notesDir(), path))
+  ipcMain.handle(IPC.NOTES_WRITE, (_event, path: string, text: string): boolean => writeNote(notesDir(), path, text))
 }

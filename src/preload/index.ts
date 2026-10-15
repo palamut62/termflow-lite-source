@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitRepoInfo, type GitStatus, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WorktreeSetupOutcome, type WorktreeSetupRequest, type WeatherPlace, type WeatherReading, type DirListing, type AttentionBadge } from '../shared/ipc'
+import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitHubTask, type GitHubTaskFilter, type GitHubTaskKind, type GitRepoInfo, type GitStatus, type ScmAction, type ScmChecks, type ScmDiff, type ScmState, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WorktreeSetupOutcome, type WorktreeSetupRequest, type WeatherPlace, type WeatherReading, type DirListing, type ResourceSnapshot, type FileSearchQuery, type FileSearchResult, type AttentionBadge } from '../shared/ipc'
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentHookEvent } from '../shared/agentHooks'
 import type { AgentUsage } from '../shared/usage'
@@ -23,6 +23,9 @@ const api = {
   system: {
     osBuildNumber: osBuildNumber(),
     openExternal: (url: string): Promise<boolean> => ipcRenderer.invoke(IPC.SYSTEM_OPEN_EXTERNAL, url),
+    resources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IPC.SYSTEM_RESOURCES),
+    appMemory: (): Promise<number> => ipcRenderer.invoke(IPC.SYSTEM_APP_MEMORY),
+    keepAwake: (active: boolean): Promise<void> => ipcRenderer.invoke(IPC.SYSTEM_KEEP_AWAKE, active),
     /** Terminaldeki tıklanabilir yollar: adayı tab cwd'sine göre çöz, var mı döndür. */
     resolvePath: (candidate: string, cwd: string): Promise<ResolvedPath | null> =>
       ipcRenderer.invoke(IPC.SYSTEM_RESOLVE_PATH, candidate, cwd),
@@ -144,7 +147,17 @@ const api = {
     }
   },
   git: {
-    status: (cwd: string): Promise<GitStatus | null> => ipcRenderer.invoke(IPC.GIT_STATUS, cwd)
+    status: (cwd: string): Promise<GitStatus | null> => ipcRenderer.invoke(IPC.GIT_STATUS, cwd),
+    scm: (cwd: string): Promise<ScmState | null> => ipcRenderer.invoke(IPC.SCM_STATE, cwd),
+    scmRun: (cwd: string, action: ScmAction): Promise<GhOutcome> => ipcRenderer.invoke(IPC.SCM_RUN, cwd, action),
+    checks: (cwd: string): Promise<ScmChecks> => ipcRenderer.invoke(IPC.SCM_CHECKS, cwd),
+    diff: (cwd: string, base = ''): Promise<ScmDiff> => ipcRenderer.invoke(IPC.SCM_DIFF, cwd, base),
+    refs: (cwd: string): Promise<string[]> => ipcRenderer.invoke(IPC.SCM_REFS, cwd)
+  },
+  /** Agent IDE worktree notes (userData, never the project). */
+  notes: {
+    read: (worktreePath: string): Promise<string> => ipcRenderer.invoke(IPC.NOTES_READ, worktreePath),
+    write: (worktreePath: string, text: string): Promise<boolean> => ipcRenderer.invoke(IPC.NOTES_WRITE, worktreePath, text)
   },
   /** Per-agent git worktree isolation. */
   worktree: {
@@ -168,11 +181,13 @@ const api = {
     currentRepo: (cwd: string): Promise<string> => ipcRenderer.invoke(IPC.GITHUB_CURRENT_REPO, cwd),
     pullRequests: (repo: string, cwd?: string): Promise<GitHubPullRequest[]> => ipcRenderer.invoke(IPC.GITHUB_PULL_REQUESTS, repo, cwd),
     checkoutPr: (worktreePath: string, number: number, repo?: string): Promise<GhOutcome> => ipcRenderer.invoke(IPC.GITHUB_PR_CHECKOUT, worktreePath, number, repo),
-    clone: (nameWithOwner: string, targetPath: string): Promise<GhOutcome> => ipcRenderer.invoke(IPC.GITHUB_CLONE, nameWithOwner, targetPath)
+    clone: (nameWithOwner: string, targetPath: string): Promise<GhOutcome> => ipcRenderer.invoke(IPC.GITHUB_CLONE, nameWithOwner, targetPath),
+    tasks: (kind: GitHubTaskKind, filter: GitHubTaskFilter, search: string, repo: string, cwd?: string): Promise<GitHubTask[]> => ipcRenderer.invoke(IPC.GITHUB_TASKS, kind, filter, search, repo, cwd)
   },
   /** Read-only folder listing for the file panel. */
   files: {
-    list: (dir: string, showHidden: boolean): Promise<DirListing | null> => ipcRenderer.invoke(IPC.FILES_LIST, dir, showHidden)
+    list: (dir: string, showHidden: boolean): Promise<DirListing | null> => ipcRenderer.invoke(IPC.FILES_LIST, dir, showHidden),
+    search: (dir: string, query: FileSearchQuery): Promise<FileSearchResult> => ipcRenderer.invoke(IPC.FILES_SEARCH, dir, query)
   },
   /** Live weather for the agent character (Open-Meteo, from the main process). */
   weather: {

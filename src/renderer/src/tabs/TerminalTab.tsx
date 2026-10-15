@@ -16,6 +16,8 @@ interface TerminalTabProps {
   onDragOverTab: (targetId: string, before: boolean) => void
   /** Insertion indicator: null | 'before' | 'after' (hedef tab'a göre). */
   dropPos: 'before' | 'after' | null
+  /** Agent IDE sekme menusu. */
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void
 }
 
 const MAX_TITLE_LENGTH = 60
@@ -34,7 +36,8 @@ export function TerminalTab({
   onDragStart,
   onDragEnd,
   onDragOverTab,
-  dropPos
+  dropPos,
+  onContextMenu
 }: TerminalTabProps): React.JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(tab.title)
@@ -54,6 +57,13 @@ export function TerminalTab({
     setEditing(true)
   }
 
+  // Sekme menusundeki "Rename" bu sekmeyi duzenlemeye acar.
+  useEffect(() => {
+    const onRename = (event: Event): void => { if ((event as CustomEvent<string>).detail === tab.id) startEdit() }
+    window.addEventListener('termflow:rename-tab', onRename)
+    return () => window.removeEventListener('termflow:rename-tab', onRename)
+  })
+
   const commit = (): void => {
     setEditing(false)
     const value = draft.trim().slice(0, MAX_TITLE_LENGTH)
@@ -70,9 +80,11 @@ export function TerminalTab({
   return (
     <div
       data-tab-id={tab.id}
-      className={`tab${active ? ' tab-active' : ''}${dragging ? ' tab-dragging' : ''}${dragPosClass}`}
+      className={`tab${active ? ' tab-active' : ''}${dragging ? ' tab-dragging' : ''}${dragPosClass}${tab.color ? ' tab-colored' : ''}`}
+      style={tab.color ? { '--tab-color': tab.color } as React.CSSProperties : undefined}
       draggable={!editing}
       onClick={onSelect}
+      onContextMenu={onContextMenu}
       onAuxClick={(e) => {
         // Middle click closes the tab (PRD §14).
         if (e.button === 1) {

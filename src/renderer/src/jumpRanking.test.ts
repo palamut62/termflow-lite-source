@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AgentSession, TerminalTab } from '../../shared/types'
-import { IDLE_LIMIT, idleTabs, matchScore, searchJump, type JumpItem } from './jumpRanking'
+import { IDLE_LIMIT, idleTabs, matchScore, searchCommands, searchJump, type JumpCommand, type JumpItem } from './jumpRanking'
 
 function tab(id: string, overrides: Partial<TerminalTab> = {}): TerminalTab {
   return { id, title: id, profileId: 'bash', running: true, activity: 'running', startedAt: 0, ...overrides }
@@ -10,7 +10,7 @@ function session(id: string, overrides: Partial<AgentSession> = {}): AgentSessio
   return { agent: 'claude', id, title: id, updatedAt: 0, ...overrides }
 }
 
-const ids = (items: JumpItem[]): string[] => items.map((item) => (item.kind === 'tab' ? item.tab.id : item.session.id))
+const ids = (items: JumpItem[]): string[] => items.map((item) => (item.kind === 'tab' ? item.tab.id : item.kind === 'session' ? item.session.id : item.command.id))
 
 describe('idleTabs', () => {
   it('puts tabs waiting for you first, then the most recently seen, and skips the active tab', () => {
@@ -66,4 +66,19 @@ describe('searchJump', () => {
   it('returns nothing for a blank query', () => {
     expect(searchJump('  ', [tab('a')], [], new Map())).toEqual([])
   })
+})
+
+it('ranks palette commands by label, detail, then keywords', () => {
+  const run = (): void => undefined
+  const commands: JumpCommand[] = [
+    { id: 'a', group: 'settings', label: 'Terminal', detail: 'Settings', keywords: 'scrollback shell integration', run },
+    { id: 'b', group: 'actions', label: 'Open Source Control', detail: 'Right panel', run },
+    { id: 'c', group: 'worktrees', label: 'fix-login', detail: 'shop-api', run }
+  ]
+  const ids = (q: string): string[] => searchCommands(q, commands).map((i) => (i.kind === 'command' ? i.command.id : ''))
+  expect(ids('')).toEqual(['a', 'b', 'c'])
+  expect(ids('scrollback')).toEqual(['a'])
+  expect(ids('shop')).toEqual(['c'])
+  expect(ids('source')).toEqual(['b'])
+  expect(ids('sc')).toEqual(['b'])
 })

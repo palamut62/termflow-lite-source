@@ -3,7 +3,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS, type AppSettings } from '../../shared/types'
-import { SettingsStore } from './SettingsStore'
+import { SettingsStore, normalizeWorktreeMeta } from './SettingsStore'
 
 let dir: string
 
@@ -119,5 +119,16 @@ describe('SettingsStore', () => {
     vi.advanceTimersByTime(1)
     const onDisk = JSON.parse(readFileSync(file(), 'utf-8')) as AppSettings
     expect(onDisk.fontSize).toBe(16)
+  })
+})
+
+describe('normalizeWorktreeMeta', () => {
+  it('keeps valid fields, drops junk and empty records', () => {
+    expect(normalizeWorktreeMeta({
+      'c:/repo/a': { name: 'Login fix', status: 'in-review', pinned: true, sleeping: 'yes', note: '', extra: 1 },
+      'c:/repo/b': { status: 'blocked' },
+      'c:/repo/c': 'nope'
+    })).toEqual({ 'c:/repo/a': { name: 'Login fix', status: 'in-review', pinned: true } })
+    expect(normalizeWorktreeMeta([])).toEqual({})
   })
 })

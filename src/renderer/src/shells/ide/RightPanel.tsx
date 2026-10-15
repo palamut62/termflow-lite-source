@@ -1,18 +1,21 @@
-import { Bot, Files, PanelRight } from 'lucide-react'
+import { Bot, Files, GitBranch, ListChecks, PanelRight } from 'lucide-react'
 import type { IdeRightTab } from '../../../../shared/types'
 import { useSettingsStore } from '../../store/settingsStore'
 import { FilePanel } from '../../components/FilePanel'
 import { AgentsPanel } from './AgentsPanel'
+import { ChecksPanel, SourceControlPanel } from './ScmPanel'
 import { ResizeHandle } from './ResizeHandle'
 
 const TABS: { id: IdeRightTab; label: string; icon: React.JSX.Element }[] = [
   { id: 'explorer', label: 'Explorer (Ctrl+Shift+E)', icon: <Files size={15} /> },
-  { id: 'agents', label: 'Agents (Ctrl+Shift+A)', icon: <Bot size={15} /> }
+  { id: 'agents', label: 'Agents (Ctrl+Shift+A)', icon: <Bot size={15} /> },
+  { id: 'scm', label: 'Source Control (Ctrl+Shift+G)', icon: <GitBranch size={15} /> },
+  { id: 'checks', label: 'Checks (Ctrl+Shift+K)', icon: <ListChecks size={15} /> }
 ]
 
 /**
  * Agent IDE sag paneli (PRD 4.3, F1.4), Orca yerlesimi: ust satir pencere dugmelerinin altinda kalir,
- * altinda yalniz ikonlu sekmeler. Source Control ve Checks Faz 2'de eklenir.
+ * altinda yalniz ikonlu sekmeler.
  */
 export function RightPanel(): React.JSX.Element {
   const ide = useSettingsStore((s) => s.settings.ide)
@@ -41,7 +44,7 @@ export function RightPanel(): React.JSX.Element {
         ))}
       </div>
       <div className="ide-right-body" role="tabpanel">
-        {ide.rightTab === 'explorer' ? <FilePanel embedded /> : <AgentsPanel />}
+        {ide.rightTab === 'explorer' ? <FilePanel embedded /> : ide.rightTab === 'agents' ? <AgentsPanel /> : ide.rightTab === 'scm' ? <SourceControlPanel /> : <ChecksPanel />}
       </div>
     </aside>
   )

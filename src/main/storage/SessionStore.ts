@@ -94,7 +94,8 @@ export function sanitizeSession(value: unknown): PersistedSession | null {
       ...(['safe', 'workspace', 'full'].includes(tab.permissionMode ?? '') ? { permissionMode: tab.permissionMode } : {}),
       ...(typeof tab.model === 'string' && tab.model.length <= 200 ? { model: tab.model } : {}),
       ...(tab.resumeSession && ['claude', 'codex', 'opencode'].includes(tab.resumeSession.agent) && /^[a-zA-Z0-9_-]{1,160}$/.test(tab.resumeSession.id) ? { resumeSession: { agent: tab.resumeSession.agent, id: tab.resumeSession.id } } : {}),
-      ...(typeof tab.cwd === 'string' ? { cwd: tab.cwd } : {})
+      ...(typeof tab.cwd === 'string' ? { cwd: tab.cwd } : {}),
+      ...(typeof tab.color === 'string' && /^#[0-9a-f]{6}$/i.test(tab.color) ? { color: tab.color } : {})
     }))
   if (tabs.length === 0) return null
   const ids = new Set(tabs.map((tab) => tab.id))

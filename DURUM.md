@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-14 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.24.2
+guncel: 2026-10-15 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.24.2
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -32,13 +32,15 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
 - [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
 
-## Son oturum (2026-10-14, Agent IDE Faz 0-1)
-- PRD kararlari (bolum 12): ayri urun "TermFlow Agent IDE" ayni repodan (`TERMFLOW_EDITION=ide`), IDE exe'si iki modlu, freeware, Faz 5 ertelendi, yeni public repo (ilk yayindan once onayla)
-- Faz 0 + Faz 1 tamam, Orca yerlesimi (`docs/agent-ide/PRD.md` 12b, karsilastirma gorselleri). Tek `shells/AppShell.tsx`; Lite DOM'u ayni
-- Dogrulama: birim 720, IDE E2E 3/3 (`npm run test:e2e:ide`), Lite E2E tam kosu 106/107 (kalan bilinen session-rail hatasi)
+## Son oturum (2026-10-15, Agent IDE: Faz 4 + kalan bosluklar)
+- Faz 4: Review sayfasi (`shells/ide/review/`: diff tek sutun/yan yana, "Compare with" = Change Base Ref merge-base'e karsi, satir yorumu, "Send to agent" bracketed paste ile Enter'siz; duz kabukta panoya kopyalar), worktree notlari (`src/main/notes.ts`, userData/notes), giris: SCM dosya tiklamasi, worktree menusu, palet
+- Kalan bosluklar: Create worktree sparse checkout (`validSparsePaths`, cone), Group by Pull Request (proje basina tek `gh pr list`), Floating Workspace icinde gercek terminal (`floatingTabId`, Dock ile sekmeye doner)
+- Hata: Close Others/Right/Left her canli sekmeyi mesgul sayiyordu (yeni sekme `activity: 'running'` baslar), onay acikken hicbirini kapatmiyordu; artik yalniz ajan `working`/`needs-input` korunur
+- Hata: session-rail daraltmasi kayboluyordu (git koku `C:/x`, sekme klasoru `C:\x`; kok cozulunce grup anahtari degisiyordu). Anahtar artik ayiricidan bagimsiz; 2026-10-09'dan beri kirik E2E duzeldi
+- Dogrulama: birim 758, IDE E2E 13/13, Lite tam E2E 106/107 (tek kirik session-rail idi; duzeltme sonrasi session-rail 18/18, 3 tekrar)
 
 ## Yarim kalan / siradaki adim
-- **Agent IDE:** siradaki Faz 2 (Create worktree modali, arama paletine ayar/aksiyon kaynaklari, Source Control + Checks panelleri). Dal `feature/agent-ide` push edilmedi. IDE yayin reposu henuz yok (IDE'de updater ve Explorer menusu kapali)
+- **Agent IDE:** Faz 0-4 tamam (PRD 4.10/12b). Karar bekleyen: Faz 5 (tarayici/design mode, orchestration, CLI) ve Create worktree 'Run on WSL/SSH' (uzak calisma alani modeli gerekir). Sonra IDE yayin reposu. Dal `feature/agent-ide` push edilmedi, commit yok (degisiklikler calisma agacinda). IDE yayin reposu henuz yok (IDE'de updater ve Explorer menusu kapali)
 - Memory guncelleme sikligi (Ayarlar > Memory > Update: saatlik/gunluk/haftalik, varsayilan saatlik; zamani gelince yalniz yeni/degisen session analiz edilir, yoksa model cagrilmaz, onceki kullanim bilgisi korunur). Surum 1.24.0 kaldi, yerel kurulum
 - Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
@@ -47,7 +49,6 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 
 ## Acik sorunlar / bilinen sinirlar
-- E2E `session-rail` 'a collapsed group hides its sessions' 2026-10-09'da 1.22.0 kodunda da kiriliyor (grup basligi tiklamasi daraltmiyor); Voice'tan bagimsiz, incelenmeli
 - Sekme durumu Claude Code / Codex'te artik ajanin kendi olayindan (agent-hooks); OpenCode ve yeni katalog ajanlarinda hala cikti tahmini
 - E2E derleme sonrasi ilk acilista ara sira 30 sn `.tab` bekleme zaman asimi; tekrarda geciyor
 - E2E `app.spec` "pastes ..." iki testi gercek OS panosuna yazar; pano kilitliyken (2026-10-07) degisiklikten bagimsiz kirilir

@@ -4,9 +4,12 @@ import {
   type GhOutcome,
   type GitHubPullRequest,
   type GitHubRepo,
-  type GitHubStatus
+  type GitHubStatus,
+  type GitHubTask,
+  type GitHubTaskFilter,
+  type GitHubTaskKind
 } from '../../shared/ipc'
-import { checkoutPullRequest, cloneRepo, currentRepo, listPullRequests, listRepos, readStatus } from '../github'
+import { checkoutPullRequest, cloneRepo, currentRepo, listPullRequests, listRepos, listTasks, readStatus } from '../github'
 
 /**
  * GitHub channels backed by the user's own `gh` CLI. No token ever reaches
@@ -34,4 +37,7 @@ export function registerGithubIpc(): void {
     if (typeof nameWithOwner !== 'string' || typeof targetPath !== 'string') return { ok: false, error: 'Invalid clone request.' }
     return cloneRepo(nameWithOwner, targetPath)
   })
+
+  ipcMain.handle(IPC.GITHUB_TASKS, async (_event, kind: GitHubTaskKind, filter: GitHubTaskFilter, search: string, repo: string, cwd?: string): Promise<GitHubTask[]> =>
+    listTasks(kind === 'prs' ? 'prs' : 'issues', (['mine', 'review', 'closed'] as const).find((f) => f === filter) ?? 'open', typeof search === 'string' ? search : '', typeof repo === 'string' ? repo : '', typeof cwd === 'string' ? cwd : undefined))
 }

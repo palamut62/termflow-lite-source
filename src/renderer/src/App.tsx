@@ -39,6 +39,7 @@ import { startRemoteBridge } from './remoteBridge'
 import { VoiceIndicator } from './components/VoiceIndicator'
 import { subscribeAgentHooks } from './terminal/agentHookEvents'
 import { startAttention } from './attention/alerts'
+import { startTabHistory } from './shells/ide/tabHistory'
 import { startScrollbackAutosave } from './terminal/scrollbackRestore'
 import { persistedResume } from './terminal/agentResume'
 import { startAgentDetection } from './agentDetect'
@@ -100,6 +101,8 @@ export default function App(): React.JSX.Element {
   useEffect(() => subscribeAgentHooks(), [])
   // agent-attention: gorunen sekmenin isaretini temizle, gorev cubugu rozeti.
   useEffect(() => startAttention(), [])
+  // Agent IDE geri/ileri: aktif sekme gecmisi.
+  useEffect(() => startTabHistory(), [])
   // scrollback-restore: degisen sekmeleri dakikada bir, hepsini kapanista kaydet.
   useEffect(() => startScrollbackAutosave(), [])
   // jump-palette: "son aktif sekmeler" sirasi.
@@ -150,7 +153,7 @@ export default function App(): React.JSX.Element {
     if (!useSettingsStore.getState().settings.restoreSession) return
     window.termflow.session.save({
       version: 1,
-      tabs: state.tabs.map((tab) => ({ id: tab.id, title: tab.title, profileId: tab.profileId, cwd: tab.cwd || tab.launchCwd, model: tab.model, permissionMode: tab.permissionMode, resumeSession: persistedResume(tab, useSettingsStore.getState().settings), worktree: tab.worktree })),
+      tabs: state.tabs.map((tab) => ({ id: tab.id, title: tab.title, profileId: tab.profileId, cwd: tab.cwd || tab.launchCwd, model: tab.model, permissionMode: tab.permissionMode, resumeSession: persistedResume(tab, useSettingsStore.getState().settings), worktree: tab.worktree, color: tab.color })),
       activeTabId: state.activeTabId,
       paneTree: state.paneTree,
       splitDirection: state.splitDirection,
@@ -194,9 +197,10 @@ export default function App(): React.JSX.Element {
         e.stopPropagation()
         return
       }
-      // Agent IDE: Ctrl+Shift+E / Ctrl+Shift+A sag paneli Explorer / Agents sekmesinde acar-kapatir.
-      if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && useSettingsStore.getState().settings.uiMode === 'ide' && ['e', 'a'].includes(e.key.toLowerCase())) {
-        toggleRightPanel(e.key.toLowerCase() === 'e' ? 'explorer' : 'agents')
+      // Agent IDE: Ctrl+Shift+E / A / G / K sag paneli Explorer / Agents / Source Control / Checks sekmesinde acar-kapatir.
+      const rightTab = ({ e: 'explorer', a: 'agents', g: 'scm', k: 'checks' } as const)[e.key.toLowerCase() as 'e']
+      if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && useSettingsStore.getState().settings.uiMode === 'ide' && rightTab) {
+        toggleRightPanel(rightTab)
         e.preventDefault()
         e.stopPropagation()
         return

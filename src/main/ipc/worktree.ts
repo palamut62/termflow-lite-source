@@ -48,7 +48,8 @@ export function registerWorktreeIpc(): void {
       branch: request.branch,
       baseRef: typeof request.baseRef === 'string' ? request.baseRef : undefined,
       path: typeof request.path === 'string' ? request.path : undefined,
-      detach: request.detach === true
+      detach: request.detach === true,
+      sparsePaths: request.sparsePaths
     })
   })
 

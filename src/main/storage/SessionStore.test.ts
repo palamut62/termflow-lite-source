@@ -118,3 +118,11 @@ describe('paneTreeMatchesTabs', () => {
     expect(paneTreeMatchesTabs({ type: 'leaf', terminalId: 'a' }, ids)).toBe(true)
   })
 })
+
+describe('sanitizeSession tab color', () => {
+  it('keeps #rrggbb colors and drops anything else', () => {
+    const tabs = [{ id: 'a', title: 'A', profileId: 'bash', color: '#3B82F6' }, { id: 'b', title: 'B', profileId: 'bash', color: 'red; x' }]
+    const result = sanitizeSession({ ...SESSION, tabs, activeTabId: 'a', paneTree: null, splitDirection: null })
+    expect(result?.tabs.map((t) => t.color)).toEqual(['#3B82F6', undefined])
+  })
+})

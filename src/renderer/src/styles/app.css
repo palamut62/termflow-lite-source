@@ -831,3 +831,6 @@ body {
 .layout-choice-option:hover, .layout-choice-option:focus-visible { border-color: var(--accent-color); outline: none; }
 .layout-choice-option strong { font-size: 14px; }
 .layout-choice-option span { font-size: 12px; opacity: 0.75; line-height: 1.45; }
+
+/* Tasan bir oge odak alsa bile pencere icerigi kaymasin (overflow:hidden kaydirilabilir; clip kaydirilamaz). */
+html, body, #root, .app { overflow: clip; }

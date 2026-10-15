@@ -13,7 +13,10 @@ import { paneTerminalIds, type PaneNode } from '../paneUtils'
  * hiç çalışmıyordu).
  */
 export function TerminalArea(): React.JSX.Element {
-  const tabs = useTerminalStore((s) => s.tabs)
+  const allTabs = useTerminalStore((s) => s.tabs)
+  const floatingTabId = useTerminalStore((s) => s.floatingTabId)
+  // Floating Workspace'teki sekme orada cizilir; ayni TerminalView iki yerde mount edilmez.
+  const tabs = floatingTabId ? allTabs.filter((tab) => tab.id !== floatingTabId) : allTabs
   const activeTabId = useTerminalStore((s) => s.activeTabId)
   const splitRatio = useTerminalStore((s) => s.splitRatio)
   const paneTree = useTerminalStore((s) => s.paneTree)

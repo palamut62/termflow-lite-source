@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react'
-import { Bell, Bot, Brain, Info, Keyboard, Mic, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
+import { ArrowLeft, BarChart3, Bell, Bot, Brain, Info, Keyboard, Mic, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { AppearanceSettings } from './AppearanceSettings'
 import { TerminalSettings } from './TerminalSettings'
@@ -17,10 +17,11 @@ import { BackupSettings } from './BackupSettings'
 import { MemorySettings } from './MemorySettings'
 import { RemoteSettings } from './RemoteSettings'
 import { VoiceSettings } from './VoiceSettings'
+import { StatsSettings } from './StatsSettings'
 
-type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice' | 'notifications'
+type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice' | 'notifications' | 'stats'
 
-const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: string }[] = [
+export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: string }[] = [
   { id: 'appearance', label: 'Appearance', icon: <Palette size={14} />, keywords: 'theme font size family weight ligatures line height letter spacing cursor blink effect trail blaze glow gpu webgl rendering inline images opacity blur backdrop mica acrylic transparency tint window border corner radius tab height padding custom theme motion animation transition reduce motion retro crt scanlines confetti celebrate agent animation companion mascot face pixel scenes style character ember miso piko ascii weather rain snow sunny city background picture image photo wallpaper art density characters' },
   { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={14} />, keywords: 'shift enter newline osc 52 clipboard copy ssh tmux default profile startup directory scrollback shell integration osc 133 command blocks inline suggestions autosuggest media previews image video thumbnail exit code duration notifications bell sounds keyboard click copy on select right click clickable paths confirm before close restore session tray quake hotkey hide on blur' },
   { id: 'profiles', label: 'Profiles', icon: <UserRound size={14} />, keywords: 'custom command profiles arguments icon color startup command starting directory default model permissions environment variables' },
@@ -35,6 +36,7 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
   { id: 'agent-security', label: 'Agent Security', icon: <ShieldCheck size={14} />, keywords: 'agent security permission mode safe workspace full access status hooks' },
   { id: 'ssh', label: 'SSH', icon: <Server size={14} />, keywords: 'ssh connections host user port identity file key jump host proxyjump remote directory command persistent tmux screen multiplexer forward agent extra arguments' },
   { id: 'keyboard', label: 'Keyboard', icon: <Keyboard size={14} />, keywords: 'keyboard shortcuts keybindings hotkeys' },
+  { id: 'stats', label: 'Stats & Usage', icon: <BarChart3 size={14} />, keywords: 'stats usage statistics agent sessions commands time wrapped' },
   { id: 'about', label: 'About', icon: <Info size={14} />, keywords: 'about updates automatic update version license product owner' }
 ]
 
@@ -43,8 +45,20 @@ const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: strin
  * Keyboard, About. Backdrop tıklaması ve Escape kapatır; KeyboardSettings
  * kayıt modundayken Esc'i document capture'da yutar, bu listener tetiklenmez.
  */
+/** Agent IDE tam sayfa ayarlarinda menu gruplari (Orca: AI Capabilities, Set Up, Workflows, Interface). */
+const GROUPS: { label: string; ids: SectionId[] }[] = [
+  { label: 'AI Capabilities', ids: ['providers', 'memory', 'voice', 'agent-security'] },
+  { label: 'Set Up', ids: ['profiles', 'health', 'workspaces', 'remote', 'backup'] },
+  { label: 'Workflows', ids: ['terminal', 'ssh'] },
+  { label: 'Interface', ids: ['appearance', 'notifications', 'keyboard', 'stats'] },
+  { label: 'About', ids: ['about'] }
+]
+
 export function Settings(): React.JSX.Element {
   const closeSettings = useSettingsStore((s) => s.closeSettings)
+  // Agent IDE: tam sayfa (Orca), "Back to app", gruplu menu, Ctrl+F arama.
+  const fullPage = useSettingsStore((s) => s.settings.uiMode === 'ide')
+  const searchRef = useRef<HTMLInputElement>(null)
   const [section, setSection] = useState<SectionId>(() => {
     const requested = useSettingsStore.getState().settingsSection
     return SECTIONS.some((s) => s.id === requested) ? requested as SectionId : 'appearance'
@@ -69,20 +83,22 @@ export function Settings(): React.JSX.Element {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') closeSettings()
+      if (fullPage && e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); searchRef.current?.focus() }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [closeSettings])
+  }, [closeSettings, fullPage])
 
   return (
     <div
-      className="settings-backdrop"
+      className={fullPage ? 'settings-backdrop settings-fullpage' : 'settings-backdrop'}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) closeSettings()
       }}
     >
       <div className="settings-panel" role="dialog" aria-label="Settings" ref={panelRef} tabIndex={-1}>
         <header className="settings-header">
+          {fullPage && <button className="settings-btn settings-back" onClick={closeSettings}><ArrowLeft size={14} /> Back to app</button>}
           <span className="settings-header-title">Settings</span>
           <button className="settings-icon-btn" onClick={closeSettings} aria-label="Close settings" title="Close (Esc)">
             <X size={16} />
@@ -91,10 +107,11 @@ export function Settings(): React.JSX.Element {
         <div className="settings-body">
           <nav className="settings-nav">
             <input
+              ref={searchRef}
               className="settings-input settings-search"
               type="search"
               value={query}
-              placeholder="Search settings"
+              placeholder={fullPage ? 'Search settings (Ctrl+F)' : 'Search settings'}
               aria-label="Search settings"
               onChange={(e) => {
                 const next = e.target.value
@@ -106,16 +123,22 @@ export function Settings(): React.JSX.Element {
               }}
             />
             {visibleSections.length === 0 && <div className="settings-search-empty">No matching settings</div>}
-            {visibleSections.map((s) => (
-              <button
-                key={s.id}
-                className={`settings-nav-item${s.id === section ? ' settings-nav-item-active' : ''}`}
-                onClick={() => setSection(s.id)}
-              >
-                {s.icon}
-                <span>{s.label}</span>
-              </button>
-            ))}
+            {(fullPage && words.length === 0
+              ? GROUPS.map((group) => ({ label: group.label, items: group.ids.map((id) => SECTIONS.find((s) => s.id === id)).filter((s) => s !== undefined) }))
+              : [{ label: '', items: visibleSections }]
+            ).map((group) => [
+              group.label && <div key={`group:${group.label}`} className="settings-nav-group">{group.label}</div>,
+              ...group.items.map((s) => (
+                <button
+                  key={s.id}
+                  className={`settings-nav-item${s.id === section ? ' settings-nav-item-active' : ''}`}
+                  onClick={() => setSection(s.id)}
+                >
+                  {s.icon}
+                  <span>{s.label}</span>
+                </button>
+              ))
+            ])}
           </nav>
           <div className="settings-content">
             {section === 'appearance' && <AppearanceSettings />}
@@ -133,6 +156,7 @@ export function Settings(): React.JSX.Element {
             {section === 'ssh' && <SshSettings />}
             {section === 'keyboard' && <KeyboardSettings />}
             {section === 'about' && <AboutSettings />}
+            {section === 'stats' && <StatsSettings />}
           </div>
         </div>
       </div>

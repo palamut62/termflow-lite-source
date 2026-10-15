@@ -54,6 +54,14 @@ describe('groupPathFor', () => {
 })
 
 describe('buildRailGroups', () => {
+  it('keeps the group key when git reports the root with forward slashes', () => {
+    const before = buildRailGroups([tab('a', { launchCwd: 'C:\\sandbox\\my-app' })], 'a')
+    const after = buildRailGroups([tab('a', { launchCwd: 'C:\\sandbox\\my-app' }), tab('b', { launchCwd: 'C:\\sandbox\\my-app\\src' })], 'a', new Map([['C:\\sandbox\\my-app', 'C:/sandbox/my-app'], ['C:\\sandbox\\my-app\\src', 'C:/sandbox/my-app']]))
+    expect(after).toHaveLength(1)
+    expect(after[0]?.key).toBe(before[0]?.key)
+    expect(after[0]?.sessions.map((s) => s.id)).toEqual(['a', 'b'])
+  })
+
   it('collects sessions per repository and marks the active one', () => {
     const worktree = { repoRoot: '/repo', path: '/wt/a1', branch: 'tf/a1', createdByApp: true }
     const groups = buildRailGroups(

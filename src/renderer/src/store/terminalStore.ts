@@ -18,6 +18,11 @@ export const dataHandlers = new Map<string, (data: string) => void>()
 export const exitHandlers = new Map<string, (exitCode: number, durationMs: number) => void>()
 /** Per-tab "Restart" action of the mounted TerminalView (used by Remote Access). */
 export const restartHandlers = new Map<string, () => void>()
+/**
+ * Per-tab xterm paste of the mounted TerminalView (no Enter; review "Send to agent").
+ * Returns false when the program has not enabled bracketed paste and the text is multi-line.
+ */
+export const pasteHandlers = new Map<string, (text: string) => boolean>()
 
 /**
  * Per-tab SearchAddon instances (registered by TerminalView on mount, same
@@ -87,6 +92,12 @@ interface TerminalState {
   resumeAgentSession(profileId: string, session: AgentSessionRef, cwd?: string, permissionMode?: AgentPermissionMode): string
   /** Onay bekleyen sekme (uygulama içi modal); null = onay istenmiyor. */
   pendingCloseTabId: string | null
+  /**
+   * Agent IDE Floating Workspace'te gosterilen sekme (PRD F3.3). Ana alanda cizilmez; sekme seridinden
+   * secilince ana alana doner (PTY yasar, TerminalView buffer'dan yeniden baglanir).
+   */
+  floatingTabId: string | null
+  setFloatingTab(id: string | null): void
   /** UI girişi: settings.confirmBeforeClose ise onay modalını açar, değilse direkt kapatır. */
   requestCloseTab(id: string): void
   /** Modaldaki "Close": bekleyen sekmeyi kapatır. */
@@ -107,6 +118,12 @@ interface TerminalState {
   clearAttention(ids: string[]): void
   /** Surdurulemeyen konusmayi birakir; sekme yeni oturumla baslar (agent-resume). */
   dropResume(id: string): void
+  setTabColor(id: string, color: string | undefined): void
+  /**
+   * Agent IDE sekme menusu (Close Others / Right / Left). Kapatma onayi aciksa calisan ya da girdi bekleyen
+   * sekmeler kapatilmaz (toplu onay yok); kac sekmenin birakildigini dondurur.
+   */
+  closeTabs(ids: string[]): number
   /** Reorder (Faz 7'de sürükleme; store şimdi hazır). */
   moveTab(id: string, toIndex: number): void
   setTabCwd(id: string, cwd: string): void
@@ -171,7 +188,8 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
       permissionMode: tab.permissionMode ?? useSettingsStore.getState().settings.defaultAgentPermissionMode,
       model: tab.model,
       resumeSession: tab.resumeSession,
-      worktree: tab.worktree
+      worktree: tab.worktree,
+      color: tab.color
     }))
     const ids = new Set(tabs.map((tab) => tab.id))
     // Bozuk dosyaya karşı savunma: ağaçtaki her id gerçekten bir sekme olmalı.
@@ -213,6 +231,12 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   },
 
   pendingCloseTabId: null,
+  floatingTabId: null,
+
+  setFloatingTab(id) {
+    if (id !== null && !get().tabs.some((t) => t.id === id)) return
+    set({ floatingTabId: id })
+  },
 
   requestCloseTab(id) {
     if (!get().tabs.some((t) => t.id === id)) return
@@ -245,6 +269,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     const { tabs, activeTabId, splitTabIds } = get()
     const idx = tabs.findIndex((t) => t.id === id)
     if (idx < 0) return
+    if (get().floatingTabId === id) set({ floatingTabId: null })
 
     // Offer to clean up an isolated checkout we created — but only once the
     // last tab using it is gone, otherwise a sibling pane would lose its cwd.
@@ -289,6 +314,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   setActiveTab(id) {
     const state = get()
     if (!state.tabs.some((t) => t.id === id)) return
+    if (state.floatingTabId === id) set({ floatingTabId: null })
     // Split düzeninde ağaç dışı (arka plan) sekmesi seçilirse aktif yaprakla
     // yer değiştirir; aksi halde sekme yalnızca vurgulanır ama terminali hiç
     // gösterilemezdi. Yer değişen önceki sekme arka plana düşer, PTY'si yaşar.
@@ -332,6 +358,23 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   clearAttention(ids) {
     if (!get().tabs.some((tab) => tab.attention && ids.includes(tab.id))) return
     set((s) => ({ tabs: s.tabs.map((tab) => (tab.attention && ids.includes(tab.id) ? { ...tab, attention: undefined } : tab)) }))
+  },
+
+  setTabColor(id, color) {
+    set((s) => ({ tabs: s.tabs.map((tab) => (tab.id === id ? { ...tab, color } : tab)) }))
+  },
+
+  closeTabs(ids) {
+    const confirm = useSettingsStore.getState().settings.confirmBeforeClose
+    let kept = 0
+    for (const id of ids) {
+      const tab = get().tabs.find((t) => t.id === id)
+      if (!tab) continue
+      const busy = tab.agentHook?.state === 'working' || tab.agentHook?.state === 'needs-input'
+      if (confirm && busy) { kept++; continue }
+      get().closeTab(id)
+    }
+    return kept
   },
 
   dropResume(id) {

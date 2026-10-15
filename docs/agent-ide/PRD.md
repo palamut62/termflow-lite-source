@@ -136,6 +136,72 @@ Advanced (katlanir), `Create more` anahtari, `Create worktree  Ctrl Enter`.
 Kirmizi ikon + baslik, tek cumle aciklama, "Error details" kod kutusu + kopyala, `Close`.
 TermFlow'da native dialog yasak; bu kalip in-app modal olarak uygun.
 
+### 4.9 Detayli inceleme (Orca 1.4.x, bu PC, 2026-10-14)
+Her dugmeye basilarak incelendi; ayar degistirilmedi.
+- **Sol ust:** logo, `...` uygulama menusu (File: Settings, Exit / Edit / View: Reload, Zoom, Worktree Palette
+  Ctrl+Shift+J, Full Screen, Appearance / Window / Help: Report Crash, Getting Started, About, Check for Updates),
+  kenar cubugu ac-kapa, geri/ileri (worktree gezinme gecmisi). Kapaliyken bu kume sekme seridinin soluna gecer.
+- **Gezinme:** Search (odakta `Ctrl Shift J` ipucu), Tasks (tam sayfa; GitHub/Jira kaynak, Issues/PRs/Projects,
+  Open/Assigned/Mine/Needs review, sorgu kutusu, tablo), Artifacts (bos durum), Automations (sablonlar, New Automation
+  modali: baslik, prompt, Agent, ek argumanlar, Host, Project, Workspace Worktree/New run, Session Fresh/Reuse,
+  Schedule; Runs sayfasi: 4 istatistik karti + tablo), Orca Mobile (gizlenebilir).
+- **Projects basligi:** zil (listeyi ajan etkinligine cevirir, Filter kutusu), Workspace options (Group by
+  None/Status/PR/Project; Sort by Name/Agent Activity/Recent/Project/Manual; Project order; Card layout
+  Detailed/Compact; Show properties; Filters: Hide sleeping / default branch / automation-created / CLI-created /
+  detached HEAD), Add a project (Host, Browse folder, Clone from URL, Create new project), `+` Create worktree.
+- **Proje satiri:** uzerine gelince ok, `...` (Project Settings, Change Project Icon, Show hidden worktrees,
+  New group from project, Remove Project), `+`. Sag tik yok.
+- **Non-Orca worktrees:** kaynaga gore (Claude Code `.claude/worktrees/*`, GSD, Other locations) Show/Hide,
+  Worktree root ekleme, gizli worktree listesi + tek tek Show. Varsayilan: Orca disi worktree'ler GIZLI.
+- **Worktree karti:** yalniz etkin grup cerceveli kart; sag tik: Update (gorunen ad, bagli is, not), Move to Status
+  (Todo/In progress/In review/Done), Open in (VS Code, File Explorer), Copy Path, Copy Worktree Name, Pin,
+  Mark Unread, Change/Open Parent, Sleep, Delete (Ctrl+Shift+Backspace). Oturum satirinda ayni menu.
+- **Alt cubuk (sidebar):** Settings, Help (Keyboard Shortcuts, Feedback, Docs, Changelog, GitHub, Discord, X,
+  Check for Updates, Restart), Reveal active workspace, Workspace board (kanban: Pinned + 4 durum sutunu).
+- **Sekme seridi:** `+` = aramali menu (yeni terminal turleri, Browser, Markdown, ikonlu ajan listesi, Agent
+  settings); sekme sag tik: Split terminal, Pin Tab, Close / Others / Right / Left, Change Title, Tab Color;
+  Command = Quick Commands (bossa Add Quick Command: Label, Terminal/Agent, komut, Append Enter); sag panel dugmesi.
+- **Pane sag ustu:** Hand off to another agent, Chat gorunumu, Split, Close tab.
+- **Sag panel:** ikon sekmeler (Explorer, Agents, Source Control, Checks). Explorer: `...` (Show Dotfiles,
+  Show Git Ignored, Open in VS Code, Open in File Explorer), Names | Contents (case, kelime, regex, include/exclude,
+  dosyaya gore gruplu sonuc). Agents: host secici, ajan filtresi, projeye gore gruplu kartlar (baslik, onizleme,
+  mesaj sayisi, yas, model), "Show more sessions". Source Control: Create PR, `...` (View as tree, Change Base Ref,
+  Refresh), Publish Branch, COMMITS. Checks: upstream yoksa Publish Branch.
+- **Durum cubugu:** solda saglayici basina ikon + `% used` + sifirlanma (dar pencerede kisalir); tiklayinca SOLA
+  hizali popover (Detailed/Compact, saglayici basina 5h/wk cubuklari, %80 ustu kirmizi, Usage details, Manage
+  Accounts). Sagda Keep computer awake (On/Agent/Off), Resource Manager (bellek; worktree > terminal CPU/bellek,
+  Clean up workspaces, disk taramasi), terminal sayisi, Ports (workspace/external).
+- **Floating Workspace:** sag alt dugme; pencere icinde terminal/markdown/browser paneli.
+- **Ayarlar:** tam sayfa, "Back to app", Ctrl+F arama, gruplar (AI Capabilities, Set Up, Workflows, Interface,
+  Remote Hosts, Privacy, Advanced, Experimental). General: worktree klasoru, kaynak Show/Hide, silmeden once onay,
+  Open In Apps. Appearance: sidebar Default/Match Terminal/Tinted, durum cubugu ogeleri. Notifications: Send Test.
+
+### 4.10 Uygulama durumu (4.9'a karsi, 2026-10-14)
+Faz 5 (gomulu tarayici, Chat gorunumu, design mode, orchestration) haric her madde.
+- [x] Sol ust kume: `...` uygulama menusu, kenar cubugu ac-kapa, geri/ileri; kapaliyken sekme seridinin solunda
+- [x] Projects basligi: zil, Workspace options (siralama, kart duzeni, default branch / detached HEAD gizle, kaynak goster)
+- [x] Non-Orca worktree'ler varsayilan gizli + "Show hidden worktrees" penceresi; proje satiri hover ok / `...` / `+`
+- [x] Worktree menusu: New Terminal Here, Open in VS Code / File Explorer, Copy Path / Name, Mark Unread, Remove
+- [x] Alt cubuk: Settings, Help menusu, Reveal active workspace
+- [x] Sekme seridi: `+` aramali menu, sag tik (split, rename, renk, Close / Others / Right / Left), Command = Quick Commands
+- [x] Pane sag ustu: Hand off, Split, Close; durum cubugu limit popover'i sola hizali, pencereden tasmaz
+- [x] Sag panel Source Control (`ScmPanel.tsx`, `src/main/scm.ts`): stage/unstage, commit, Push/Publish, Create PR (`gh pr create --web`), `...` tree/refresh, COMMITS; Ctrl+Shift+G. Dosya tiklamasi ve baslik dugmesi Review sayfasini acar (F4.1)
+- [x] Sag panel Checks (`gh pr checks --json`, upstream yoksa Publish Branch); Ctrl+Shift+K
+- [x] Explorer `...` (Show Dotfiles, Open in VS Code / File Explorer) + `Names | Contents` (`ContentSearch.tsx`, `src/main/fileSearch.ts` = git grep; case/kelime/regex, include/exclude). Show Git Ignored yok: liste .gitignore'a gore zaten suzmuyor
+- [x] Agents paneli: ajan turu filtresi (Select all / Clear), Project/All'da projeye gore gruplu, "Show more sessions" (30'ar). Onizleme/mesaj sayisi/model yok: oturum okuyucusu bu alanlari vermiyor
+- [x] Worktree karti: Update modali (`WorktreeDetailsDialog.tsx`: ad, bagli is, not, durum, parent), Move to Status, Pin, Sleep/Wake, Open/Change Parent (dongu korumali `nestChildren`); veri `ide.worktreeMeta`
+- [x] Workspace board (`WorkspaceBoard.tsx`: Pinned + 4 durum, surukle-birak + erisilebilir secici, arama)
+- [x] Workspace options: Group by Project/Status/Pull Request/None (PR: proje basina tek `gh pr list`, dal adi -> PR), Hide sleeping, Show properties (Notes, Linked work, Agent activity)
+- [x] Create worktree modali (F2.1, `WorktreeLauncherModal.tsx`): tek akilli giris (`worktreeTarget.ts`: ad / mevcut dal / #PR / PR-issue URL), ajan secici, Advanced (parent, not, sparse checkout = cone, `validSparsePaths`), Create more, Ctrl+Enter. Run on WSL/SSH yok (karar bekliyor, asagida)
+- [x] Arama paleti kaynaklari (F2.2, `JumpPalette.tsx` + `jumpRanking.searchCommands`): IDE'de worktree'ler, ayarlar (anahtar kelimeyle), aksiyonlar; Tab / Shift+Tab ile kaynak suzgeci. Lite paleti degismedi
+- [x] Durum cubugu sagi (`IdeStatusExtras.tsx`, `src/main/resources.ts`): Keep computer awake (On/Agent/Off, `powerSaveBlocker`), Resource Manager (uygulama + terminal agaci CPU/bellek), terminal sayisi, Ports (workspace/harici; tiklayinca localhost acilir). Surec taramasi yalniz popover acikken. Clean up workspaces ve disk taramasi yok
+- [x] Tasks tam sayfa (F3.1, `pages/TasksPage.tsx` + `github.listTasks`: Issues/PRs, Open/Mine/Needs review/Closed, GitHub arama, Start worktree), Automations (F3.2, `pages/AutomationsPage.tsx`: istatistik, liste, Run now, 4 sablon = duraklatilmis `claude -p`, Runs)
+- [x] Floating Workspace (F3.3, `pages/FloatingWorkspace.tsx`: surukle/boyutla; Note / Terminal: terminal `floatingTabId` sekmesi, ana alanda cizilmez, Dock ya da sekme seridi ile ana alana doner), Mobile tam sayfa (F3.4), Artifacts (F4.4, oturumdaki medya). Sayfalar orta sutunda, terminaller altta canli (`pages/IdePage.tsx`)
+- [x] Ayarlar tam sayfa (IDE'de `settings-fullpage`: "Back to app", gruplu menu, Ctrl+F), Notifications > Send test notification, Stats & Usage (`StatsSettings.tsx`)
+- [x] Review (F4.1-F4.2, `review/ReviewPage.tsx`, `review/diffModel.ts`, `scm.readScmDiff`): dosya listesi, Unified / Side by side, "Compare with" (bos = HEAD, dal = merge-base'e karsi; Change Base Ref), takip edilmeyen dosyalar dahil; satir numarasina tiklayinca Markdown yorum, yorumlar worktree basina birikir; "Send to agent" tek prompt olarak secilen sekmeye bracketed paste ile Enter'siz yapistirir, program bracketed paste acmadiysa (duz kabuk) satirlar calismasin diye panoya kopyalar
+- [x] Worktree notu (F4.3, `review/NotesPage.tsx`, `src/main/notes.ts`): worktree basina `userData/notes/<hash>.md`, otomatik kayit; worktree menusu "Open Notes" ve palet. Not ayri sayfa olarak acilir (sekmeler terminal oldugu icin)
+- [ ] Create worktree "Run on WSL / SSH": worktree'yi WSL ya da uzak makinenin dosya sisteminde acmak agac, Explorer, SCM ve Review'un uzak yollarla calismasini gerektirir; Faz 5 ile birlikte karar
+
 ## 5. Tasarim dili (gozlenen, yaklasik)
 
 Ekran goruntusunden okunmustur; TermFlow tema sistemine token olarak eklenir, sabit renk yazilmaz.
@@ -337,6 +403,7 @@ modulleri (worktree-note, hibernate, race, scheduled-prompts, remote-attention) 
 | ![TermFlow IDE Explorer](img/tf-01-ide-explorer.png) | ![Orca Explorer](img/03-sag-panel-explorer.jpg) |
 | ![TermFlow IDE Agents](img/tf-02-ide-agents.png) | ![Orca Agents](img/04-sag-panel-agents.jpg) |
 
+- **Faz 2-4 tamam (2026-10-15):** yukaridaki 4.10 listesi. Acik: Run on WSL/SSH ve Faz 5 (karar bekliyor).
 - Faz 1'de yapilmayan: kenar cubugu "Artifacts" (Faz 4), Floating Workspace dugmesi (Faz 3), Explorer
   `Names | Contents` icerik aramasi, sag panel Source Control/Checks (Faz 2).
 

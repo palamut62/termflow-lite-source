@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
 import { normalizeAsciiBackgrounds } from '../../shared/asciiBackground'
-import { DEFAULT_SETTINGS, MEMORY_INTERVAL_MS, type AppSettings } from '../../shared/types'
+import { DEFAULT_SETTINGS, MEMORY_INTERVAL_MS, type AppSettings, type WorktreeMeta } from '../../shared/types'
 import { normalizeSetupSteps } from '../../shared/worktreeSetup'
 import { EDITION } from '../../shared/edition'
 
@@ -50,9 +50,44 @@ function normalizeIde(value: unknown): AppSettings['ide'] {
     sidebarWidth: width(input.sidebarWidth, 260, 200, 400),
     rightWidth: width(input.rightWidth, 300, 220, 560),
     rightOpen: input.rightOpen !== false,
-    rightTab: input.rightTab === 'agents' ? 'agents' : 'explorer',
-    sidebarOpen: input.sidebarOpen !== false
+    rightTab: (['agents', 'scm', 'checks'] as const).find((t) => t === input.rightTab) ?? 'explorer',
+    sidebarOpen: input.sidebarOpen !== false,
+    showClaudeWorktrees: input.showClaudeWorktrees === true,
+    showOtherWorktrees: input.showOtherWorktrees === true,
+    shownWorktrees: Array.isArray(input.shownWorktrees) ? input.shownWorktrees.filter((p): p is string => typeof p === 'string' && p.length <= 1024).slice(0, 500) : [],
+    hideDefaultBranch: input.hideDefaultBranch === true,
+    hideDetached: input.hideDetached === true,
+    sort: input.sort === 'name' || input.sort === 'recent' ? input.sort : 'activity',
+    cardLayout: input.cardLayout === 'compact' ? 'compact' : 'detailed',
+    groupBy: input.groupBy === 'status' || input.groupBy === 'pr' || input.groupBy === 'none' ? input.groupBy : 'project',
+    hideSleeping: input.hideSleeping === true,
+    hiddenProps: Array.isArray(input.hiddenProps) ? (['note', 'link', 'sessions'] as const).filter((p) => input.hiddenProps?.includes(p)) : [],
+    worktreeMeta: normalizeWorktreeMeta(input.worktreeMeta),
+    keepAwake: input.keepAwake === 'on' || input.keepAwake === 'agent' ? input.keepAwake : 'off'
   }
+}
+
+export function normalizeWorktreeMeta(value: unknown): Record<string, WorktreeMeta> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const text = (raw: unknown, max: number): string | undefined => (typeof raw === 'string' && raw.trim() ? raw.slice(0, max) : undefined)
+  const out: Record<string, WorktreeMeta> = {}
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>).slice(0, 1000)) {
+    if (!raw || typeof raw !== 'object' || key.length > 1024) continue
+    const m = raw as Record<string, unknown>
+    const meta: WorktreeMeta = {
+      name: text(m.name, 120),
+      link: text(m.link, 2000),
+      note: text(m.note, 20000),
+      status: (['todo', 'in-progress', 'in-review', 'done'] as const).find((s) => s === m.status),
+      pinned: m.pinned === true || undefined,
+      sleeping: m.sleeping === true || undefined,
+      parent: text(m.parent, 1024)
+    }
+    // Bos kayit tutulmaz.
+    const clean = Object.fromEntries(Object.entries(meta).filter(([, v]) => v !== undefined)) as WorktreeMeta
+    if (Object.keys(clean).length) out[key] = clean
+  }
+  return out
 }
 
 function normalizeAgentAlerts(value: unknown): AppSettings['agentAlerts'] {

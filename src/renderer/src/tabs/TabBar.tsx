@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, DragEvent } from 'react'
-import { ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Play, Plus, Rows2, PanelLeft, PanelRight, Smartphone } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, Columns2, PanelTopClose, PictureInPicture2, Play, Plus, Rows2, PanelLeft, PanelRight, Smartphone } from 'lucide-react'
 import { useWidgetStore } from '../widget/widgetStore'
 import { resolveDefaultProfileId, useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
@@ -10,6 +10,10 @@ import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
 import { useTaskPaletteStore } from '../store/taskPaletteStore'
+import { useSavedCommandStore } from '../store/savedCommandStore'
+import { useToastStore } from '../store/toastStore'
+import { IdeMenu, MenuItem, anchorOf, type MenuAnchor } from '../shells/ide/IdeMenu'
+import { canGo, go, onHistoryChange } from '../shells/ide/tabHistory'
 import { AttentionBell } from '../attention/AttentionBell'
 import { effectiveMotion } from '../motion'
 import { phonesLabel, useConnectedPhones } from '../remoteStatus'
@@ -28,24 +32,99 @@ function RemoteIndicator(): React.JSX.Element | null {
   )
 }
 
-/** Agent IDE sekme seridinin sag ucu (Orca): Command paleti ve sag panel dugmesi; kenar cubugu kapaliysa acma dugmesi. */
-function IdeTabBarActions({ sidebarOpen, rightOpen }: { sidebarOpen: boolean; rightOpen: boolean }): React.JSX.Element {
-  const setIde = (patch: { sidebarOpen?: boolean; rightOpen?: boolean }): void => {
-    const current = useSettingsStore.getState().settings.ide
-    void useSettingsStore.getState().update({ ide: { ...current, ...patch } })
+function setIde(patch: { sidebarOpen?: boolean; rightOpen?: boolean }): void {
+  const current = useSettingsStore.getState().settings.ide
+  void useSettingsStore.getState().update({ ide: { ...current, ...patch } })
+}
+
+/** Kenar cubugu gizliyken Orca'daki gibi ust sol kume sekme seridine gecer: ac, geri, ileri. */
+function IdeTabBarLead(): React.JSX.Element {
+  const [, setTick] = useState(0)
+  useEffect(() => onHistoryChange(() => setTick((n) => n + 1)), [])
+  return (
+    <div className="ide-tab-lead">
+      <button className="split-tab-btn" onClick={() => setIde({ sidebarOpen: true })} title="Show sidebar" aria-label="Show sidebar"><PanelLeft size={14} /></button>
+      <button className="split-tab-btn" disabled={!canGo(-1)} onClick={() => go(-1)} title="Back" aria-label="Back"><ArrowLeft size={13} /></button>
+      <button className="split-tab-btn" disabled={!canGo(1)} onClick={() => go(1)} title="Forward" aria-label="Forward"><ArrowRight size={13} /></button>
+    </div>
+  )
+}
+
+/** Agent IDE sekme seridinin sag ucu (Orca): Quick Commands ve sag panel dugmesi. */
+function IdeTabBarActions({ rightOpen }: { rightOpen: boolean }): React.JSX.Element {
+  const commands = useSavedCommandStore((s) => s.commands)
+  const [anchor, setAnchor] = useState<MenuAnchor | null>(null)
+  const close = (): void => setAnchor(null)
+  const run = (id: string): void => {
+    close()
+    const item = useSavedCommandStore.getState().commands.find((c) => c.id === id)
+    if (!item || item.activeTabId) return
+    const tabId = useTerminalStore.getState().addTab(item.profileId, true, item.cwd, item.command)
+    useSavedCommandStore.getState().startRun(item.id, tabId, Date.now())
   }
   return (
     <>
       <span className="ide-tab-spacer" />
-      {!sidebarOpen && (
-        <button className="split-tab-btn" onClick={() => setIde({ sidebarOpen: true })} title="Show sidebar" aria-label="Show sidebar"><PanelLeft size={14} /></button>
-      )}
-      <button className="ide-command-btn" onClick={() => useTaskPaletteStore.getState().toggle()} title="Command palette (Ctrl+Shift+P)"><Play size={11} /> Command</button>
+      <button className="ide-command-btn" onClick={(e) => setAnchor(anchor ? null : anchorOf(e.currentTarget))} title="Quick commands" aria-haspopup="menu" aria-expanded={Boolean(anchor)}><Play size={11} /> Command</button>
       {/* Panel acikken dugmesi panelin kendi ust satirinda (Orca). */}
       {!rightOpen && (
         <button className="split-tab-btn" onClick={() => setIde({ rightOpen: true })} title="Show right panel" aria-label="Show right panel"><PanelRight size={14} /></button>
       )}
+      {anchor && (
+        <IdeMenu anchor={anchor} label="Quick commands" onClose={close} width={280}>
+          <div className="ctx-menu-section" role="presentation">Quick commands</div>
+          {commands.length === 0 && <div className="ide-menu-empty">No saved commands yet.</div>}
+          {commands.map((item) => (
+            <MenuItem key={item.id} onSelect={() => run(item.id)} hint={item.activeTabId ? 'running' : undefined}>{item.name}</MenuItem>
+          ))}
+          <div className="ctx-menu-divider" />
+          <MenuItem onSelect={() => { close(); useSavedCommandStore.getState().show() }}>Add or edit commands...</MenuItem>
+          <MenuItem onSelect={() => { close(); useTaskPaletteStore.getState().toggle() }} hint="Ctrl+Shift+P">Command Palette</MenuItem>
+        </IdeMenu>
+      )}
     </>
+  )
+}
+
+const TAB_COLORS = ['#3b82f6', '#a855f7', '#ec4899', '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#94a3b8']
+
+/** Agent IDE sekme sag tik menusu (Orca 4.9). */
+function TabContextMenu({ tabId, anchor, onClose }: { tabId: string; anchor: MenuAnchor; onClose: () => void }): React.JSX.Element {
+  const tabs = useTerminalStore((s) => s.tabs)
+  const index = tabs.findIndex((t) => t.id === tabId)
+  const tab = tabs[index]
+  const store = useTerminalStore.getState()
+  const pick = (fn: () => void) => (): void => { onClose(); fn() }
+  if (!tab) return <></>
+  const others = tabs.filter((t) => t.id !== tabId).map((t) => t.id)
+  const right = tabs.slice(index + 1).map((t) => t.id)
+  const left = tabs.slice(0, index).map((t) => t.id)
+  const split = (dir: 'vertical' | 'horizontal'): void => { store.setActiveTab(tabId); store.splitActive(dir) }
+  const closeMany = (ids: string[]): void => {
+    const kept = store.closeTabs(ids)
+    if (kept > 0) useToastStore.getState().show(`Kept ${kept} running tab${kept === 1 ? '' : 's'}. Close ${kept === 1 ? 'it' : 'them'} one by one to confirm.`, 'info')
+  }
+  return (
+    <IdeMenu anchor={anchor} label="Tab actions" onClose={onClose} width={240}>
+      <MenuItem onSelect={pick(() => store.addTab(tab.profileId, true, tab.cwd || tab.launchCwd))}>New Terminal Like This</MenuItem>
+      <MenuItem onSelect={pick(() => split('vertical'))} hint={'Ctrl+\\'}>Split Right</MenuItem>
+      <MenuItem onSelect={pick(() => split('horizontal'))}>Split Down</MenuItem>
+      <div className="ctx-menu-divider" />
+      <MenuItem onSelect={pick(() => window.dispatchEvent(new CustomEvent('termflow:rename-tab', { detail: tabId })))}>Change Title</MenuItem>
+      <MenuItem onSelect={pick(() => store.markAttention(tabId, 'done'))}>Mark as Unread</MenuItem>
+      <div className="ctx-menu-section" role="presentation">Tab color</div>
+      <div className="ide-color-row" role="group" aria-label="Tab color">
+        <button className={`ide-color-swatch ide-color-none${!tab.color ? ' ide-color-on' : ''}`} onClick={pick(() => store.setTabColor(tabId, undefined))} aria-label="No color" title="No color" />
+        {TAB_COLORS.map((color) => (
+          <button key={color} className={`ide-color-swatch${tab.color === color ? ' ide-color-on' : ''}`} style={{ background: color }} onClick={pick(() => store.setTabColor(tabId, color))} aria-label={`Color ${color}`} title={color} />
+        ))}
+      </div>
+      <div className="ctx-menu-divider" />
+      <MenuItem onSelect={pick(() => store.requestCloseTab(tabId))} hint="Ctrl+Shift+W">Close</MenuItem>
+      {others.length > 0 && <MenuItem onSelect={pick(() => closeMany(others))}>Close Others</MenuItem>}
+      {right.length > 0 && <MenuItem onSelect={pick(() => closeMany(right))}>Close Tabs to the Right</MenuItem>}
+      {left.length > 0 && <MenuItem onSelect={pick(() => closeMany(left))}>Close Tabs to the Left</MenuItem>}
+    </IdeMenu>
   )
 }
 
@@ -73,6 +152,7 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
   const [pathLauncherOpen, setPathLauncherOpen] = useState(false)
   const [worktreeLauncherOpen, setWorktreeLauncherOpen] = useState(false)
   const [githubOpen, setGithubOpen] = useState(false)
+  const [tabMenu, setTabMenu] = useState<{ tabId: string; anchor: MenuAnchor } | null>(null)
   const caretRef = useRef<HTMLButtonElement>(null)
   // Native HTML5 DnD reorder (PRD §14): dragged tab + insertion indicator.
   const [draggedId, setDraggedId] = useState<string | null>(null)
@@ -168,6 +248,7 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
 
   return (
     <div className="tab-bar" style={{ height, ...titleBarInset } as CSSProperties}>
+      {ide && !ide.sidebarOpen && <IdeTabBarLead />}
       <div ref={listRef} className="tab-list" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
         <div ref={indicatorRef} className="tab-indicator" aria-hidden="true" />
         {tabs.map((tab) => (
@@ -181,6 +262,10 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
             onDragStart={setDraggedId}
             onDragEnd={handleDragEnd}
             onDragOverTab={handleDragOverTab}
+            onContextMenu={ide ? (e) => {
+              e.preventDefault()
+              setTabMenu({ tabId: tab.id, anchor: { left: e.clientX, right: e.clientX, top: e.clientY, bottom: e.clientY } })
+            } : undefined}
             dropPos={
               dropPos && dropPos.tabId === tab.id ? (dropPos.before ? 'before' : 'after') : null
             }
@@ -225,11 +310,12 @@ export function TabBar({ height, ide }: TabBarProps): React.JSX.Element {
         )}
         <AttentionBell />
         <RemoteIndicator />
-        {ide && <IdeTabBarActions {...ide} />}
+        {ide && <IdeTabBarActions rightOpen={ide.rightOpen} />}
       </div>
       {pathLauncherOpen && <PathLauncherModal onClose={() => setPathLauncherOpen(false)} />}
       {worktreeLauncherOpen && <WorktreeLauncherModal onClose={() => setWorktreeLauncherOpen(false)} />}
       {githubOpen && <GitHubPanel onClose={() => setGithubOpen(false)} />}
+      {tabMenu && <TabContextMenu tabId={tabMenu.tabId} anchor={tabMenu.anchor} onClose={() => setTabMenu(null)} />}
     </div>
   )
 }

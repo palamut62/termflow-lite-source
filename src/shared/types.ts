@@ -7,7 +7,7 @@ export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'cus
 export type TabActivity = 'running' | 'waiting' | 'unread' | 'completed' | 'error'
 export type AgentKind = 'claude' | 'codex' | 'opencode'
 /** Ajanin dikkat istedigi okunmamis olay (agent-attention). */
-export type IdeRightTab = 'explorer' | 'agents'
+export type IdeRightTab = 'explorer' | 'agents' | 'scm' | 'checks'
 export interface IdeSettings {
   /** Kullanicinin ekledigi proje klasorleri (depo kokleri), siraya gore. */
   projects: string[]
@@ -16,7 +16,38 @@ export interface IdeSettings {
   rightOpen: boolean
   rightTab: IdeRightTab
   sidebarOpen: boolean
+  /** Workspace options (Orca): baska araclarin worktree'leri, filtreler, siralama, kart duzeni. */
+  showClaudeWorktrees: boolean
+  showOtherWorktrees: boolean
+  shownWorktrees: string[]
+  hideDefaultBranch: boolean
+  hideDetached: boolean
+  sort: 'activity' | 'name' | 'recent'
+  cardLayout: 'detailed' | 'compact'
+  groupBy: 'project' | 'status' | 'pr' | 'none'
+  hideSleeping: boolean
+  /** Show properties (Orca): kartta gizlenen alanlar. */
+  hiddenProps: WorktreeProp[]
+  /** Worktree basina kullanici verisi; anahtar `worktreeKey(path)`. */
+  worktreeMeta: Record<string, WorktreeMeta>
+  /** Keep computer awake (Orca): on = hep, agent = bir ajan calisirken, off. */
+  keepAwake: 'off' | 'on' | 'agent'
 }
+export type WorktreeStatus = 'todo' | 'in-progress' | 'in-review' | 'done'
+export type WorktreeProp = 'note' | 'link' | 'sessions'
+/** Orca "Workspace details" + kart menusu: gorunen ad, bagli is, not, durum, pin, uyku, parent. */
+export interface WorktreeMeta {
+  name?: string
+  link?: string
+  note?: string
+  status?: WorktreeStatus
+  pinned?: boolean
+  sleeping?: boolean
+  /** Agacta altinda gosterilecegi worktree yolu. */
+  parent?: string
+}
+/** Windows'ta buyuk/kucuk harf ve ayirici farkindan bagimsiz worktree anahtari. */
+export const worktreeKey = (path: string): string => path.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
 export type TabAttention = 'needs-input' | 'done' | 'error'
 export interface AlertChannel { system: boolean; sound: boolean }
 export interface AgentAlertSettings {
@@ -100,6 +131,8 @@ export interface TerminalTab {
   agentHook?: { state: AgentHookState; sessionId?: string; detail?: string; at: number }
   /** Gorulmemis ajan olayi: sekme noktasi, zil, gorev cubugu rozeti. */
   attention?: TabAttention
+  /** Sekme rengi (Agent IDE sekme menusu, Orca "Tab Color"): #rrggbb. */
+  color?: string
 }
 
 export interface TerminalProfile {
@@ -614,7 +647,7 @@ export interface UpdateStatus {
  */
 export interface PersistedSession {
   version: 1
-  tabs: { id: string; title: string; profileId: string; cwd?: string; permissionMode?: AgentPermissionMode; model?: string; resumeSession?: AgentSessionRef; worktree?: TabWorktree }[]
+  tabs: { id: string; title: string; profileId: string; cwd?: string; permissionMode?: AgentPermissionMode; model?: string; resumeSession?: AgentSessionRef; worktree?: TabWorktree; color?: string }[]
   activeTabId: string | null
   paneTree: unknown | null
   splitDirection: 'vertical' | 'horizontal' | null
@@ -721,7 +754,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showSessionRail: false,
   uiMode: EDITION === 'ide' ? 'ide' : 'terminal',
   uiModeChosen: false,
-  ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer', sidebarOpen: true },
+  ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer', sidebarOpen: true, showClaudeWorktrees: false, showOtherWorktrees: false, shownWorktrees: [], hideDefaultBranch: false, hideDetached: false, sort: 'activity', cardLayout: 'detailed', groupBy: 'project', hideSleeping: false, hiddenProps: [], worktreeMeta: {}, keepAwake: 'off' },
   sessionRailWidth: 220,
   closeToTray: true,
   quakeMode: false,

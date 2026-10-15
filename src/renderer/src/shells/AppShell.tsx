@@ -6,6 +6,8 @@ import { StatusBar } from '../components/StatusBar'
 import { TerminalArea } from './TerminalArea'
 import { IdeSidebar } from './ide/IdeSidebar'
 import { RightPanel } from './ide/RightPanel'
+import { IdePageView } from './ide/pages/IdePage'
+import { FloatingWorkspace } from './ide/pages/FloatingWorkspace'
 
 /**
  * Uygulama yerlesimi. Terminal modu TermFlow Lite'in kendisidir. Agent IDE modu (yalniz IDE surumu,
@@ -29,6 +31,9 @@ export function AppShell(): React.JSX.Element {
         <TerminalArea />
         {ide ? rightOpen && <RightPanel /> : <FilePanel />}
         {ide && <TabBar height={tabHeight} ide={{ sidebarOpen, rightOpen }} />}
+        {/* Sayfalar ve yuzen panel SON cocuklar: TerminalArea'nin sirasi degismez, terminaller altta canli kalir. */}
+        {ide && <IdePageView />}
+        {ide && <FloatingWorkspace />}
       </div>
       <StatusBar />
     </>

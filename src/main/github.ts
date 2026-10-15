@@ -9,7 +9,7 @@ import { execFile } from 'child_process'
 import { existsSync, statSync } from 'fs'
 import { isAbsolute } from 'path'
 import { promisify } from 'util'
-import type { GitHubPullRequest, GitHubRepo, GitHubStatus } from '../shared/ipc'
+import type { GitHubPullRequest, GitHubRepo, GitHubStatus, GitHubTask, GitHubTaskFilter, GitHubTaskKind } from '../shared/ipc'
 
 const execFileAsync = promisify(execFile)
 
@@ -92,6 +92,52 @@ export function parsePullRequests(stdout: string): GitHubPullRequest[] {
       isDraft: entry.isDraft === true,
       updatedAt: str(entry.updatedAt)
     }))
+}
+
+/** `gh issue|pr list --json ...` -> task rows (Agent IDE Tasks page). */
+export function parseTasks(stdout: string): GitHubTask[] {
+  let raw: unknown
+  try {
+    raw = JSON.parse(stdout)
+  } catch {
+    return []
+  }
+  if (!Array.isArray(raw)) return []
+  const logins = (value: unknown): string[] => (Array.isArray(value) ? value.map((v) => str((v as Record<string, unknown>)?.login)).filter(Boolean) : [])
+  return raw
+    .map((entry) => entry as Record<string, unknown>)
+    .filter((entry) => !!entry && Number.isInteger(entry.number) && (entry.number as number) > 0)
+    .map((entry) => ({
+      number: entry.number as number,
+      title: str(entry.title, '(untitled)'),
+      author: str((entry.author as Record<string, unknown> | undefined)?.login),
+      assignees: logins(entry.assignees),
+      state: str(entry.state),
+      updatedAt: str(entry.updatedAt),
+      url: str(entry.url),
+      labels: Array.isArray(entry.labels) ? entry.labels.map((l) => str((l as Record<string, unknown>)?.name)).filter(Boolean) : [],
+      ...(typeof entry.headRefName === 'string' ? { branch: entry.headRefName, draft: entry.isDraft === true } : {})
+    }))
+}
+
+/** gh arguments for a Tasks query; the search text is passed as one `--search=` value, never as a flag. */
+export function taskArgs(kind: GitHubTaskKind, filter: GitHubTaskFilter, search: string, repo: string): string[] {
+  const fields = kind === 'prs' ? 'number,title,author,assignees,state,updatedAt,url,labels,headRefName,isDraft' : 'number,title,author,assignees,state,updatedAt,url,labels'
+  const args = [kind === 'prs' ? 'pr' : 'issue', 'list', '--json', fields, '--limit', '50', '--state', filter === 'closed' ? 'closed' : 'open']
+  if (filter === 'mine') args.push(kind === 'prs' ? '--author' : '--assignee', '@me')
+  const query = [filter === 'review' && kind === 'prs' ? 'review-requested:@me' : '', search.trim().slice(0, 200)].filter(Boolean).join(' ')
+  if (query) args.push(`--search=${query}`)
+  if (repo) args.push('--repo', repo)
+  return args
+}
+
+export async function listTasks(kind: GitHubTaskKind, filter: GitHubTaskFilter, search: string, repo: string, cwd?: string): Promise<GitHubTask[]> {
+  if (repo && !isValidRepo(repo)) throw new Error('Invalid repository name.')
+  try {
+    return parseTasks(await gh(taskArgs(kind, filter, search, repo), cwd))
+  } catch (error) {
+    throw new Error(ghError(error))
+  }
 }
 
 /**

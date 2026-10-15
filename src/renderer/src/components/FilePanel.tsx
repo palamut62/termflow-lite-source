@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Eye, EyeOff, File, FileCode, Folder, FolderOpen, RefreshCw, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Eye, EyeOff, File, FileCode, Folder, FolderOpen, MoreHorizontal, RefreshCw, X } from 'lucide-react'
 import type { DirEntry, DirListing } from '../../../shared/ipc'
 import { useFilePanelStore } from '../store/filePanelStore'
 import { useTerminalStore } from '../store/terminalStore'
 import { useToastStore } from '../store/toastStore'
 import { folderName, matchesFilter, opensInEditor, quotePath } from './filePanelModel'
+import { IdeMenu, MenuItem, anchorOf, type MenuAnchor } from '../shells/ide/IdeMenu'
+import { ContentSearch } from '../shells/ide/ContentSearch'
 
 /** Opens a file: code and text in the editor, anything else in its default app (executables are only revealed). */
 async function openFile(entry: DirEntry): Promise<void> {
@@ -37,6 +39,9 @@ export function FilePanel({ embedded = false }: { embedded?: boolean } = {}): Re
   const activeTabId = useTerminalStore((s) => s.activeTabId)
   const [selected, setSelected] = useState('')
   const [menu, setMenu] = useState<MenuState | null>(null)
+  // Agent IDE Explorer (PRD 4.9): `...` menusu ve Names | Contents.
+  const [moreMenu, setMoreMenu] = useState<MenuAnchor | null>(null)
+  const [mode, setMode] = useState<'names' | 'contents'>('names')
 
   useEffect(() => {
     if (!menu) return
@@ -71,12 +76,29 @@ export function FilePanel({ embedded = false }: { embedded?: boolean } = {}): Re
     <aside className={embedded ? 'file-panel file-panel-embedded' : 'file-panel'} aria-label="Files">
       <header className="file-panel-head">
         <span className="file-panel-title" title={cwd}>{cwd ? folderName(cwd) : 'Files'}</span>
-        <button className="file-panel-icon" onClick={() => store.setShowHidden(!showHidden)} title={showHidden ? 'Hide hidden files' : 'Show hidden files (.git, node_modules, dotfiles)'} aria-pressed={showHidden}>
+        {!embedded && <button className="file-panel-icon" onClick={() => store.setShowHidden(!showHidden)} title={showHidden ? 'Hide hidden files' : 'Show hidden files (.git, node_modules, dotfiles)'} aria-pressed={showHidden}>
           {showHidden ? <Eye size={13} /> : <EyeOff size={13} />}
-        </button>
+        </button>}
         <button className="file-panel-icon" onClick={() => store.refresh()} title="Refresh" aria-label="Refresh"><RefreshCw size={13} /></button>
+        {embedded && <button className="file-panel-icon" onClick={(e) => setMoreMenu(moreMenu ? null : anchorOf(e.currentTarget))} title="More actions" aria-label="Explorer actions" aria-haspopup="menu"><MoreHorizontal size={13} /></button>}
         {!embedded && <button className="file-panel-icon" onClick={() => store.hide()} title="Close (Ctrl+Shift+E)" aria-label="Close files"><X size={13} /></button>}
       </header>
+      {moreMenu && (
+        <IdeMenu anchor={moreMenu} label="Explorer actions" onClose={() => setMoreMenu(null)}>
+          <MenuItem checked={showHidden} onSelect={() => { setMoreMenu(null); store.setShowHidden(!showHidden) }}>Show Dotfiles (.git, node_modules)</MenuItem>
+          <div className="ctx-menu-divider" />
+          <MenuItem onSelect={() => { setMoreMenu(null); if (cwd) void window.termflow.system.openInEditor(cwd, 1) }}>Open in VS Code</MenuItem>
+          <MenuItem onSelect={() => { setMoreMenu(null); if (cwd) void window.termflow.system.openPath(cwd) }}>Open in File Explorer</MenuItem>
+        </IdeMenu>
+      )}
+      {embedded && (
+        <div className="ide-segment ide-explorer-mode" role="radiogroup" aria-label="Search mode">
+          {(['names', 'contents'] as const).map((m) => (
+            <button key={m} role="radio" aria-checked={mode === m} className={mode === m ? 'ide-segment-on' : ''} onClick={() => setMode(m)}>{m === 'names' ? 'Names' : 'Contents'}</button>
+          ))}
+        </div>
+      )}
+      {mode === 'contents' ? <ContentSearch cwd={cwd} /> : <>
       <input
         className="file-panel-filter"
         value={filter}
@@ -91,6 +113,7 @@ export function FilePanel({ embedded = false }: { embedded?: boolean } = {}): Re
           ? <FolderLevel path={cwd} depth={0} selected={selected} onSelect={setSelected} onMenu={setMenu} />
           : <div className="file-panel-note">This tab has no folder yet.</div>}
       </div>
+      </>}
       {menu && (
         <div className="ctx-menu" role="menu" style={{ left: Math.min(menu.x, window.innerWidth - 200), top: Math.min(menu.y, window.innerHeight - 170) }} onMouseDown={(e) => e.stopPropagation()}>
           {!menu.entry.isDirectory && <button className="ctx-menu-item" role="menuitem" onClick={menuAction(() => openFile(menu.entry))}>Open</button>}
