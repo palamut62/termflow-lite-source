@@ -161,6 +161,9 @@ export class SettingsStore {
       merged.usageDisplay = 'remaining'
     }
     merged.limitDefaultsApplied = true
+    // 1.25.0: limitler Claude Code'un kendi satiri gibi % kullanilan; mevcut kurulumlar bir kez gecer, 'off' korunur.
+    if (!settings.limitClaudeStyleApplied && merged.usageDisplay !== 'off') merged.usageDisplay = 'used'
+    merged.limitClaudeStyleApplied = true
     const contrast = Number(merged.minimumContrastRatio)
     merged.minimumContrastRatio = Number.isFinite(contrast) ? Math.min(21, Math.max(1, contrast)) : 1
     return merged

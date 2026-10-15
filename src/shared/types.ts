@@ -445,6 +445,8 @@ export interface AppSettings {
   claudeUsage: boolean
   /** Limit gostergesi varsayilanlari (Claude acik, kalan %) bir kez uygulandi; sonraki secimler korunur. */
   limitDefaultsApplied: boolean
+  /** 1.25.0 tek seferlik gecis: limitler Claude Code gibi % kullanilan. */
+  limitClaudeStyleApplied: boolean
   /** Aktif ajanin limitlerini terminalin sag ustunde kart olarak goster. */
   usageCard: boolean
   /** OSC 52: terminal programlari (SSH/tmux icindeki TUI'ler dahil) panoya yazabilir; okuma hep kapali. */
@@ -776,9 +778,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agentHooks: true,
   restoreScrollback: true,
   resumeAgentsOnRestore: true,
-  usageDisplay: 'remaining',
+  usageDisplay: 'used',
   claudeUsage: true,
   limitDefaultsApplied: true,
+  limitClaudeStyleApplied: true,
   usageCard: true,
   osc52Clipboard: true,
   shiftEnterNewline: true,

@@ -54,11 +54,22 @@ describe('SettingsStore', () => {
     expect(new SettingsStore(file()).get().worktreeSetup).toEqual({ 'c:/app': { copyFiles: ['.env'], commands: ['npm ci'], enabled: true } })
   })
 
-  it('moves existing installs to Claude limits on and remaining % once, then keeps their choice', () => {
+  it('moves existing installs to Claude limits on once, then keeps their choice', () => {
     writeFileSync(file(), JSON.stringify({ claudeUsage: false, usageDisplay: 'used' }))
     const store = new SettingsStore(file())
-    expect(store.get()).toMatchObject({ claudeUsage: true, usageDisplay: 'remaining', limitDefaultsApplied: true })
+    expect(store.get()).toMatchObject({ claudeUsage: true, usageDisplay: 'used', limitDefaultsApplied: true, limitClaudeStyleApplied: true })
     expect(store.update({ usageDisplay: 'used', claudeUsage: false })).toMatchObject({ claudeUsage: false, usageDisplay: 'used' })
+  })
+
+  it('switches a remaining-% install to Claude Code style used % once, keeps off and later choices', () => {
+    writeFileSync(file(), JSON.stringify({ limitDefaultsApplied: true, usageDisplay: 'remaining' }))
+    const store = new SettingsStore(file())
+    expect(store.get().usageDisplay).toBe('used')
+    expect(store.update({ usageDisplay: 'remaining' }).usageDisplay).toBe('remaining')
+    store.flush()
+    expect(new SettingsStore(file()).get().usageDisplay).toBe('remaining')
+    writeFileSync(file(), JSON.stringify({ limitDefaultsApplied: true, usageDisplay: 'off' }))
+    expect(new SettingsStore(file()).get().usageDisplay).toBe('off')
   })
 
   it('rejects an unknown backdrop material', () => {

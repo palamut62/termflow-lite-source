@@ -27,8 +27,8 @@ describe('parseClaudeRateLimits', () => {
   })
 })
 
-it('drops expired windows and sorts the tightest first', () => {
-  const windows = [{ label: '7d', usedPercent: 40, resetsAt: now + 1 }, { label: '5h', usedPercent: 90, resetsAt: now + 1 }, { label: 'old', usedPercent: 99, resetsAt: now - 1 }]
+it('drops expired windows and keeps Claude Code order, 5h before 7d whatever is used', () => {
+  const windows = [{ label: '7d', usedPercent: 90, resetsAt: now + 1 }, { label: '5h', usedPercent: 30, resetsAt: now + 1 }, { label: 'old', usedPercent: 99, resetsAt: now - 1 }]
   expect(liveWindows(windows, now).map((w) => w.label)).toEqual(['5h', '7d'])
 })
 

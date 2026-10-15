@@ -31,8 +31,16 @@ function windowLabel(minutes: number): string {
 }
 
 /** Suresi dolmus pencere gosterilmez; en sikisik once. */
+/** Window length in minutes from its label ('5h', '7d', '90m'); unknown labels sort last. */
+function windowMinutes(label: string): number {
+  const match = /^(\d+(?:\.\d+)?)\s*([mhdw])/i.exec(label)
+  if (!match) return Number.MAX_SAFE_INTEGER
+  return Number(match[1]) * ({ m: 1, h: 60, d: 1440, w: 10080 } as Record<string, number>)[match[2]!.toLowerCase()]!
+}
+
+/** Live windows in Claude Code's own order: the shortest window first (5h, then 7d). */
 export function liveWindows(windows: readonly UsageWindow[], now: number): UsageWindow[] {
-  return windows.filter((w) => w.resetsAt > now).sort((a, b) => b.usedPercent - a.usedPercent)
+  return windows.filter((w) => w.resetsAt > now).sort((a, b) => windowMinutes(a.label) - windowMinutes(b.label))
 }
 
 /**
