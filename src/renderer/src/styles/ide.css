@@ -272,10 +272,13 @@
   color: var(--ide-muted);
   border-top: 1px solid var(--widget-border);
 }
-.ui-ide .status-bar > button.status-action:not(.status-item) { display: none; }
+/* IDE: History, Saved, Sessions, Agents, Commands, Wrapped yalniz simge (ad title'da); Files yerine sag panel Explorer. */
+.ui-ide .status-bar > button.status-action:not(.status-item) { font-size: 0; gap: 0; padding: 0 6px; }
+.ui-ide .status-bar > button.status-action:not(.status-item) svg { width: 13px; height: 13px; }
+.ui-ide .status-bar > button.status-files { display: none; }
 .ui-ide .status-bar > .usage-meter { order: -1; }
 /* Orca alt cubugu sade: cikti grafigi ve profil secici yok (devir pane araclarinda, Hand off). */
-.ui-ide .status-bar > .status-pulse, .ui-ide .status-bar > .status-agent-profile { display: none; }
+.ui-ide .status-bar > .status-pulse { display: none; }
 .ui-ide .status-bar > .ide-term-count { display: inline-flex; align-items: center; gap: 3px; }
 
 /* Pane sag ustu (Orca): devret, bol, kapat; fare pane uzerindeyken. */

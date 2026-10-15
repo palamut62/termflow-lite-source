@@ -173,7 +173,7 @@ export function StatusBar(): React.JSX.Element {
       <button className="status-action" onClick={() => useAgentEventStore.getState().show()} title="Live agent activity and timeline"><Radio size={12} />Agents</button>
       <button className="status-action" onClick={() => useTaskPaletteStore.getState().show()} title="Command palette (Ctrl+Shift+P)"><Command size={12} />Commands</button>
       <button className="status-action" onClick={() => useStatsStore.getState().show()} title="Your TermFlow stats and badges"><Sparkles size={12} />Wrapped</button>
-      <button className="status-action" onClick={() => useFilePanelStore.getState().toggle()} title="Files in this folder (Ctrl+Shift+E)"><FolderTree size={12} />Files</button>
+      <button className="status-action status-files" onClick={() => useFilePanelStore.getState().toggle()} title="Files in this folder (Ctrl+Shift+E)"><FolderTree size={12} />Files</button>
       <span className="status-spacer" />
       {/* Yanlışlıkla açık kalmasın diye belirgin rozet; tıklama kapatır. */}
       {broadcastInput && (

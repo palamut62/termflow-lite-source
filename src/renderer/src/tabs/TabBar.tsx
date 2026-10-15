@@ -55,6 +55,7 @@ function IdeTabBarLead(): React.JSX.Element {
 /** Agent IDE sekme seridinin sag ucu (Orca): Quick Commands ve sag panel dugmesi. */
 function IdeTabBarActions({ rightOpen }: { rightOpen: boolean }): React.JSX.Element {
   const commands = useSavedCommandStore((s) => s.commands)
+  const splitDirection = useTerminalStore((s) => s.splitDirection)
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null)
   const close = (): void => setAnchor(null)
   const run = (id: string): void => {
@@ -68,6 +69,9 @@ function IdeTabBarActions({ rightOpen }: { rightOpen: boolean }): React.JSX.Elem
     <>
       <span className="ide-tab-spacer" />
       <button className="ide-command-btn" onClick={(e) => setAnchor(anchor ? null : anchorOf(e.currentTarget))} title="Quick commands" aria-haspopup="menu" aria-expanded={Boolean(anchor)}><Play size={11} /> Command</button>
+      {/* Lite ile ayni: widget gorunumu ve split kapatma IDE'de de var (split dugmeleri pane araclarinda). */}
+      {splitDirection && <button className="split-tab-btn" onClick={() => useTerminalStore.getState().closeSplit()} title="Close split view" aria-label="Close split view"><PanelTopClose size={14} /></button>}
+      <button className="split-tab-btn" onClick={() => void useWidgetStore.getState().enter()} title="Widget view (compact status, always on top)" aria-label="Switch to widget view"><PictureInPicture2 size={14} /></button>
       {/* Panel acikken dugmesi panelin kendi ust satirinda (Orca). */}
       {!rightOpen && (
         <button className="split-tab-btn" onClick={() => setIde({ rightOpen: true })} title="Show right panel" aria-label="Show right panel"><PanelRight size={14} /></button>

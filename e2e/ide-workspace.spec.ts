@@ -329,3 +329,16 @@ test('review: a changed file opens as a diff, a line comment goes to the agent t
   await win.getByRole('menuitem', { name: 'Open Notes' }).click()
   await expect(win.getByRole('textbox', { name: 'Worktree notes (Markdown)' })).toHaveValue('# fix-login\n- check tokens')
 })
+
+test('everything the Lite status bar and tab bar offer is reachable in the IDE layout', async () => {
+  const bar = win.locator('.status-bar')
+  for (const title of ['Command history (Ctrl+Shift+H)', 'Saved commands', 'Saved agent sessions', 'Live agent activity and timeline', 'Command palette (Ctrl+Shift+P)', 'Your TermFlow stats and badges']) {
+    await expect(bar.locator(`button[title="${title}"]`)).toBeVisible()
+  }
+  await expect(bar.locator('.status-security')).toBeVisible()
+  await expect(win.getByRole('button', { name: 'Switch to widget view' })).toBeVisible()
+  // Files is the right panel Explorer in the IDE.
+  await expect(bar.locator('.status-files')).toBeHidden()
+  await bar.locator('button[title="Command history (Ctrl+Shift+H)"]').click()
+  await expect(win.getByRole('complementary', { name: 'Command history' })).toBeVisible()
+})
