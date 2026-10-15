@@ -40,7 +40,12 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Dogrulama: birim 758, IDE E2E 13/13, Lite tam E2E 106/107 (tek kirik session-rail idi; duzeltme sonrasi session-rail 18/18, 3 tekrar)
 
 ## Yarim kalan / siradaki adim
-- **Agent IDE:** Faz 0-4 tamam (PRD 4.10/12b). Karar bekleyen: Faz 5 (tarayici/design mode, orchestration, CLI) ve Create worktree 'Run on WSL/SSH' (uzak calisma alani modeli gerekir). Sonra IDE yayin reposu. Dal `feature/agent-ide` push edilmedi, commit yok (degisiklikler calisma agacinda). IDE yayin reposu henuz yok (IDE'de updater ve Explorer menusu kapali)
+- **1.25.0 yayini YARIM (2026-10-15):** main'e merge + `v1.25.0` tag'i itildi, ama Release run 38692776220'nin isleri hic baslamadi: GitHub "recent account payments have failed or your spending limit needs to be increased" (Billing & plans). Kullanici odemeyi duzeltince: `gh run rerun 38692776220 --repo palamut62/termflow-lite-source`
+- IDE yayin reposu acildi: PUBLIC `palamut62/termflow-agent-ide` (README + LICENSE). CI'da `release-ide-*` isleri ona yukler; `RELEASES_TOKEN` (fine-grained) bu repoya da Contents: write almali, kullanici token'a repoyu eklemeli, yoksa IDE isleri 403. IDE updater acildi, `.deb`/updater adi `termflow-agent-ide` (extraMetadata). IDE notlari `CHANGELOG-IDE.md`
+- Site: `#agent-ide` bolumu (EN/TR, `assets/agent-ide.webp`) hazir, Vercel'e DEPLOY EDILMEDI: IDE release'i cikinca `vercel --prod`
+- Yerel: Agent IDE 1.25.0 bu PC'ye kuruldu; Lite 1.25.0 exe hazir (`dist/`), Lite acik oldugu icin kurulmadi (kullanici onayi)
+- **Agent IDE:** Faz 0-4 tamam (PRD 4.10/12b). Karar bekleyen: Faz 5 (tarayici/design mode, orchestration, CLI) ve Create worktree 'Run on WSL/SSH' (uzak calisma alani modeli gerekir). IDE Explorer sag tik menusu hala kapali
+- E2E IDE review testi yuk altinda bir kez kirildi (worktree listesi yuklenmedi), tekrarda 3/3 gecti
 - Memory guncelleme sikligi (Ayarlar > Memory > Update: saatlik/gunluk/haftalik, varsayilan saatlik; zamani gelince yalniz yeni/degisen session analiz edilir, yoksa model cagrilmaz, onceki kullanim bilgisi korunur). Surum 1.24.0 kaldi, yerel kurulum
 - Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)

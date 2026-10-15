@@ -50,6 +50,19 @@
     })
     .catch(() => {})
 
+  // TermFlow Agent IDE: its own releases repo; until it has a release the buttons open the releases page.
+  const IDE_REPO = 'palamut62/termflow-agent-ide'
+  fetch(`https://api.github.com/repos/${IDE_REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((release) => {
+      for (const [kind, pattern] of Object.entries(ASSET_PATTERNS)) {
+        const asset = (release.assets || []).find((a) => pattern.test(a.name))
+        if (!asset || !String(asset.browser_download_url).startsWith(`https://github.com/${IDE_REPO}/releases/download/`)) continue
+        document.querySelectorAll(`[data-ide-dl="${kind}"]`).forEach((a) => (a.href = asset.browser_download_url))
+      }
+    })
+    .catch(() => {})
+
   fetch(`https://api.github.com/repos/${REPO}`)
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
     .then((repo) => {

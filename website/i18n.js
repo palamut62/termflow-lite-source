@@ -31,6 +31,7 @@
     'nav.main': 'Ana menü',
     'nav.features': 'Özellikler',
     'nav.download': 'İndir',
+    'nav.ide': 'Agent IDE',
     'nav.lang': 'Dil',
 
     'hero.title': 'Her komutun nasıl bittiğini gösteren terminal.',
@@ -194,6 +195,18 @@
 
     owner: 'Ürün sahibi: Umut Çelik',
     'foot.releases': 'Tüm sürümler',
+    'foot.ideReleases': 'Agent IDE sürümleri',
+    'ide.kicker': 'Yeni: ayrı bir uygulama',
+    'ide.title': 'TermFlow Agent IDE: kodlama ajanların için çalışma alanı',
+    'ide.text': 'Aynı terminal, etrafında projelerinle. Her worktree ve içinde çalışan ajanlar tek kenar çubuğunda, değiştirdikleri kod bir tık uzakta.',
+    'ide.li1': "Projeler, git worktree'leri ve ajan oturumları canlı durumlarıyla: çalışıyor, seni bekliyor, bitti. Duruma ya da pull request'e göre grupla veya panoyu aç",
+    'ide.li2': 'Bir daldan, <code>#123</code> ya da pull request linkinden worktree aç ve içinde çalışacak ajanı seç',
+    'ide.li3': "Diff'i incele, satırlara yorum yaz ve tüm yorumları ajana tek mesaj olarak gönder",
+    'ide.li4': 'Kaynak kontrolü, pull request kontrolleri, GitHub görevleri, worktree başına notlar ve yüzen terminal. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>I</kbd> düz terminale geçer',
+    'ide.dlWin': "Agent IDE'yi Windows için indir",
+    'ide.dlLinux': 'Linux AppImage',
+    'ide.note': "Ücretsiz; TermFlow Lite'ın yanına kurulur ve kendi ayarlarını tutar.",
+    'ide.alt': 'Proje kenar çubuğu, inceleme yorumlu bir diff ve Source Control paneliyle TermFlow Agent IDE',
     'foot.license': 'Lisans'
   }
 
