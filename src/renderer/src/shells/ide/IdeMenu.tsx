@@ -23,13 +23,26 @@ export function IdeMenu({ anchor, up = false, width, label, onClose, children, c
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
 
+  // Konum her boyut degisiminde yeniden hesaplanir: icerik sonradan yuklenir (Resource Manager satirlari)
+  // ve pencere kuculebilir; menu hicbir zaman pencerenin disina tasmaz, uzunsa kayar.
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const { width: w, height: h } = el.getBoundingClientRect()
-    const left = Math.max(8, Math.min(anchor.left, window.innerWidth - w - 8))
-    const top = up ? anchor.top - h - 4 : anchor.bottom + 4
-    setPos({ left, top: Math.max(8, Math.min(top, window.innerHeight - h - 8)) })
+    const place = (): void => {
+      const margin = 8
+      const available = window.innerHeight - margin * 2
+      el.style.maxHeight = `${available}px`
+      const { width: w, height: h } = el.getBoundingClientRect()
+      const left = Math.max(margin, Math.min(anchor.left, window.innerWidth - w - margin))
+      const top = up ? anchor.top - h - 4 : anchor.bottom + 4
+      const next = { left, top: Math.max(margin, Math.min(top, window.innerHeight - h - margin)) }
+      setPos((previous) => (previous && previous.left === next.left && previous.top === next.top ? previous : next))
+    }
+    place()
+    const observer = new ResizeObserver(place)
+    observer.observe(el)
+    window.addEventListener('resize', place)
+    return () => { observer.disconnect(); window.removeEventListener('resize', place) }
   }, [anchor.left, anchor.top, anchor.bottom, up])
 
   useEffect(() => {
