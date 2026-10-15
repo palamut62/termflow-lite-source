@@ -73,5 +73,6 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Hava durumu: IP ile konum yok; yalniz yuvarlanmis koordinat gider
 - Yayin yalniz CI uzerinden; lokal exe release'e yuklenmez; public repo adi degismez
 - Surum kurali (kullanici, 2026-10-09): mevcut ozellik duzeltmesinde surum ARTMAZ; ayni surum yerelde derlenip (`npm run build && npm run dist:win`) bu PC'ye sessiz kurulur (Git Bash'te `MSYS_NO_PATHCONV=1 ./dist/TermFlow-Lite-<v>-x64.exe /S --force-run`; yoksa /S `S:/` olur ve sihirbaz acilir). Yeni ozellikte surum artar ve CI ile yayinlanir
+- IDE kapsami (kullanici, 2026-10-15): Agent IDE, Lite'in TUM ozelliklerini kapsar; IDE yerlesimi bir Lite ozelligini gizleyemez (karsiligi yoksa gorunur kalir). Regresyon: e2e ide-workspace 'everything the Lite status bar...'
 - Kurulum kurali (kullanici, 2026-10-15): her duzeltme/gelistirmeden sonra YALNIZ Agent IDE yerelde derlenip (dist:win:ide) bu PC'ye sessiz kurulur (onay sorulmaz; acik uygulama kapanir)
 - Site dili: `website/i18n.js`; uygulama arayuzu yalniz Ingilizce
