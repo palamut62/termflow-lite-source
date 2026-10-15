@@ -106,6 +106,9 @@ function resolveLinuxArtifactName() {
 module.exports = {
   appId: IDE ? 'com.palamut62.termflowagentide' : 'com.palamut62.termflowlite',
   productName: IDE ? 'TermFlow Agent IDE' : 'TermFlow Lite',
+  // package.json `name` is the .deb package name and the updater cache folder; the IDE must not
+  // replace the Lite package or share its downloaded updates.
+  ...(IDE ? { extraMetadata: { name: 'termflow-agent-ide' } } : {}),
   // GitHub Releases hem dağıtım hem de electron-updater'ın kaynağıdır. Bu blok
   // sayesinde NSIS (`latest.yml`) ve AppImage (`latest-linux.yml`) hedefleri
   // güncelleme metadata'sı üretir; bu dosyalar release'e YÜKLENMELİDİR
@@ -117,7 +120,6 @@ module.exports = {
   publish: {
     provider: 'github',
     owner: 'palamut62',
-    // shortcut: IDE reposu henuz yok; ilk yayindan once kullanici onayiyla acilir, o zamana kadar IDE updater kapali.
     repo: IDE ? 'termflow-agent-ide' : 'termflow-lite',
     releaseType: 'release'
   },

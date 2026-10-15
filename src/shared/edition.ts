@@ -14,11 +14,13 @@ export interface ProductIdentity {
   appId: string
   /** Kurucu/dosya adlarinda bosluksuz ad. */
   slug: string
+  /** Public releases page (installers + auto-update feed). */
+  releases: string
 }
 
 export const PRODUCTS: Record<Edition, ProductIdentity> = {
-  lite: { name: 'TermFlow Lite', appId: 'com.palamut62.termflowlite', slug: 'TermFlow-Lite' },
-  ide: { name: 'TermFlow Agent IDE', appId: 'com.palamut62.termflowagentide', slug: 'TermFlow-Agent-IDE' }
+  lite: { name: 'TermFlow Lite', appId: 'com.palamut62.termflowlite', slug: 'TermFlow-Lite', releases: 'https://github.com/palamut62/termflow-lite/releases' },
+  ide: { name: 'TermFlow Agent IDE', appId: 'com.palamut62.termflowagentide', slug: 'TermFlow-Agent-IDE', releases: 'https://github.com/palamut62/termflow-agent-ide/releases' }
 }
 
 export const PRODUCT = PRODUCTS[EDITION]

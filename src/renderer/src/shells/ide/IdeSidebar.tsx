@@ -13,10 +13,11 @@ import { ResizeHandle } from './ResizeHandle'
 import { IdeMenu, MenuItem, anchorOf, type MenuAnchor } from './IdeMenu'
 import { canGo, go, onHistoryChange } from './tabHistory'
 import { useIdePageStore, type IdePage } from './pages/idePageStore'
+import { PRODUCT } from '../../../../shared/edition'
 
 const LINKS = {
   site: 'https://www.termflowlite.lol',
-  releases: 'https://github.com/palamut62/termflow-lite/releases',
+  releases: PRODUCT.releases,
   github: 'https://github.com/palamut62',
   x: 'https://x.com/palamut62'
 }

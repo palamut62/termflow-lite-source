@@ -12,7 +12,8 @@ if (!version) {
   process.exit(1)
 }
 
-const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8')
+// Optional second argument: another changelog (Agent IDE uses CHANGELOG-IDE.md).
+const changelog = readFileSync(join(root, process.argv[3] ?? 'CHANGELOG.md'), 'utf8')
 // Split on the version headings so a section runs until the next one.
 const section = changelog
   .split(/^## /m)

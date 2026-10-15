@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.25.0 - 2026-10-15
+
+- New worktree: one box takes a branch name, `#123` for a pull request, or a pull request or issue link. Advanced has a note, a parent worktree and sparse checkout (only the folders you list are checked out).
+- Settings > Stats & Usage shows your agent sessions, commands run and command time, and Settings > Notifications has Send test notification.
+- Settings now groups its sections and finds a setting from its keywords.
+- Fixed: a collapsed group in the session rail opened again by itself a moment after you collapsed it.
+- New sister app: TermFlow Agent IDE, a separate download with a project and worktree sidebar, source control, diff review and agent pages. TermFlow Lite stays a terminal.
+
 ## 1.24.2 - 2026-10-14
 
 - The limit strip under the terminal now replaces the limit button in the status bar instead of repeating it. With the strip off, or before any data arrives, the button stays.

@@ -2,7 +2,6 @@ import { app, type BrowserWindow } from 'electron'
 import electronUpdater from 'electron-updater'
 import { IPC } from '../shared/ipc'
 import type { AppSettings, UpdateStatus } from '../shared/types'
-import { EDITION } from '../shared/edition'
 
 const { autoUpdater } = electronUpdater
 
@@ -36,8 +35,6 @@ function unsupportedReason(): UpdateStatus | null {
   if (!app.isPackaged) {
     return { state: 'idle', error: 'Updates only work in the installed version.' }
   }
-  // shortcut: Agent IDE yayin reposu henuz yok (PRD bolum 12); repo acilinca bu satir kalkar.
-  if (EDITION === 'ide') return { state: 'idle', error: 'Automatic updates are not available yet for TermFlow Agent IDE.' }
   if (process.platform === 'linux' && !process.env.APPIMAGE) {
     return { state: 'idle', error: 'Bu Linux paketi (.deb) paket yöneticisiyle güncellenir.' }
   }

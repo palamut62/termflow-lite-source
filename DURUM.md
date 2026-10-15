@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-15 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.24.2
+guncel: 2026-10-15 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.25.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.

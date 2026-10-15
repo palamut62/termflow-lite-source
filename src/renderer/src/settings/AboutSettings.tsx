@@ -96,7 +96,7 @@ export function AboutSettings(): React.JSX.Element {
         <a href="https://termflow-lite.vercel.app" target="_blank" rel="noopener noreferrer">
           Website
         </a>
-        <a href="https://github.com/palamut62/termflow-lite/releases" target="_blank" rel="noopener noreferrer">
+        <a href={PRODUCT.releases} target="_blank" rel="noopener noreferrer">
           Releases
         </a>
       </div>

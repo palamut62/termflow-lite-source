@@ -18,10 +18,12 @@ if (status) {
   process.exit(1)
 }
 
-const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8')
-if (!changelog.includes(`## ${version}`)) {
-  console.error(`CHANGELOG.md has no "## ${version}" section — the release notes are generated from it.`)
-  process.exit(1)
+// The same tag publishes TermFlow Lite and TermFlow Agent IDE, each with its own notes.
+for (const file of ['CHANGELOG.md', 'CHANGELOG-IDE.md']) {
+  if (!readFileSync(join(root, file), 'utf8').includes(`## ${version}`)) {
+    console.error(`${file} has no "## ${version}" section — the release notes are generated from it.`)
+    process.exit(1)
+  }
 }
 
 git('tag', '-a', tag, '-m', `TermFlow Lite ${version}`)
