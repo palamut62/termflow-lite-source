@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bot, Camera, FolderGit2, QrCode, Settings as SettingsIcon, SquareTerminal, WifiOff } from 'lucide-react'
+import { Bot, Camera, FolderGit2, House, QrCode, Settings as SettingsIcon, SquareTerminal, WifiOff } from 'lucide-react'
 import { isLightColor } from '../../renderer/src/backdrop'
 import { resolveTheme } from '../../renderer/src/themes/themes'
 import { RemoteClient, loadToken, pairWithCode, saveToken } from './client'
@@ -10,12 +10,15 @@ import { TerminalScreen } from './views/TerminalScreen'
 import { AgentsScreen } from './views/AgentsScreen'
 import { ProjectScreen } from './views/ProjectScreen'
 import { SettingsScreen } from './views/SettingsScreen'
+import { HomeScreen } from './views/HomeScreen'
+import { WorkspacesScreen } from './views/WorkspacesScreen'
 
+// Settings sits behind the gear in the header (Orca Mobile); the bar keeps the four places you work in.
 const NAV: { id: Screen; label: string; icon: React.JSX.Element }[] = [
+  { id: 'home', label: 'Home', icon: <House size={20} /> },
   { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={20} /> },
   { id: 'agents', label: 'Agents', icon: <Bot size={20} /> },
-  { id: 'project', label: 'Project', icon: <FolderGit2 size={20} /> },
-  { id: 'settings', label: 'Settings', icon: <SettingsIcon size={20} /> }
+  { id: 'project', label: 'Project', icon: <FolderGit2 size={20} /> }
 ]
 
 /** Reads a one-time code from #pair=..., removing it from the address bar right away. */
@@ -197,13 +200,19 @@ export function App(): React.JSX.Element {
   return (
     <div className="app">
       <header className="app-head">
-        <span className={`conn ${connection}`} title={connection} />
+        <img src="/icon-192.png" alt="" className="app-logo" />
         <span className="app-title">TermFlow</span>
+        <span className={`conn ${connection}`} title={connection} />
         {connection !== 'online' && <span className="app-sub">{connection === 'connecting' ? 'Connecting...' : 'Offline'}</span>}
+        <button className={`app-gear${screen === 'settings' ? ' active' : ''}`} onClick={() => setScreen(screen === 'settings' ? 'home' : 'settings')} aria-label="Settings" aria-pressed={screen === 'settings'}>
+          <SettingsIcon size={20} />
+        </button>
       </header>
       <main className="app-main">
         {/* The terminal stays mounted so switching screens keeps its state. */}
         <div className="screen" hidden={screen !== 'terminal'}><TerminalScreen /></div>
+        {screen === 'workspaces' && <div className="screen scroll"><WorkspacesScreen /></div>}
+        {screen === 'home' && <div className="screen scroll"><HomeScreen /></div>}
         {screen === 'agents' && <div className="screen scroll"><AgentsScreen /></div>}
         {screen === 'project' && <div className="screen scroll"><ProjectScreen /></div>}
         {screen === 'settings' && <div className="screen scroll"><SettingsScreen /></div>}

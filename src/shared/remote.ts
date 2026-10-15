@@ -107,6 +107,8 @@ export interface HelloPayload extends RemoteTabsState {
   version: string
   /** The computer's home folder, the fallback place to browse from. */
   home: string
+  /** The computer's name (hostname), shown on the phone home screen. */
+  computer?: string
 }
 
 export type ServerMessage =

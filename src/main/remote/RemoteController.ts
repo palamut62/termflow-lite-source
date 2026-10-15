@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { homedir } from 'os'
+import { homedir, hostname } from 'os'
 import QRCode from 'qrcode'
 import type { AppSettings, ShellInfo } from '../../shared/types'
 import type { RemoteCommandReply, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabCommand, RemoteTabsState } from '../../shared/remote'
@@ -59,7 +59,8 @@ export class RemoteController {
       onClientsChanged: () => this.publish(),
       platform: deps.platform,
       version: deps.version,
-      home: homedir()
+      home: homedir(),
+      computer: hostname()
     })
     this.server = new RemoteServer({
       staticDir: deps.staticDir,

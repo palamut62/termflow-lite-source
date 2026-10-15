@@ -3,7 +3,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Plus, Send, Smartphone, SquareTerminal } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ChevronLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Plus, Send, Smartphone, SquareTerminal } from 'lucide-react'
 import { resolveTheme } from '../../../renderer/src/themes/themes'
 import type { RemoteTab, ServerMessage } from '../../../shared/remote'
 import { client, errorText, useRemote } from '../store'
@@ -48,6 +48,8 @@ export function TerminalScreen(): React.JSX.Element {
   const setCurrentTab = useRemote((s) => s.setCurrentTab)
   const connection = useRemote((s) => s.connection)
   const settings = useRemote((s) => s.settings)
+  const currentTab = tabs.find((t) => t.id === currentTabId)
+  const workspaceName = currentTab?.worktree?.branch || (currentTab?.cwd ?? '').split(/[\\/]/).filter(Boolean).pop() || 'Terminal'
   const shells = useRemote((s) => s.shells)
   const toast = useRemote((s) => s.toast)
   const pageVisible = usePageVisible()
@@ -332,6 +334,13 @@ export function TerminalScreen(): React.JSX.Element {
 
   return (
     <div className="terminal-screen">
+      <div className="term-head">
+        <button className="ws-back" onClick={() => useRemote.getState().setScreen('workspaces')} aria-label="Back to workspaces"><ChevronLeft size={22} /></button>
+        <span className="ws-title">
+          <strong>{workspaceName}</strong>
+          <span><i className={`home-dot ${connection}`} />{tabs.length} tab{tabs.length === 1 ? '' : 's'}</span>
+        </span>
+      </div>
       <div className="tab-strip" role="tablist" aria-label="Desktop tabs">
         {tabs.map((tab) => (
           <button

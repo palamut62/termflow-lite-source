@@ -3,7 +3,7 @@ import type { RemoteSettingsView, RemoteTab, ServerMessage } from '../../shared/
 import type { AppSettings, ShellInfo } from '../../shared/types'
 import type { ConnectionState, RemoteClient } from './client'
 
-export type Screen = 'terminal' | 'agents' | 'project' | 'settings'
+export type Screen = 'home' | 'workspaces' | 'terminal' | 'agents' | 'project' | 'settings'
 
 interface Toast {
   id: number
@@ -21,6 +21,8 @@ interface RemoteState {
   platform: string
   version: string
   home: string
+  /** Desktop hostname for the home screen. */
+  computer: string
   tabs: RemoteTab[]
   desktopActiveTabId: string | null
   /** The tab this phone is looking at (independent of the desktop focus). */
@@ -49,10 +51,11 @@ export const useRemote = create<RemoteState>()((set, get) => ({
   platform: 'win32',
   version: '',
   home: '',
+  computer: '',
   tabs: [],
   desktopActiveTabId: null,
   currentTabId: null,
-  screen: 'terminal',
+  screen: 'home',
   termSize: null,
   toasts: [],
 
@@ -71,6 +74,7 @@ export const useRemote = create<RemoteState>()((set, get) => ({
             platform: message.platform,
             version: message.version,
             home: message.home,
+            computer: message.computer ?? '',
             tabs: message.tabs,
             desktopActiveTabId: message.activeTabId,
             currentTabId: keep ? current : (message.activeTabId ?? message.tabs[0]?.id ?? null)

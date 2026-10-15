@@ -20,6 +20,13 @@ let phone: Page
 let userData = ''
 const port = 41000 + Math.floor(Math.random() * 9000)
 
+/** The phone opens on its Home screen (Orca Mobile); the tests that drive the shell go to Terminal first. */
+async function openTerminal(): Promise<void> {
+  await expect(phone.locator('.home-title')).toBeVisible({ timeout: 15_000 })
+  await phone.getByRole('button', { name: 'Terminal', exact: true }).click()
+  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+}
+
 test.beforeEach(async () => {
   userData = mkdtempSync(join(tmpdir(), 'termflow-e2e-remote-'))
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({
@@ -64,7 +71,9 @@ test('a phone pairs by QR link, drives a desktop tab, opens tabs and changes set
 
   // The phone pairs; the code leaves the address bar right away.
   await phone.goto(pairing.url)
-  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  await expect(phone.locator('.home-title')).toBeVisible({ timeout: 15_000 })
+  await phone.screenshot({ path: 'test-results/remote-phone-home.png' })
+  await openTerminal()
   expect(phone.url()).not.toContain('pair=')
   await expect(win.locator('.status-remote')).toBeVisible()
 
@@ -159,7 +168,7 @@ test('a home-screen app pairs by typing the code shown under the QR', async () =
   await phone.locator('#pair-code').fill(pairing.code.replace('-', '').toLowerCase())
   await phone.screenshot({ path: 'test-results/remote-phone-pair.png' })
   await phone.getByRole('button', { name: 'Pair', exact: true }).click()
-  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  await openTerminal()
 })
 
 test('the pairing screen reads the QR from a photo', async () => {
@@ -169,7 +178,7 @@ test('the pairing screen reads the QR from a photo', async () => {
   // The camera hands the page a photo; a rendered QR stands in for it.
   const photo = await QRCode.toBuffer(pairing.url, { type: 'png', width: 900, margin: 6 })
   await phone.locator('.pair-photo').setInputFiles({ name: 'IMG_0001.png', mimeType: 'image/png', buffer: photo })
-  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  await openTerminal()
 })
 
 test('Reconnect on the desktop gives the same phone a new key', async () => {
@@ -177,7 +186,7 @@ test('Reconnect on the desktop gives the same phone a new key', async () => {
   // First pairing: the browser.
   const first = await win.evaluate(() => window.termflow.remote.pair())
   await phone.goto(first.url)
-  await expect(phone.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  await openTerminal()
   const [device] = await win.evaluate(() => window.termflow.remote.devices())
 
   // The desktop shows a renewal QR from the device row.
@@ -193,7 +202,7 @@ test('Reconnect on the desktop gives the same phone a new key', async () => {
   await homeScreen.goto(`http://127.0.0.1:${port}/`)
   await homeScreen.locator('#pair-code').fill(code!)
   await homeScreen.getByRole('button', { name: 'Pair', exact: true }).click()
-  await expect(homeScreen.locator('.tab-chip.active')).toBeVisible({ timeout: 15_000 })
+  await expect(homeScreen.locator('.home-title')).toBeVisible({ timeout: 15_000 })
 
   // Same entry, new key: the old browser session is retired and the QR closes.
   await expect(phone.getByText('This phone was disconnected from the computer')).toBeVisible()

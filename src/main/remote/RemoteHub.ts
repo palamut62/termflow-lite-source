@@ -50,7 +50,10 @@ export const REMOTE_IPC_CHANNELS: ReadonlySet<string> = new Set([
   IPC.MEMORY_MODELS,
   IPC.MEMORY_TEST_MODEL,
   IPC.AGENT_EVENTS_LIST,
-  IPC.UPDATE_CHECK
+  IPC.UPDATE_CHECK,
+  // Phone home screen (Orca): agent limits and GitHub tasks, both read-only.
+  IPC.USAGE_GET,
+  IPC.GITHUB_TASKS
 ])
 
 /** Settings a phone may not change: it would lock itself out or ship desktop-only data. */
@@ -96,6 +99,7 @@ export interface RemoteHubDeps {
   platform: string
   version: string
   home: string
+  computer?: string
 }
 
 interface Client {
@@ -237,7 +241,8 @@ export class RemoteHub {
         shells,
         platform: this.deps.platform,
         version: this.deps.version,
-        home: this.deps.home
+        home: this.deps.home,
+        computer: this.deps.computer
       })
       this.deps.onClientsChanged()
       return
