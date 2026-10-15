@@ -1,16 +1,16 @@
-/* Kompakt widget görünümü (TermFlow widget spec 02.10.2026): düz terminal
-   satırları, hizalı sütunlar, karakter çubukları. Gradient, cam efekti ve
-   büyük rozet yok. */
+/* Kompakt widget, "ayni kumas" (kullanici secimi 2026-10-15, docs/agent-ide/widget-options.html):
+   sekme cubugunun zemini, uygulamanin yazi tipi ve temanin renkleri. Durum: nokta + kisa kelime;
+   tek vurgu, seni bekleyen satirin serit ve hafif zemini. Windows dugmeleri ayni zemini alir (widgetStore). */
 
 .tf-widget {
-  --bg: #0c0b09;
-  --fg: #e6e2dd;
-  --muted: #8f8b85;
-  --line: #3b3732;
-  --run: #f18a52;
-  --done: #39b884;
-  --alert: #ff6652;
-  --warn: #e6a23c;
+  --bg: var(--tab-background, #252526);
+  --fg: var(--tab-active-foreground, var(--app-foreground, #cccccc));
+  --muted: var(--tab-inactive-foreground, #8b8b8b);
+  --line: var(--border-color, #3c3c3c);
+  --run: var(--term-blue, #4fc1ff);
+  --done: var(--term-green, #4ec9b0);
+  --warn: var(--term-yellow, #e5c07b);
+  --alert: var(--term-red, #f48771);
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -20,9 +20,9 @@
   background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
-  font: 13px/20px 'Cascadia Code', 'Cascadia Mono', Consolas, monospace;
+  font: 13px/20px 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   user-select: none;
 }
@@ -38,10 +38,8 @@
   height: 32px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
+  gap: 8px;
+  padding: 0 4px 0 12px;
   white-space: nowrap;
   -webkit-app-region: drag;
 }
@@ -49,12 +47,11 @@
 .tf-widget.is-collapsed .tf-header {
   flex-basis: 100%;
   height: 100%;
-  border-bottom: 0;
 }
 
-.tf-title { flex: 0 0 auto; }
-.tf-grip { flex: 1; text-align: center; color: var(--line); letter-spacing: 1px; }
-.tf-inline-summary { flex: 1; min-width: 0; display: flex; gap: 8px; overflow: hidden; }
+.tf-title { flex: 0 0 auto; font-weight: 600; }
+.tf-head-note { flex: 1; min-width: 0; display: flex; justify-content: flex-end; gap: 6px; overflow: hidden; font-size: 12px; color: var(--muted); }
+.tf-inline-summary { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; }
 
 .tf-widget button {
   -webkit-app-region: no-drag;
@@ -66,12 +63,11 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-  min-height: 28px;
 }
 
 .tf-widget button:focus-visible {
-  outline: 1px solid var(--run);
-  outline-offset: 2px;
+  outline: 1px solid var(--accent-color, var(--run));
+  outline-offset: 1px;
 }
 
 .tf-icon {
@@ -79,17 +75,18 @@
   align-items: center;
   justify-content: center;
   width: 28px;
+  height: 28px;
   color: var(--muted) !important;
-  border-radius: 3px;
+  border-radius: 5px;
 }
 
-.tf-icon:hover { color: var(--fg) !important; background: color-mix(in srgb, var(--fg) 8%, transparent) !important; }
-.tf-icon[aria-pressed='true'] { color: var(--run) !important; }
+.tf-icon:hover { color: var(--fg) !important; background: color-mix(in srgb, var(--fg) 9%, transparent) !important; }
+.tf-icon[aria-pressed='true'] { color: var(--fg) !important; }
 
 .tf-body {
   flex: 1;
   min-height: 0;
-  padding: 12px 16px;
+  padding: 0 6px 6px;
   overflow: hidden;
 }
 
@@ -98,106 +95,56 @@
 .tf-row {
   display: grid !important;
   width: 100%;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  grid-template-columns: 12ch minmax(0, 1fr) 14ch 8ch;
-  min-height: 24px !important;
-  border-radius: 2px;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 10px !important;
+  border-radius: 6px;
 }
 
-.tf-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent) !important; }
+.tf-row:hover { background: color-mix(in srgb, var(--fg) 6%, transparent) !important; }
 
-.tf-state { white-space: nowrap; color: var(--muted); }
-
-.tf-task {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* Tek vurgu: seni bekleyen satir. */
+.tf-row[data-state='needs-you'] {
+  background: color-mix(in srgb, var(--warn) 13%, transparent) !important;
+  box-shadow: inset 2px 0 0 var(--warn);
 }
 
-.tf-time {
-  text-align: right;
-  font-size: 12px;
-  color: var(--muted);
+.tf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
 }
 
-.tf-empty { color: var(--muted); }
+[data-state='running'] .tf-dot, .tf-dot[data-state='running'] { background: var(--run); }
+[data-state='done'] .tf-dot, .tf-dot[data-state='done'] { background: var(--done); }
+[data-state='needs-you'] .tf-dot, .tf-dot[data-state='needs-you'] { background: var(--warn); }
+[data-state='failed'] .tf-dot, .tf-dot[data-state='failed'] { background: var(--alert); }
 
-.tf-summary {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  white-space: nowrap;
-}
+/* Calisan oturumun noktasi yavasca nefes alir; hareket kapaliyken durur. */
+[data-state='running'] .tf-dot { animation: tf-breathe 1.8s ease-in-out infinite; }
+@keyframes tf-breathe { 50% { opacity: .35; } }
 
-.tf-summary .tf-expand { margin-left: auto; color: var(--muted); min-height: 20px; }
-.tf-summary .tf-expand:hover { color: var(--fg); }
+.tf-task { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tf-task b { font-weight: 600; }
+
+.tf-time { text-align: right; font-size: 12px; color: var(--muted); white-space: nowrap; }
+[data-state='needs-you'] .tf-time { color: var(--warn); font-weight: 600; }
+[data-state='failed'] .tf-time { color: var(--alert); }
+
+.tf-empty { padding: 8px 10px; color: var(--muted); }
+.tf-more { padding: 6px 10px !important; font-size: 12px; color: var(--muted) !important; }
+.tf-more:hover { color: var(--fg) !important; }
 
 .tf-c-muted { color: var(--muted); }
-.tf-c-run { color: var(--run); }
-.tf-c-done { color: var(--done); }
 .tf-c-warn { color: var(--warn); font-weight: 600; }
 .tf-c-alert { color: var(--alert); }
 
-/* ---- Karakter çubuğu: kayma CSS ile, durum ve süre gerçek oturum verisinden ---- */
-.tf-meter {
-  position: relative;
-  display: block;
-  width: 14ch;
-  height: 20px;
-  overflow: hidden;
-  white-space: pre;
-  color: var(--line);
-}
-
-.tf-meter::before { content: '..............'; }
-
-.tf-meter::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-[data-state='running'] .tf-state,
-[data-state='running'] .tf-meter::after { color: var(--run); }
-
-[data-state='running'] .tf-meter::after {
-  content: '░▒▓██▓▒░';
-  animation: tf-sweep 1.4s steps(18, end) infinite;
-}
-
-[data-state='done'] .tf-state,
-[data-state='done'] .tf-meter { color: var(--done); }
-[data-state='done'] .tf-meter::before { content: ''; }
-[data-state='done'] .tf-meter::after { content: '▓▓▓▓▓▓▓▓▓▓▓▓▓▓'; }
-
-[data-state='needs-you'] .tf-state,
-[data-state='failed'] .tf-state { color: var(--alert); font-weight: 600; }
-
-[data-state='needs-you'] .tf-meter::after,
-[data-state='failed'] .tf-meter::after { content: '▓▒░'; color: var(--alert); }
-
-[data-state='needs-you'] .tf-time { color: var(--alert); }
-
-@keyframes tf-sweep {
-  from { transform: translateX(-8ch); }
-  to { transform: translateX(14ch); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .tf-widget *,
-  .tf-widget *::before,
-  .tf-widget *::after {
-    animation: none !important;
-    transition: none !important;
-  }
+  .tf-widget *, .tf-widget *::before, .tf-widget *::after { animation: none !important; transition: none !important; }
 }
 
-/* Uygulamanın hareket ayarı "off" ise de kayma durur. */
-:root[data-motion='off'] .tf-widget *,
-:root[data-motion='off'] .tf-widget *::after {
-  animation: none !important;
-}
+:root[data-motion='off'] .tf-widget * { animation: none !important; }

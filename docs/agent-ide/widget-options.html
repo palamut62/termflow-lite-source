@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>TermFlow widget seçenekleri</title>
+<style>
+body{margin:0;padding:24px;background:#f2f2f0;color:#1f1f1f;font:14px/1.5 'Segoe UI Variable','Segoe UI',system-ui,sans-serif}
+h1{font-size:20px;font-weight:600;margin:0 0 4px}
+p.lead{margin:0 0 16px;color:#555}
+.themes{display:flex;gap:8px;margin:0 0 20px}
+.themes button{font:inherit;padding:6px 14px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer}
+.themes button[aria-pressed=true]{background:#1f1f1f;color:#fff;border-color:#1f1f1f}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(470px,1fr));gap:20px}
+.opt{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px}
+.opt h2{font-size:16px;margin:0 0 2px}
+.opt p{margin:0 0 12px;color:#555;font-size:13px}
+.stage{display:grid;gap:10px;padding:14px;border-radius:10px;background:#d9dde3}
+#w{--bg:#1e1e1e;--bar:#252526;--line:#3c3c3c;--fg:#cccccc;--mut:#8b8b8b;--run:#4fc1ff;--ok:#4ec9b0;--warn:#e5c07b;--bad:#f48771}
+.win{width:430px;max-width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px;line-height:20px}
+.hd{display:flex;align-items:center;gap:10px;height:34px;padding:0 0 0 12px;background:var(--bar);border-bottom:1px solid var(--line)}
+.win.col .hd{border-bottom:0}
+.sp{flex:1}
+.ctl{display:flex;height:100%}
+.ctl i{width:40px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-style:normal;font-size:12px}
+.bd{padding:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+.m{color:var(--mut)}.n{color:var(--warn)}.r{color:var(--run)}.o{color:var(--ok)}
+.a .row{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center;padding:7px 10px;border-radius:6px}
+.a .row.need{background:color-mix(in srgb,var(--warn) 13%,transparent);box-shadow:inset 2px 0 0 var(--warn)}
+.a .row b{font-weight:600}
+.b .strip{display:flex;gap:3px;flex:1;max-width:210px}
+.b .strip u{flex:1;height:6px;border-radius:3px;text-decoration:none}
+.b .row{display:grid;grid-template-columns:3px 1fr auto;gap:10px;align-items:center;padding:6px 10px}
+.b .row s{align-self:stretch;border-radius:2px;text-decoration:none}
+.c .card{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin:0 0 6px}
+.c .card:last-child{margin:0}
+.c .top{display:flex;justify-content:space-between;gap:8px}
+.c .act{font-size:12px;color:var(--mut);margin:1px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c .bars{display:flex;gap:2px;align-items:flex-end;height:14px}
+.c .bars u{flex:1;border-radius:1px;text-decoration:none}
+.d{font-family:'Cascadia Code','Cascadia Mono',Consolas,monospace;font-size:12.5px}
+.d .row{display:grid;grid-template-columns:13ch 1fr 11ch 6ch;gap:10px;align-items:center;padding:2px 10px;white-space:nowrap}
+.now{margin:0 0 20px}
+.now .win{--bg:#0c0b09;--bar:#0c0b09;--line:#3b3732;--fg:#e6e2dd;--mut:#8f8b85;--run:#f18a52}
+</style>
+</head>
+<body>
+<h1>TermFlow widget seçenekleri</h1>
+<p class="lead">Üstteki tema düğmeleriyle her seçeneğin farklı temalarda nasıl duracağını görebilirsin. Her kutuda önce açık, sonra küçültülmüş hâl var.</p>
+<div class="themes" role="group" aria-label="Tema">
+<button data-th="dark" aria-pressed="true">Dark+</button><button data-th="light" aria-pressed="false">Light+</button><button data-th="mono" aria-pressed="false">Monokai</button>
+</div>
+<div class="opt now"><h2>Şu anki widget (karşılaştırma için)</h2><p>Renkler sabit; temayı değiştirsen de değişmez.</p><div class="stage" id="now"></div></div>
+<div id="w" class="grid"></div>
+<script>
+var TH={dark:{bg:'#1e1e1e',bar:'#252526',line:'#3c3c3c',fg:'#cccccc',mut:'#8b8b8b',run:'#4fc1ff',ok:'#4ec9b0',warn:'#e5c07b',bad:'#f48771'},
+light:{bg:'#ffffff',bar:'#f3f3f3',line:'#d4d4d4',fg:'#3b3b3b',mut:'#6e6e6e',run:'#0066b8',ok:'#107c41',warn:'#9a6700',bad:'#c72e0f'},
+mono:{bg:'#272822',bar:'#1e1f1c',line:'#3e3d32',fg:'#f8f8f2',mut:'#a0a094',run:'#66d9ef',ok:'#a6e22e',warn:'#e6db74',bad:'#f92672'}};
+var S=[{n:'Codex',f:'termflow-lite',s:'need',t:'Onay bekliyor: npm run build',e:'waiting'},{n:'Claude Code',f:'hozat-taskin',s:'run',t:'upload.ts düzenleniyor',e:'24:04'},{n:'Claude Code',f:'gramma',s:'done',t:'Testler geçti',e:'06:12'}];
+var C={need:'var(--warn)',run:'var(--run)',done:'var(--ok)'};
+var WORD={need:'Needs you',run:'Working',done:'Done'};
+var GL={need:'!',run:'*',done:'✓'};
+var CTL='<div class="ctl"><i>—</i><i>▢</i><i>✕</i></div>';
+function dot(s){return '<span class="dot" style="background:'+C[s]+'"></span>'}
+function A(){var rows=S.map(function(x){return '<div class="row '+(x.s=='need'?'need':'')+'">'+dot(x.s)+'<span><b>'+x.n+'</b> <span class="m">'+x.f+'</span></span><span class="'+(x.s=='need'?'n':'m')+'">'+(x.s=='need'?'Needs you':x.e)+'</span></div>'}).join('');
+return '<div class="win a"><div class="hd"><b>TermFlow</b><span class="sp"></span><span class="m" style="font-size:12px">1 needs you</span>'+CTL+'</div><div class="bd">'+rows+'</div></div>'+
+'<div class="win a col"><div class="hd">'+dot('need')+'<span>1 needs you</span><span class="m">· 1 working</span><span class="sp"></span>'+CTL+'</div></div>'}
+function B(){var st=S.map(function(x){return '<u style="background:'+C[x.s]+'"></u>'}).join('');
+var rows=S.map(function(x){return '<div class="row"><s style="background:'+C[x.s]+'"></s><span>'+x.n+' <span class="m">'+x.f+'</span></span><span class="m">'+WORD[x.s]+' · '+x.e+'</span></div>'}).join('');
+return '<div class="win b"><div class="hd"><div class="strip">'+st+'</div><span class="sp"></span>'+CTL+'</div><div class="bd">'+rows+'</div></div>'+
+'<div class="win b col"><div class="hd"><div class="strip">'+st+'</div><span class="n">1</span><span class="sp"></span>'+CTL+'</div></div>'}
+function bars(c,seed){var h='';for(var i=0;i<22;i++){var v=((i*7+seed*5)%9)+3;h+='<u style="height:'+v+'px;background:'+c+';opacity:'+(i>15?1:.45)+'"></u>'}return h}
+function Cc(){var cards=S.map(function(x,i){return '<div class="card"><div class="top"><b>'+x.f+'</b><span class="'+(x.s=='need'?'n':'m')+'">'+(x.s=='need'?'Needs you':x.e)+'</span></div><div class="act">'+x.n+' · '+x.t+'</div><div class="bars">'+bars(C[x.s],i+2)+'</div></div>'}).join('');
+return '<div class="win c"><div class="hd"><b>Agents</b><span class="m">3</span><span class="sp"></span>'+CTL+'</div><div class="bd">'+cards+'</div></div>'+
+'<div class="win c col"><div class="hd"><span>3 agents</span><span class="n">· 1 needs you</span><span class="sp"></span>'+CTL+'</div></div>'}
+function Dd(){var rows=S.map(function(x){var m=x.s=='run'?'░▒▓█▓▒░......':x.s=='done'?'▓▓▓▓▓▓▓▓▓▓':'▓▒░.........';
+return '<div class="row"><span style="color:'+C[x.s]+'">'+GL[x.s]+' '+WORD[x.s].toLowerCase()+'</span><span>'+x.n+' <span class="m">/ '+x.f+'</span></span><span style="color:'+C[x.s]+'">'+m+'</span><span class="m" style="text-align:right">'+x.e+'</span></div>'}).join('');
+return '<div class="win d"><div class="hd"><span class="m">&gt;_</span><span>termflow</span><span class="sp"></span>'+CTL+'</div><div class="bd">'+rows+'<div style="padding:4px 10px 2px" class="m"><span class="n">! 1 needs you</span> · <span class="r">* 1 running</span> · <span class="o">✓ 1 done</span></div></div></div>'+
+'<div class="win d col"><div class="hd"><span class="m">&gt;_</span><span>termflow</span><span class="m">|</span><span class="n">! 1 needs you</span><span class="r">* 1 running</span><span class="sp"></span>'+CTL+'</div></div>'}
+var OPTS=[['1 · Aynı kumaş','Sekme çubuğunun zemini ve yazı tipi. Durum noktası ve kısa cümle. Tek vurgu: bekleyen satırın sarı şeridi.',A],['2 · Sinyal','Her oturum bir renk segmenti. Küçültülmüşken yalnızca şerit ve sayı kalır.',B],['3 · Kartlar','Her oturum bir kart: proje, ajanın şu anki işi, son dakikaların etkinlik çubukları.',Cc],['4 · Terminal, tema renkli','Bugünkü karakter çubuğu ve hizalı sütunlar kalır; sıcak siyah gider, renkler temadan gelir.',Dd]];
+document.getElementById('w').innerHTML=OPTS.map(function(o){return '<div class="opt"><h2>'+o[0]+'</h2><p>'+o[1]+'</p><div class="stage">'+o[2]()+'</div></div>'}).join('');
+document.getElementById('now').innerHTML='<div class="win d"><div class="hd"><span class="m">&gt;_</span><span>termflow lite</span><span class="sp"></span>'+CTL+'</div><div class="bd"><div class="row"><span style="color:var(--run)">* running</span><span>Claude Code</span><span style="color:var(--run)">░▒▓██▓▒░....</span><span class="m">11:44</span></div><div style="padding:4px 10px" ><span class="r">* 1 running</span></div></div></div>';
+function setTh(k){var t=TH[k],w=document.getElementById('w');for(var p in t)w.style.setProperty('--'+p,t[p]);document.querySelectorAll('.themes button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.th==k)})}
+document.querySelectorAll('.themes button').forEach(function(b){b.onclick=function(){setTh(b.dataset.th)}});
+setTh('dark');
+</script>
+</body>
+</html>

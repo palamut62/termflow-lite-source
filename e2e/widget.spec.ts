@@ -68,6 +68,7 @@ test('collapses to one line, unpins, and remembers both', async () => {
   await win.click('[aria-label="Collapse widget"]')
   await expect.poll(async () => (await bounds()).height).toBe(40)
   await expect(win.locator('.tf-widget.is-collapsed .tf-inline-summary')).toBeVisible()
+  await win.screenshot({ path: 'test-results/widget-collapsed.png' })
 
   await win.click('[aria-label="Unpin widget"]')
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isAlwaysOnTop())).toBe(false)
@@ -85,6 +86,7 @@ test('clicking a row opens that terminal in the full window', async () => {
 
   await win.click('[aria-label="Switch to widget view"]')
   await expect(win.locator('.tf-row')).toHaveCount(2)
+  await win.screenshot({ path: 'test-results/widget-expanded.png' })
   await win.locator('.tf-row').first().click()
 
   await expect(win.locator('.tf-widget')).toHaveCount(0)

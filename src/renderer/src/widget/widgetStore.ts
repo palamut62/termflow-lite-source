@@ -2,9 +2,6 @@ import { create } from 'zustand'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTerminalStore } from '../store/terminalStore'
 
-/** Widget colors from the spec; the Windows window controls follow them. */
-const WIDGET_BG = '#0c0b09'
-const WIDGET_MUTED = '#8f8b85'
 const HEADER_HEIGHT = 32
 const COLLAPSED_HEIGHT = 40
 
@@ -24,8 +21,18 @@ interface WidgetStoreState {
   togglePinned(): Promise<void>
 }
 
+/** Windows controls take the widget's own surface: the theme's tab bar color (widget.css). */
 function paintControls(collapsed: boolean): void {
-  window.termflow?.window?.setTitleBarOverlay({ color: WIDGET_BG, symbolColor: WIDGET_MUTED, height: collapsed ? COLLAPSED_HEIGHT : HEADER_HEIGHT })
+  const style = getComputedStyle(document.documentElement)
+  const hex = (name: string, fallback: string): string => {
+    const value = style.getPropertyValue(name).trim()
+    return /^#[0-9a-f]{6}$/i.test(value) ? value : fallback
+  }
+  window.termflow?.window?.setTitleBarOverlay({
+    color: hex('--tab-background', '#252526'),
+    symbolColor: hex('--tab-inactive-foreground', '#8b8b8b'),
+    height: collapsed ? COLLAPSED_HEIGHT : HEADER_HEIGHT
+  })
 }
 
 /** Resolves after the window has had a chance to resize and lay out again. */
