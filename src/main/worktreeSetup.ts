@@ -1,7 +1,7 @@
 // Worktree kurulum adimlari (docs/orca-parity/worktree-setup.md): yeni checkout'a depodan dosya
 // kopyalama ve ajan baslamadan once kurulum komutlari.
 
-import { execFile, spawn } from 'child_process'
+import { execFile, spawn, type ChildProcess } from 'child_process'
 import { constants, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, realpathSync } from 'fs'
 import { dirname, join, relative, isAbsolute } from 'path'
 import { isSafeCopyPattern } from '../shared/worktreeSetup'
@@ -66,18 +66,21 @@ export interface SetupCommandRun {
   cancel(): void
 }
 
+/** Surec ve tum alt surecleri; Unix'te cocuk `detached: true` ile baslatilmis olmali (kendi grubu). */
+export function killProcessTree(child: ChildProcess): void {
+  if (child.exitCode !== null || child.pid === undefined) return
+  if (process.platform === 'win32') execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true }, () => undefined)
+  else {
+    try { process.kill(-child.pid, 'SIGTERM') } catch { child.kill('SIGTERM') }
+  }
+}
+
 /** Sistem kabugunda (Windows cmd, digerleri sh) tek komut; cikti parca parca gelir. */
 export function runSetupCommand(command: string, cwd: string, onOutput: (text: string) => void, timeoutMs = STEP_TIMEOUT_MS): SetupCommandRun {
   const windows = process.platform === 'win32'
   // Unix'te kendi surec grubu: iptal npm'in alt sureclerini de durdursun.
   const child = spawn(command, { cwd, shell: true, windowsHide: true, detached: !windows })
-  const kill = (): void => {
-    if (child.exitCode !== null || child.pid === undefined) return
-    if (windows) execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true }, () => undefined)
-    else {
-      try { process.kill(-child.pid, 'SIGTERM') } catch { child.kill('SIGTERM') }
-    }
-  }
+  const kill = (): void => killProcessTree(child)
   let timedOut = false
   const timer = setTimeout(() => { timedOut = true; kill() }, timeoutMs)
   child.stdout.on('data', (chunk: Buffer) => onOutput(chunk.toString()))

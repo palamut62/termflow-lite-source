@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-15 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.25.0
+guncel: 2026-10-17 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.26.0
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -32,14 +32,15 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
 - [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
 
-## Son oturum (2026-10-15, Agent IDE: Faz 4 + kalan bosluklar)
-- Faz 4: Review sayfasi (`shells/ide/review/`: diff tek sutun/yan yana, "Compare with" = Change Base Ref merge-base'e karsi, satir yorumu, "Send to agent" bracketed paste ile Enter'siz; duz kabukta panoya kopyalar), worktree notlari (`src/main/notes.ts`, userData/notes), giris: SCM dosya tiklamasi, worktree menusu, palet
-- Kalan bosluklar: Create worktree sparse checkout (`validSparsePaths`, cone), Group by Pull Request (proje basina tek `gh pr list`), Floating Workspace icinde gercek terminal (`floatingTabId`, Dock ile sekmeye doner)
-- Hata: Close Others/Right/Left her canli sekmeyi mesgul sayiyordu (yeni sekme `activity: 'running'` baslar), onay acikken hicbirini kapatmiyordu; artik yalniz ajan `working`/`needs-input` korunur
-- Hata: session-rail daraltmasi kayboluyordu (git koku `C:/x`, sekme klasoru `C:\x`; kok cozulunce grup anahtari degisiyordu). Anahtar artik ayiricidan bagimsiz; 2026-10-09'dan beri kirik E2E duzeldi
-- Dogrulama: birim 758, IDE E2E 13/13, Lite tam E2E 106/107 (tek kirik session-rail idi; duzeltme sonrasi session-rail 18/18, 3 tekrar)
+## Son oturum (2026-10-17, Orchestration dilim 0-1)
+- Headless CLI'lar ve ucretsiz modeller olculdu (spec tablosu). Hata yakalandi: OpenCode spawn cwd yerine miras `PWD`'yi kullanip baska depoya yaziyordu; klasor artik her ajana acikca verilir. `worktreeSetup.killProcessTree` paylasildi. Birim 809/810 gecti, canli 4/4
+
+## Onceki oturum (2026-10-17, Claude hesaplari + New project)
+- Claude hesap gecisi: Ayarlar > Profiles > "Add Claude account" (`CLAUDE_CONFIG_DIR` env'li profil; `src/main/claudeAccount.ts` projects/skills'i varsayilan hesaba junction'lar, dolu klasoru ezmez). Sekme sag tik > "Continue session with <hesap>": hook'tan gelen sessionId ile `--resume`, eski sekme kapanir. Giris her hesapta bir kez `/login`. Girisli hesaplar `.claude*/.claude.json` oauthAccount.emailAddress ile otomatik bulunur ve profil olarak eklenir (acilista, odakta, Ayarlar > Profiles > Claude accounts). Limit dolunca otomatik gecis: StopFailure hook (rate_limit/limit metni) -> `claudeFailover.ts onClaudeLimit`, ayar `autoSwitchClaudeAccount`; limitli hesap 5 saat atlanir. Gercek limit olayi dogrulanmadi. Elle denenmedi (gercek ikinci hesap yok); sessionId yoksa menu 'no session yet' der. Surum 1.26.0'da kaldi (yayinlanmadi)
+- Yeni sekme menusu > "New project...": ust klasor + proje adi + ajan/shell secilir, `src/main/projectCreate.ts` klasoru olusturur (bos mevcut klasor kullanilir, dolu reddedilir), sekme o klasorde acilir. `tabs/NewProjectModal.tsx`, IPC `project:create`. Birim test var, E2E ve elle deneme YOK, yayin/kurulum yapilmadi
 
 ## Yarim kalan / siradaki adim
+- **Orchestration (IDE, 2026-10-17):** spec `docs/agent-ide/orchestration.md`, dilim 0-1 tamam: `src/main/agentRunner.ts` (OpenCode/Codex/Grok headless, worktree, agac oldurme, kontrol komutu); henuz hicbir yere bagli DEGIL (IPC/MCP/UI yok). Siradaki: dilim 2 gorev kuyrugu + hookServer API + provider profil env'iyle `claude -p`. Gemini hesap katmani hatasi, DeepSeek bakiyesi bos
 - **1.25.0 yayini YARIM (2026-10-15):** main'e merge + `v1.25.0` tag'i itildi, ama Release run 38692776220'nin isleri hic baslamadi: GitHub "recent account payments have failed or your spending limit needs to be increased" (Billing & plans). Kullanici odemeyi duzeltince: `gh run rerun 38692776220 --repo palamut62/termflow-lite-source`
 - IDE yayin reposu acildi: PUBLIC `palamut62/termflow-agent-ide` (README + LICENSE). CI'da `release-ide-*` isleri ona yukler; `RELEASES_TOKEN` (fine-grained) bu repoya da Contents: write almali, kullanici token'a repoyu eklemeli, yoksa IDE isleri 403. IDE updater acildi, `.deb`/updater adi `termflow-agent-ide` (extraMetadata). IDE notlari `CHANGELOG-IDE.md`
 - Site: `#agent-ide` bolumu (EN/TR, `assets/agent-ide.webp`) hazir, Vercel'e DEPLOY EDILMEDI: IDE release'i cikinca `vercel --prod`
