@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.26.0 - 2026-10-17
+
+- Launch at startup: Settings > Terminal (and the phone's settings) can start TermFlow when you sign in to Windows.
+- Agent CLIs installed with npm (Claude Code, Codex, OpenCode, Gemini CLI, Qwen Code, Copilot CLI, Pi, Codebuff) update themselves in the background at start and once a day. Settings > Profiles shows each version and its state, and has Check for CLI updates now. Turn it off with Auto-update agent CLIs.
+- Antigravity (`agy`) is a built-in agent profile and appears in the New Tab menu when installed.
+- Several Claude accounts: Settings > Profiles > Add Claude account. Signed-in accounts are found by themselves, a tab can continue its session with another account, and an optional switch moves to the next account when a limit is hit.
+- New project in the New Tab menu: pick a parent folder and a name, TermFlow creates the folder and opens the agent or shell in it.
+- Administrator tabs from the phone: after one UAC approval on the PC, the phone can open an administrator terminal with a PIN.
+- Limits read like Claude Code: percent used, the 5-hour limit before the weekly one.
+- The phone interface has a Home screen, a workspace list and a terminal header with a neutral dark theme. The widget view takes its colours and window buttons from your theme, with the tab that needs you on top.
+- Settings: Profiles and Profile Health moved next to Providers.
+
 ## 1.25.0 - 2026-10-15
 
 - New worktree: one box takes a branch name, `#123` for a pull request, or a pull request or issue link. Advanced has a note, a parent worktree and sparse checkout (only the folders you list are checked out).

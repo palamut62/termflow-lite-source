@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { QrCode, Smartphone, Trash2 } from 'lucide-react'
+import { QrCode, ShieldCheck, Smartphone, Trash2 } from 'lucide-react'
 import type { RemoteDeviceInfo, RemotePairing, RemoteStatus } from '../../../shared/remote'
+import type { ElevationStatus } from '../../../shared/types'
 import { useSettingsStore } from '../store/settingsStore'
 import { useToastStore } from '../store/toastStore'
 import { Field, NumberInput, Toggle } from './Settings'
@@ -17,6 +18,57 @@ function statusText(status: RemoteStatus | null): string {
 }
 
 const date = (time: number): string => new Date(time).toLocaleString()
+const ipcError = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : fallback
+
+/** Admin tabs opened from the phone: set up once here under UAC, then approved with a PIN on the phone. */
+function AdminTabsSettings(): React.JSX.Element | null {
+  const toast = useToastStore((s) => s.show)
+  const [status, setStatus] = useState<ElevationStatus | null>(null)
+  const [pin, setPin] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => { void window.termflow.remote.elevationStatus().then(setStatus) }, [])
+  if (status === null || status === 'unsupported') return null
+
+  const run = async (action: () => Promise<void>, done: string): Promise<void> => {
+    setBusy(true)
+    try {
+      await action()
+      setPin('')
+      toast(done, 'success')
+    } catch (error) {
+      toast(ipcError(error, 'Windows did not finish the change.'), 'error')
+    } finally {
+      setStatus(await window.termflow.remote.elevationStatus())
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="settings-section-title"><ShieldCheck size={14} /> Administrator tabs from the phone</div>
+      <p className="settings-note">
+        Windows does not let any app click a UAC prompt, so this PC approves once: Windows asks for administrator rights
+        one time, then the phone can open an administrator terminal after you enter this PIN there. Without the PIN nothing
+        is elevated. Changing the PIN or turning this off asks for UAC again.
+      </p>
+      <Field label="Status" hint={status === 'on' ? 'On. On the phone: New tab > Run as administrator.' : 'Off'}>
+        {status === 'on' && <button className="settings-btn settings-btn-small settings-btn-danger" disabled={busy} onClick={() => void run(() => window.termflow.remote.disableElevation(), 'Administrator tabs turned off.')}>Turn off</button>}
+      </Field>
+      <Field label={status === 'on' ? 'New PIN' : 'PIN'} hint="6 to 12 digits; entered on the phone for every administrator tab">
+        <span className="memory-inline">
+          <input className="settings-input-narrow" type="password" inputMode="numeric" autoComplete="new-password" aria-label="Administrator PIN" maxLength={12}
+            value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
+          <button className="settings-btn settings-btn-small settings-btn-primary" disabled={busy || pin.length < 6}
+            onClick={() => void run(() => window.termflow.remote.enableElevation(pin), 'Administrator tabs are ready on the phone.')}>
+            {status === 'on' ? 'Change PIN' : 'Turn on'}
+          </button>
+        </span>
+      </Field>
+    </>
+  )
+}
 
 export function RemoteSettings(): React.JSX.Element {
   const remote = useSettingsStore((s) => s.settings.remote)
@@ -81,7 +133,7 @@ export function RemoteSettings(): React.JSX.Element {
       setPairing(await window.termflow.remote.pair(deviceId))
       setNow(Date.now())
     } catch (error) {
-      toast(error instanceof Error ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'Could not create a pairing code.')
+      toast(ipcError(error, 'Could not create a pairing code.'))
     }
   }
 
@@ -176,6 +228,7 @@ export function RemoteSettings(): React.JSX.Element {
           </div>
         )
         : <button className="settings-btn" onClick={() => setConfirmAll(true)}>Disconnect all...</button>)}
+      <AdminTabsSettings />
     </div>
   )
 }

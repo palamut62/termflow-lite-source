@@ -35,6 +35,7 @@ import { MemoryEngine } from './memory/engine'
 import { MemoryStore } from './memory/store'
 import { appExecutable, installServerScript, serverLaunch, type ServerLaunch } from './memory/connect'
 import { ProviderSecretStore } from './storage/ProviderSecretStore'
+import { AgentUpdater } from './agentUpdater'
 import { registerProfileHealth } from './ipc/profileHealth'
 import { AgentEventStore } from './storage/AgentEventStore'
 import { AgentSessionOwnershipStore } from './storage/AgentSessionOwnershipStore'
@@ -53,6 +54,7 @@ import { AgentHookServer } from './agentHooks/hookServer'
 import { EDITION, PRODUCT } from '../shared/edition'
 import { readClaudeUsage, readCodexUsage } from './usage/agentUsage'
 import { registerRemoteIpc } from './ipc/remote'
+import { ELEVATED_HOST_FLAG, elevationStatus, grantElevation, runElevatedHost } from './terminal/elevation'
 import { registerVoiceIpc } from './ipc/voice'
 import { registerOrchestrationIpc, sendOrchestrationTasks, type OrchestrationController } from './ipc/orchestration'
 import { OrchestrationService } from './orchestration/service'
@@ -83,6 +85,12 @@ if (EDITION === 'ide') {
 }
 if (process.env.TERMFLOW_E2E === '1') {
   app.setPath('userData', process.env.TERMFLOW_E2E_USER_DATA || join(app.getPath('temp'), `termflow-lite-e2e-${process.pid}`))
+}
+// Started elevated by the admin-tab task: relay one shell, no window, no app state.
+const elevatedHost = process.argv.includes(ELEVATED_HOST_FLAG)
+if (elevatedHost) {
+  app.setPath('userData', join(app.getPath('temp'), `${PRODUCT.slug}-elevated-${process.pid}`))
+  void runElevatedHost().finally(() => app.exit(0))
 }
 
 let mainWindow: BrowserWindow | null = null
@@ -134,6 +142,12 @@ function applyTrayConfig(settings: AppSettings): void {
     onQuit: quitApp,
     isWindowVisible: () => Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible())
   })
+}
+
+/** Sistem başlangıcında açılma; dev/E2E koşusunda kayıt yapılmaz (electron.exe'yi kaydederdi). */
+function applyLoginItem(settings: AppSettings): void {
+  if (!app.isPackaged || process.env.TERMFLOW_E2E === '1') return
+  app.setLoginItemSettings({ openAtLogin: settings.launchAtLogin })
 }
 
 // ---- Quake (açılır) mod durumu ----
@@ -211,8 +225,10 @@ function showMainWindow(): void {
 
 // Single-instance: focus the existing window instead of spawning a second
 // process that would fight over the userData/cache locks.
-const gotLock = app.requestSingleInstanceLock({ launchRequest: initialLaunchRequest })
-if (!gotLock) {
+const gotLock = !elevatedHost && app.requestSingleInstanceLock({ launchRequest: initialLaunchRequest })
+if (elevatedHost) {
+  // no lock: it runs next to the normal app
+} else if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', (_event, argv, _workingDirectory, additionalData) => {
@@ -336,6 +352,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  if (elevatedHost) return
   // Remote Access reuses the validated IPC handlers; record them before any registration.
   recordIpcHandlers()
   // Windows bildirimleri kısayoldaki AppUserModelID ile eşleşmeli (electron-builder appId).
@@ -456,6 +473,7 @@ app.whenReady().then(() => {
     refreshContextMenu()
     applyQuakeConfig(settings)
     applyTrayConfig(settings)
+    applyLoginItem(settings)
     if (settings.memory.enabled && !memoryWasEnabled) void memoryEngine.run().catch(() => undefined)
     memoryWasEnabled = settings.memory.enabled
     remoteController?.settingsChanged(settings)
@@ -602,6 +620,7 @@ app.whenReady().then(() => {
     pushStatus: (status) => liveWindow()?.webContents.send(IPC.REMOTE_STATUS_EVENT, status),
     platform: process.platform,
     version: app.getVersion(),
+    elevation: { status: elevationStatus, grant: grantElevation },
     // E2E only: bind to a loopback address instead of requiring Tailscale.
     findAddress: process.env.TERMFLOW_E2E === '1' && process.env.TERMFLOW_E2E_REMOTE_HOST
       ? () => process.env.TERMFLOW_E2E_REMOTE_HOST ?? null
@@ -609,10 +628,17 @@ app.whenReady().then(() => {
   })
   registerRemoteIpc(remoteController)
 
+  // Ajan CLI'lari arka planda guncellenir (acilista + gunde bir); E2E'de kapali.
+  const agentUpdater = new AgentUpdater((snapshot) => liveWindow()?.webContents.send(IPC.AGENTS_UPDATE_EVENT, snapshot))
+  ipcMain.handle(IPC.AGENTS_UPDATE_STATUS, () => agentUpdater.snapshot())
+  ipcMain.handle(IPC.AGENTS_UPDATE_RUN, () => agentUpdater.run())
+  if (process.env.TERMFLOW_E2E !== '1') agentUpdater.schedule(() => settingsStore?.get().autoUpdateAgents !== false)
+
   createWindow()
   void remoteController.apply(settingsStore.get())
   applyQuakeConfig(settingsStore.get())
   applyTrayConfig(settingsStore.get())
+  applyLoginItem(settingsStore.get())
 
   // Sessiz güncelleme kontrolü: pencere yüklendikten ~10 sn SONRA, bir kez.
   // Açılış hızını etkilememesi için kritik yolun dışında tutulur.

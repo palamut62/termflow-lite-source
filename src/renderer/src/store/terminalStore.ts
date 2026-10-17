@@ -80,7 +80,7 @@ interface TerminalState {
   broadcastInput: boolean
   toggleBroadcastInput(): void
   /** id nanoid(10); title = profile adı. activate=false ile arka planda açar (sonraki fazlar). */
-  addTab(profileId: string, activate?: boolean, cwd?: string, launchCommand?: string, permissionMode?: AgentPermissionMode, worktree?: TabWorktree): string
+  addTab(profileId: string, activate?: boolean, cwd?: string, launchCommand?: string, permissionMode?: AgentPermissionMode, worktree?: TabWorktree, elevated?: boolean): string
   /**
    * Worktree'si TermFlow tarafından oluşturulmuş, kapanmış bir sekme; kullanıcı
    * checkout'u silmeyi seçene kadar burada bekler. null = temizlik sorulmuyor.
@@ -207,11 +207,13 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     return true
   },
 
-  addTab(profileId, activate = true, cwd, launchCommand, permissionMode, worktree) {
+  addTab(profileId, activate = true, cwd, launchCommand, permissionMode, worktree, elevated) {
     // An explicit folder belongs to this tab only; it must not become the path of
     // every later shell, so plain new tabs always follow the startup directory.
     const effectiveCwd = worktree?.path || cwd || resolveStartupCwd()
     const tab = makeTab(profileId, effectiveCwd, undefined, launchCommand, permissionMode, worktree)
+    // The title prefix is the admin marker everywhere a tab is listed (desktop, IDE, widget, phone).
+    if (elevated) Object.assign(tab, { elevated: true, title: `Admin: ${tab.title}` })
     set((s) => ({
       tabs: [...s.tabs, tab],
       // An isolated checkout is this tab's cwd only; it must not become the

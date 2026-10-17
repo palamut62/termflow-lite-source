@@ -49,8 +49,8 @@ export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords
  */
 /** Agent IDE tam sayfa ayarlarinda menu gruplari (Orca: AI Capabilities, Set Up, Workflows, Interface). */
 const GROUPS: { label: string; ids: SectionId[] }[] = [
-  { label: 'AI Capabilities', ids: ['providers', 'orchestration', 'memory', 'voice', 'agent-security'] },
-  { label: 'Set Up', ids: ['profiles', 'health', 'workspaces', 'remote', 'backup'] },
+  { label: 'AI Capabilities', ids: ['providers', 'profiles', 'health', 'orchestration', 'memory', 'voice', 'agent-security'] },
+  { label: 'Set Up', ids: ['workspaces', 'remote', 'backup'] },
   { label: 'Workflows', ids: ['terminal', 'ssh'] },
   { label: 'Interface', ids: ['appearance', 'notifications', 'keyboard', 'stats'] },
   { label: 'About', ids: ['about'] }

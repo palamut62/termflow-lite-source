@@ -1,7 +1,9 @@
 # TermFlow Agent IDE - Changelog
 
-## 1.26.0 - unreleased
+## 1.26.0 - 2026-10-17
 
+- Everything in TermFlow Lite 1.26.0: launch at startup, background updates for npm-installed agent CLIs, the Antigravity profile, several Claude accounts, New project, administrator tabs from the phone.
+- More orchestration workers: Antigravity, Gemini CLI, Qwen Code, GitHub Copilot CLI, Kimi and Droid can take delegated tasks when installed, next to OpenCode, Codex, Grok and Claude Code.
 - Orchestration: a coding agent can hand work to another agent or model and check the result, to save its own usage limits. Turn it on in Settings > Orchestration and connect Claude Code, Codex or OpenCode; they get the termflow-agents MCP tools (list_agents, delegate_task, get_task_result, list_tasks, cancel_task, discard_task).
 - Workers: OpenCode (free models such as opencode/deepseek-v4.1-flash-free and opencode/glm-5.3-flash-free), Codex, Grok, Claude Code and any Claude Code provider profile (DeepSeek, OpenRouter...). Each task runs headless in its own git worktree on a `deleg/` branch from the last commit; the result is a commit the coordinating agent reviews and applies with `git cherry-pick`.
 - Optional check command per task (for example a test file); a task with no changes or a failing check is reported as failed, with the agent's output.

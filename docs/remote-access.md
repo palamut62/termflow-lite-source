@@ -65,3 +65,21 @@ Metotlar: `ipc` (izin listeli kanal), `tab.open|close|rename|focus|restart`,
   izin listesi, boyut hakemligi (TerminalManager), hub (fake soket + fake renderer).
 - Entegrasyon: gercek http+ws sunucusu 127.0.0.1'de (test kancasiyla) eslestirme + auth + akis.
 - Canli: Tailscale IP'sinden yerlesik tarayicida mobil gorunum.
+
+## Yonetici sekmeleri (2026-10-15, kullanici karari)
+- Windows hicbir uygulamanin UAC penceresine tiklamasina izin vermez (guvenli masaustu), bu yuzden
+  "PC'deki herhangi bir UAC'yi telefondan onayla" yapilmaz. Yerine: telefonda PIN ile onaylanan yonetici sekmesi.
+- Kurulum masaustunde, bir kez UAC ile: Ayarlar > Remote > "Administrator tabs from the phone", PIN (6-12 rakam).
+  Yukseltilmis PowerShell `%ProgramData%\<slug>\elevation.json`'a scrypt PIN hash'ini yazar (klasor ACL'i yalniz
+  Administrators + SYSTEM) ve "<urun> Elevated" adli, tetikleyicisiz, "en yuksek yetkiyle" calisan gorev kaydeder
+  (`<exe> --termflow-elevated-host`). Kapatma/PIN degistirme yine UAC ister.
+- Kullanim: telefonda New tab > "Run as administrator" + PIN. Hub `tab.open{elevated,pin}` gorev kurulu degilse
+  reddeder; PIN 60 sn'lik tek kullanimlik onay olarak ana surecte bekler, sekme `elevated` bayragiyla acilir,
+  PtyCore `spawnElevated` ile gorevi `schtasks /run` ile baslatir. Yukseltilmis host PIN'i kendisi dogrular
+  (5 yanlis -> 15 dk kilit), kabugu node-pty ile acar ve named pipe (`\.\pipe\<slug>-elevate-<kullanici hash>`)
+  uzerinden JSON satirlariyla aktarir. Yanlis PIN / kurulum yok / baglanti yok sekmeye kirmizi yazilip sekme kapanir.
+- Sekme basligi `Admin: ...` (masaustu, IDE, widget ve telefon ayni isaret). Oturum geri yuklenince ve yeniden
+  baslatmada yonetici sekmesi kendiliginden yukselmez: yeniden baslatma yeni telefon onayi ister.
+- DURUM (2026-10-15): YAYINLANMADI. Kullanici basina kurulumda uygulama dosyalari kullanici yazilabilir klasorde;
+  PIN kontrolu bu dosyalarin icinde oldugu icin tasarim su haliyle UAC'yi zayiflatir. Yayin oncesi yukseltilmis
+  hostun korumali bir konumdan calismasi (ya da imzali servis) gerekir; karar bekliyor.

@@ -1,4 +1,4 @@
-import type { AppSettings, PtyEvent, ShellInfo } from '../../shared/types'
+import type { AppSettings, ElevationStatus, PtyEvent, ShellInfo } from '../../shared/types'
 import { IPC } from '../../shared/ipc'
 import {
   isValidTabId,
@@ -100,6 +100,8 @@ export interface RemoteHubDeps {
   version: string
   home: string
   computer?: string
+  /** Administrator tabs approved with a PIN (src/main/terminal/elevation.ts). */
+  elevation?: { status(): Promise<ElevationStatus>; grant(pin: string): void }
 }
 
 interface Client {
@@ -311,14 +313,24 @@ export class RemoteHub {
         }
         return await this.deps.invokeIpc(channel, args)
       }
-      case 'tab.open':
+      case 'tab.open': {
+        const elevated = p.elevated === true
+        if (elevated) {
+          if (!this.deps.elevation || await this.deps.elevation.status() !== 'on') throw new Error('Turn on administrator tabs on the PC first (Settings > Remote).')
+          // The elevated host checks the PIN itself; a wrong one is printed in the tab.
+          this.deps.elevation.grant(requireString(p.pin, 'PIN'))
+        }
         return this.openedAtPhoneSize(client, p, await this.deps.runTabCommand({
           kind: 'open',
           profileId: requireString(p.profileId, 'profile'),
           cwd: optionalString(p.cwd),
           launchCommand: optionalString(p.launchCommand),
-          permissionMode: permission(p.permissionMode)
+          permissionMode: permission(p.permissionMode),
+          ...(elevated ? { elevated } : {})
         }))
+      }
+      case 'elevation.status':
+        return this.deps.elevation ? await this.deps.elevation.status() : 'unsupported'
       case 'tab.close':
         return await this.deps.runTabCommand({ kind: 'close', tabId: requireTab(p.tabId) })
       case 'tab.rename':

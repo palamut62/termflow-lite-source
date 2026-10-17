@@ -181,7 +181,8 @@ test('status bar: keep awake, resource manager and a terminal port', async () =>
 })
 
 test('create worktree: note and parent from Advanced nest the new card', async () => {
-  await win.getByRole('button', { name: 'New worktree', exact: true }).click()
+  await win.getByRole('button', { name: 'Application menu' }).click()
+  await win.getByRole('menuitem', { name: 'New Worktree...' }).click()
   await win.fill('#worktree-repo', join(folder, 'shop-api'))
   await expect(win.locator('.path-launch-hint').first()).toContainText('on main')
   // Bir kabuk sec: test gercek bir ajan baslatmasin.

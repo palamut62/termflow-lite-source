@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import type { AppSettings, ShellInfo } from '../../shared/types'
 import type { RemoteCommandReply, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabCommand, RemoteTabsState } from '../../shared/remote'
 import { DeviceStore, formatPairingCode } from './devices'
-import { RemoteHub, type RemoteTerminals } from './RemoteHub'
+import { RemoteHub, type RemoteHubDeps, type RemoteTerminals } from './RemoteHub'
 import { RemoteServer } from './RemoteServer'
 import { findTailscaleAddress } from './tailscale'
 
@@ -27,6 +27,7 @@ export interface RemoteControllerDeps {
   platform: string
   version: string
   findAddress?: () => string | null
+  elevation?: RemoteHubDeps['elevation']
 }
 
 /**
@@ -60,7 +61,8 @@ export class RemoteController {
       platform: deps.platform,
       version: deps.version,
       home: homedir(),
-      computer: hostname()
+      computer: hostname(),
+      elevation: deps.elevation
     })
     this.server = new RemoteServer({
       staticDir: deps.staticDir,

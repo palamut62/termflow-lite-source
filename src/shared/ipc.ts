@@ -28,9 +28,15 @@ export const IPC = {
   REMOTE_TABS: 'remote:tabs', // renderer -> main RemoteTabsState
   REMOTE_COMMAND: 'remote:command', // main -> renderer RemoteCommandRequest
   REMOTE_COMMAND_REPLY: 'remote:command-reply', // renderer -> main RemoteCommandReply
+  ELEVATION_STATUS: 'elevation:status', // -> ElevationStatus
+  ELEVATION_ENABLE: 'elevation:enable', // (pin) one UAC prompt on the PC
+  ELEVATION_DISABLE: 'elevation:disable', // () one UAC prompt on the PC
   PROVIDER_SECRET_STATUS: 'provider-secret:status', // (providerId) -> boolean
   PROVIDER_SECRET_HEALTH: 'provider-secret:health',
   PROFILE_HEALTH: 'profile:health',
+  AGENTS_UPDATE_STATUS: 'agents:update-status', // () -> AgentUpdateSnapshot
+  AGENTS_UPDATE_RUN: 'agents:update-run', // () -> AgentUpdateSnapshot (hemen kontrol)
+  AGENTS_UPDATE_EVENT: 'agents:update-event', // main -> renderer AgentUpdateSnapshot
   AGENTS_DETECT: 'agents:detect', // () -> kurulu yerlesik ajan profil id'leri
   PROVIDER_SECRET_SET: 'provider-secret:set', // (providerId, secret) -> boolean
   PROVIDER_SECRET_DELETE: 'provider-secret:delete', // (providerId) -> void
@@ -84,6 +90,10 @@ export const IPC = {
   FILES_SEARCH: 'files:search', // (dir, FileSearchQuery) -> FileSearchResult — git grep
   TASKS_DISCOVER: 'tasks:discover',
   PROJECT_DETECT: 'project:detect',
+  CLAUDE_ACCOUNT_LINK: 'claude-account:link', // (configDir) -> { ok, error? } - shares projects/skills with the default account
+  CLAUDE_ACCOUNT_DETECT: 'claude-account:detect', // () -> ClaudeLogin[] - signed-in Claude subscriptions
+  CLAUDE_ACCOUNT_SUGGEST: 'claude-account:suggest', // (name) -> default config folder path
+  PROJECT_CREATE: 'project:create', // (parent, name) -> ProjectCreateResult — mkdir for the New project dialog
   AGENT_SESSIONS_LIST: 'agent-sessions:list',
   AGENT_SESSION_WARNINGS: 'agent-sessions:warnings',
   AGENT_SESSION_HANDOVER: 'agent-sessions:handover',
@@ -321,6 +331,7 @@ export interface ResourceSnapshot {
 /** Explorer "Contents" search (Agent IDE). include/exclude: comma separated globs. */
 export interface FileSearchQuery { text: string; caseSensitive?: boolean; word?: boolean; regex?: boolean; include?: string; exclude?: string }
 export interface FileSearchFile { path: string; absolute: string; matches: { line: number; text: string }[] }
+export type ProjectCreateResult = { ok: true; path: string } | { ok: false; error: string }
 export interface FileSearchResult { files: FileSearchFile[]; truncated: boolean; error?: string }
 
 /** A city resolved for live weather (coordinates rounded to two decimals). */

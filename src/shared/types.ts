@@ -133,6 +133,8 @@ export interface TerminalTab {
   attention?: TabAttention
   /** Sekme rengi (Agent IDE sekme menusu, Orca "Tab Color"): #rrggbb. */
   color?: string
+  /** Telefondan PIN ile onaylanan yonetici sekmesi; oturum geri yuklenince normal acilir. */
+  elevated?: boolean
 }
 
 export interface TerminalProfile {
@@ -228,7 +230,12 @@ export interface CreateTerminalInput {
   launchCommand?: string
   /** Desteklenen kabuklara OSC 133 shell integration enjekte edilsin mi. */
   shellIntegration?: boolean
+  /** Kabuk yonetici gorevi uzerinden acilir (src/main/terminal/elevation.ts). */
+  elevated?: boolean
 }
+
+/** Telefondan onayli yonetici sekmeleri: unsupported = Windows degil. */
+export type ElevationStatus = 'unsupported' | 'off' | 'on'
 
 /**
  * Full 20-color terminal palette (PRD §27). Shared with the renderer theme
@@ -386,6 +393,10 @@ export interface AppSettings {
    * gerçek çıkış yalnızca tepsi menüsündeki "Quit" ile yapılır.
    */
   closeToTray: boolean
+  /** Windows oturumu açılınca uygulama otomatik başlar. */
+  launchAtLogin: boolean
+  /** Npm ile kurulu ajan CLI'larini acilista ve gunde bir arka planda guncelle. */
+  autoUpdateAgents: boolean
   /** Quake (açılır) mod: global kısayolla ekranın üstünden inen pencere. */
   quakeMode: boolean
   /** Electron accelerator formatında global kısayol (ör. 'F12'). */
@@ -431,6 +442,8 @@ export interface AppSettings {
   commandNotifications: boolean
   /** Ajan durumunu ajanin kendisinden oku: Claude HTTP hook'lari (--settings), Codex OSC 9. Kullanici dosyalarina yazilmaz. */
   agentHooks: boolean
+  /** When a Claude account hits its usage limit, resume the session on another signed-in account. Needs agentHooks. */
+  autoSwitchClaudeAccount: boolean
   /** Ajan bitti / seni bekliyor / hata: kategori basina sistem bildirimi ve ses. */
   agentAlerts: AgentAlertSettings
   /** Depo basina worktree kurulum adimlari; anahtar `setupKey(repoRoot)`. */
@@ -563,7 +576,7 @@ export interface OrchestrationSettings {
   targets: Record<string, OrchestrationTargetSettings>
 }
 
-export type DelegateAgentKind = 'opencode' | 'codex' | 'grok' | 'claude'
+export type DelegateAgentKind = 'opencode' | 'codex' | 'grok' | 'claude' | 'agy' | 'gemini' | 'qwen' | 'copilot' | 'kimi' | 'droid'
 
 /** Is verilebilecek hedef: kurulu ajan CLI'i ya da `claude` ile calisan saglayici profili. */
 export interface OrchestrationTarget {
@@ -838,6 +851,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ide: { projects: [], sidebarWidth: 260, rightWidth: 300, rightOpen: true, rightTab: 'explorer', sidebarOpen: true, showClaudeWorktrees: false, showOtherWorktrees: false, shownWorktrees: [], hideDefaultBranch: false, hideDetached: false, sort: 'activity', cardLayout: 'detailed', groupBy: 'project', hideSleeping: false, hiddenProps: [], worktreeMeta: {}, keepAwake: 'off' },
   sessionRailWidth: 220,
   closeToTray: true,
+  launchAtLogin: false,
+  autoUpdateAgents: true,
   quakeMode: false,
   quakeHotkey: 'F12',
   quakeHideOnBlur: true,
@@ -855,6 +870,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   mediaPreviews: 'all',
   commandNotifications: true,
   agentHooks: true,
+  autoSwitchClaudeAccount: true,
   restoreScrollback: true,
   resumeAgentsOnRestore: true,
   usageDisplay: 'used',

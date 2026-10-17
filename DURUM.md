@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-17 | son arac: Claude Code (Opus 5.5) | dal: `feature/agent-ide` | surum 1.26.0
+guncel: 2026-10-17
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -32,6 +32,10 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.23.0 Voice Input: Space basili tut-konus, OpenRouter ses modeliyle yaziya cevirme + temizleme, Enter'siz ekleme; spec `docs/voice-input.md`; site f9 (EN/TR, `assets/voice.webp`), f8 Remote metni ayna/Fit ve QR tarama ile guncellendi, Vercel prod
 - [x] 1.26.0 (yayinlanmadi) IDE Orchestration: ajanlar isi baska ajanlara devreder (termflow-agents MCP, worktree + `deleg/` dali, Delegated paneli); spec `docs/agent-ide/orchestration.md`, 6/6 dilim
 - [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
+
+## Ek (2026-10-17)
+- Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
+- Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
 ## Son oturum (2026-10-17, Orchestration tamam)
 - Dilim 2-5: `orchestration/` (manager kuyrugu + OpenCode seri, yerel API + endpoint.json, termflow-agents MCP 6 arac, service: model listesi/limit raporu/Test), Ayarlar > Orchestration ve sag panel Delegated (yalniz IDE yerlesimi). Gorev dalina commit + cherry-pick; saglayici profilleri `claude -p` + env
