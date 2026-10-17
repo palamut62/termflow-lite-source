@@ -7,7 +7,7 @@ export type ShellKind = 'powershell' | 'pwsh' | 'cmd' | 'wsl' | 'gitbash' | 'cus
 export type TabActivity = 'running' | 'waiting' | 'unread' | 'completed' | 'error'
 export type AgentKind = 'claude' | 'codex' | 'opencode'
 /** Ajanin dikkat istedigi okunmamis olay (agent-attention). */
-export type IdeRightTab = 'explorer' | 'agents' | 'scm' | 'checks'
+export type IdeRightTab = 'explorer' | 'agents' | 'delegated' | 'scm' | 'checks'
 export interface IdeSettings {
   /** Kullanicinin ekledigi proje klasorleri (depo kokleri), siraya gore. */
   projects: string[]
@@ -473,6 +473,8 @@ export interface AppSettings {
   remote: RemoteSettings
   /** Voice input: hold Space and speak (docs/voice-input.md). Off by default. */
   voice: VoiceSettings
+  /** Orchestration: ajanlar isi baska ajanlara devreder (docs/agent-ide/orchestration.md). Yalniz Agent IDE. */
+  orchestration: OrchestrationSettings
   /** Widget görünümünün son konumu (null = sağ üst köşe), daraltılmış ve üstte tutma durumu. */
   widgetX: number | null
   widgetY: number | null
@@ -542,6 +544,83 @@ export interface RemoteSettings {
 /** Hafiza ne siklikla yeni session arar (yeni session yoksa model cagrilmaz). */
 export type MemoryInterval = 'hourly' | 'daily' | 'weekly'
 export const MEMORY_INTERVAL_MS: Record<MemoryInterval, number> = { hourly: 60 * 60_000, daily: 24 * 60 * 60_000, weekly: 7 * 24 * 60 * 60_000 }
+
+export interface OrchestrationTargetSettings {
+  enabled: boolean
+  /** Bos: CLI'in kendi varsayilani (saglayici profilinde profilin modeli). */
+  model: string
+}
+
+export interface OrchestrationSettings {
+  /** Yerel API'yi ve termflow-agents MCP'sini acar. */
+  enabled: boolean
+  /** Ayni anda calisan gorev siniri (OpenCode ayrica tek tek calisir). */
+  maxConcurrent: number
+  timeoutMinutes: number
+  /** Claude 5 saatlik kullanimi bu yuzdeyi gecince list_agents ucretsiz hedefleri onerir; 0 = kapali. */
+  claudeThreshold: number
+  /** Anahtar: hedef id ('opencode', 'codex', 'grok', 'claude', 'provider:<id>'). Kaydi olmayan hedef acik sayilir. */
+  targets: Record<string, OrchestrationTargetSettings>
+}
+
+export type DelegateAgentKind = 'opencode' | 'codex' | 'grok' | 'claude'
+
+/** Is verilebilecek hedef: kurulu ajan CLI'i ya da `claude` ile calisan saglayici profili. */
+export interface OrchestrationTarget {
+  id: string
+  label: string
+  agent: DelegateAgentKind
+  installed: boolean
+  enabled: boolean
+  model: string
+  providerId?: string
+  /** Saglayici profilinde anahtar kayitli mi (degeri hic gonderilmez). */
+  hasCredential?: boolean
+}
+
+export type DelegatedTaskStatus = 'queued' | 'running' | 'done' | 'failed' | 'timeout' | 'cancelled'
+
+export interface DelegatedTask {
+  id: string
+  target: string
+  label: string
+  model?: string
+  prompt: string
+  repoRoot: string
+  /** MCP istemcisinin adi (initialize clientInfo), orn. 'claude-code'. */
+  requestedBy?: string
+  checkCommand?: string
+  status: DelegatedTaskStatus
+  createdAt: number
+  startedAt?: number
+  finishedAt?: number
+  error?: string
+  worktreePath?: string
+  branch: string
+  lastMessage: string
+  cost?: number
+  tokens?: number
+  exitCode: number | null
+  diffStat: string
+  changedFiles: string[]
+  commit?: string
+  check?: { code: number | null; timedOut: boolean; output: string }
+  outputTail: string
+}
+
+export interface OrchestrationStatus {
+  running: boolean
+  error?: string
+}
+
+export interface OrchestrationTestResult {
+  ok: boolean
+  status: DelegatedTaskStatus
+  latencyMs: number
+  cost?: number
+  error?: string
+  lastMessage?: string
+}
 
 export interface MemorySettings {
   enabled: boolean
@@ -803,6 +882,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   memory: { enabled: false, updateEvery: 'hourly', model: 'deepseek/deepseek-v4-flash', excludedProjects: [] },
   remote: { enabled: false, port: 47321 },
   voice: { enabled: false, model: 'google/gemini-2.5-flash-lite', holdMs: 400, cleanup: true, language: 'auto', speak: { enabled: false, model: 'antalia', speed: 1, studioDir: '' } },
+  // Dilim 0 olcumunde en hizli gecen ucretsiz model; listede yoksa kullanici secer.
+  orchestration: { enabled: false, maxConcurrent: 2, timeoutMinutes: 10, claudeThreshold: 70, targets: { opencode: { enabled: true, model: 'opencode/deepseek-v4.1-flash-free' } } },
   widgetX: null,
   widgetY: null,
   widgetCollapsed: false,

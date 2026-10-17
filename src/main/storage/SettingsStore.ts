@@ -17,6 +17,27 @@ function normalizeMemorySettings(value: unknown): AppSettings['memory'] {
   const updateEvery = input.updateEvery && input.updateEvery in MEMORY_INTERVAL_MS ? input.updateEvery : defaults.updateEvery
   return { enabled: input.enabled === true, updateEvery, model, excludedProjects: excluded }
 }
+const clampInt = (value: unknown, min: number, max: number, fallback: number): number =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback
+const TARGET_ID = /^(opencode|codex|grok|claude|provider:[a-zA-Z0-9_-]{1,100})$/
+
+export function normalizeOrchestrationSettings(value: unknown): AppSettings['orchestration'] {
+  const input = value && typeof value === 'object' ? value as Partial<AppSettings['orchestration']> : {}
+  const defaults = DEFAULT_SETTINGS.orchestration
+  const raw = input.targets && typeof input.targets === 'object' ? input.targets : defaults.targets
+  const targets = Object.fromEntries(Object.entries(raw).slice(0, 50).flatMap(([id, target]) => {
+    if (!TARGET_ID.test(id) || !target || typeof target !== 'object') return []
+    const model = typeof target.model === 'string' ? target.model.trim().slice(0, 200) : ''
+    return [[id, { enabled: target.enabled !== false, model }]]
+  }))
+  return {
+    enabled: input.enabled === true,
+    maxConcurrent: clampInt(input.maxConcurrent, 1, 4, defaults.maxConcurrent),
+    timeoutMinutes: clampInt(input.timeoutMinutes, 1, 60, defaults.timeoutMinutes),
+    claudeThreshold: clampInt(input.claudeThreshold, 0, 100, defaults.claudeThreshold),
+    targets
+  }
+}
 function normalizeRemoteSettings(value: unknown): AppSettings['remote'] {
   const input = value && typeof value === 'object' ? value as Partial<AppSettings['remote']> : {}
   const port = typeof input.port === 'number' && Number.isInteger(input.port) && input.port >= 1024 && input.port <= 65535
@@ -50,7 +71,7 @@ function normalizeIde(value: unknown): AppSettings['ide'] {
     sidebarWidth: width(input.sidebarWidth, 260, 200, 400),
     rightWidth: width(input.rightWidth, 300, 220, 560),
     rightOpen: input.rightOpen !== false,
-    rightTab: (['agents', 'scm', 'checks'] as const).find((t) => t === input.rightTab) ?? 'explorer',
+    rightTab: (['agents', 'delegated', 'scm', 'checks'] as const).find((t) => t === input.rightTab) ?? 'explorer',
     sidebarOpen: input.sidebarOpen !== false,
     showClaudeWorktrees: input.showClaudeWorktrees === true,
     showOtherWorktrees: input.showOtherWorktrees === true,
@@ -144,6 +165,7 @@ export class SettingsStore {
     merged.memory = normalizeMemorySettings(settings.memory)
     merged.remote = normalizeRemoteSettings(settings.remote)
     merged.voice = normalizeVoiceSettings(settings.voice)
+    merged.orchestration = normalizeOrchestrationSettings(settings.orchestration)
     merged.agentAlerts = normalizeAgentAlerts(settings.agentAlerts)
     merged.ide = normalizeIde(settings.ide)
     // Agent IDE yalniz IDE surumunde; Lite her zaman terminal yerlesimi.

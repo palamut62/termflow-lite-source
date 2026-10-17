@@ -141,9 +141,14 @@ export class MemoryMcpServer {
   }
 }
 
-/** stdio döngüsü: satır başına bir JSON-RPC mesajı okur/yazar. */
-export function serveStdio(server: MemoryMcpServer, input: NodeJS.ReadableStream = process.stdin, output: NodeJS.WritableStream = process.stdout): void {
+export interface JsonRpcHandler {
+  handle(message: unknown): Record<string, unknown> | null | Promise<Record<string, unknown> | null>
+}
+
+/** stdio döngüsü: satır başına bir JSON-RPC mesajı okur/yazar. Async handler'da cevaplar bitiş sırasıyla gider (id ile eşlenir). */
+export function serveStdio(server: JsonRpcHandler, input: NodeJS.ReadableStream = process.stdin, output: NodeJS.WritableStream = process.stdout): void {
   let buffer = ''
+  const write = (response: Record<string, unknown> | null): void => { if (response) output.write(`${JSON.stringify(response)}\n`) }
   input.setEncoding?.('utf8')
   input.on('data', (chunk: string | Buffer) => {
     buffer += chunk.toString()
@@ -152,13 +157,19 @@ export function serveStdio(server: MemoryMcpServer, input: NodeJS.ReadableStream
       const line = buffer.slice(0, newline).trim()
       buffer = buffer.slice(newline + 1)
       if (!line) continue
-      let response: Record<string, unknown> | null
+      let message: unknown
+      let parsed = true
       try {
-        response = server.handle(JSON.parse(line))
+        message = JSON.parse(line)
       } catch {
-        response = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }
+        parsed = false
       }
-      if (response) output.write(`${JSON.stringify(response)}\n`)
+      const id = (message as { id?: unknown } | undefined)?.id ?? null
+      // Parse hatasi da ayni zincirden gecer: senkron handler'da cevap sirasi korunur.
+      void Promise.resolve()
+        .then(() => parsed ? server.handle(message) : { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } })
+        .catch((error: unknown) => ({ jsonrpc: '2.0', id, error: { code: -32603, message: error instanceof Error ? error.message : 'Internal error' } }))
+        .then(write)
     }
   })
 }

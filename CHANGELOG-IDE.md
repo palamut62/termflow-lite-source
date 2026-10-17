@@ -1,5 +1,14 @@
 # TermFlow Agent IDE - Changelog
 
+## 1.26.0 - unreleased
+
+- Orchestration: a coding agent can hand work to another agent or model and check the result, to save its own usage limits. Turn it on in Settings > Orchestration and connect Claude Code, Codex or OpenCode; they get the termflow-agents MCP tools (list_agents, delegate_task, get_task_result, list_tasks, cancel_task, discard_task).
+- Workers: OpenCode (free models such as opencode/deepseek-v4.1-flash-free and opencode/glm-5.3-flash-free), Codex, Grok, Claude Code and any Claude Code provider profile (DeepSeek, OpenRouter...). Each task runs headless in its own git worktree on a `deleg/` branch from the last commit; the result is a commit the coordinating agent reviews and applies with `git cherry-pick`.
+- Optional check command per task (for example a test file); a task with no changes or a failing check is reported as failed, with the agent's output.
+- list_agents shows which workers are free, your Claude and Codex usage, and suggests free workers when Claude's 5-hour usage passes a threshold you choose.
+- Settings > Orchestration: model list from each CLI (cached a day, Refresh), a Test button that runs a tiny real task, tasks at the same time and a time limit (the whole process tree is stopped).
+- Right panel: Delegated tasks with status, time, cost, changed files, check output, Open in a terminal, Copy apply command, Stop and Discard.
+
 ## 1.25.0 - 2026-10-15
 
 First release. TermFlow Agent IDE is the TermFlow terminal with a workspace around your coding agents (Claude Code, Codex, OpenCode and the other agent CLIs TermFlow finds). It installs next to TermFlow Lite and keeps its own settings. Ctrl+Shift+I switches between the IDE layout and the plain terminal layout without restarting anything.

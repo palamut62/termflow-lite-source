@@ -110,24 +110,24 @@ export class AgentHookServer {
   }
 }
 
-function header(req: IncomingMessage, name: string): string {
+export function header(req: IncomingMessage, name: string): string {
   const value = req.headers[name]
   return typeof value === 'string' ? value : ''
 }
 
-function sameToken(given: string, expected: string): boolean {
+export function sameToken(given: string, expected: string): boolean {
   const a = Buffer.from(given)
   const b = Buffer.from(expected)
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
-function readBody(req: IncomingMessage): Promise<string | null> {
+export function readBody(req: IncomingMessage, maxBody = MAX_BODY): Promise<string | null> {
   return new Promise((resolve) => {
     const chunks: Buffer[] = []
     let size = 0
     req.on('data', (chunk: Buffer) => {
       size += chunk.length
-      if (size > MAX_BODY) { resolve(null); req.destroy(); return }
+      if (size > maxBody) { resolve(null); req.destroy(); return }
       chunks.push(chunk)
     })
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
@@ -135,7 +135,7 @@ function readBody(req: IncomingMessage): Promise<string | null> {
   })
 }
 
-async function writeAtomic(file: string, content: string): Promise<void> {
+export async function writeAtomic(file: string, content: string): Promise<void> {
   await mkdir(dirname(file), { recursive: true })
   const temp = `${file}.${process.pid}.tmp`
   await writeFile(temp, content, 'utf8')

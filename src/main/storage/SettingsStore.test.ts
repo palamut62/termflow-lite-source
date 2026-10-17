@@ -38,6 +38,19 @@ describe('SettingsStore', () => {
     expect(new SettingsStore(file()).get().backdrop).toBe('acrylic')
   })
 
+  it('keeps orchestration off by default and sanitizes it', () => {
+    writeFileSync(file(), JSON.stringify({}))
+    expect(new SettingsStore(file()).get().orchestration).toEqual(DEFAULT_SETTINGS.orchestration)
+    writeFileSync(file(), JSON.stringify({ orchestration: {
+      enabled: 'yes', maxConcurrent: 99, timeoutMinutes: -3, claudeThreshold: 'x',
+      targets: { opencode: { enabled: false, model: ' m ' }, 'provider:deep-seek': { model: 3 }, 'rm -rf': { enabled: true }, grok: null }
+    } }))
+    expect(new SettingsStore(file()).get().orchestration).toEqual({
+      enabled: false, maxConcurrent: 4, timeoutMinutes: 1, claudeThreshold: 70,
+      targets: { opencode: { enabled: false, model: 'm' }, 'provider:deep-seek': { enabled: true, model: '' } }
+    })
+  })
+
   it('keeps agent memory off by default and sanitizes its settings', () => {
     writeFileSync(file(), JSON.stringify({ memory: { enabled: 'yes', model: '  ', excludedProjects: ['c:\a', 'c:\a', 3, ''] } }))
     expect(new SettingsStore(file()).get().memory).toEqual({ enabled: false, updateEvery: 'hourly', model: DEFAULT_SETTINGS.memory.model, excludedProjects: ['c:\a'] })

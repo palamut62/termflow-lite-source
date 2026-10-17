@@ -99,6 +99,17 @@ export const IPC = {
   MEMORY_DISCONNECT: 'memory:disconnect', // (agent) -> MemoryConnection
   MEMORY_MODELS: 'memory:models', // (force?) -> OpenRouterModelList; 24 saat cache'li
   MEMORY_TEST_MODEL: 'memory:test-model', // (model) -> OpenRouterModelTest
+  ORCH_STATUS: 'orchestration:status', // -> OrchestrationStatus
+  ORCH_TARGETS: 'orchestration:targets', // -> OrchestrationTarget[]
+  ORCH_TASKS: 'orchestration:tasks', // -> DelegatedTask[]
+  ORCH_TASKS_EVENT: 'orchestration:tasks-event', // main -> renderer DelegatedTask[]
+  ORCH_CANCEL: 'orchestration:cancel', // (id) -> DelegatedTask | null
+  ORCH_DISCARD: 'orchestration:discard', // (id) -> { ok, error? }
+  ORCH_MODELS: 'orchestration:models', // (targetId, force?) -> OpenRouterModelList; CLI'dan, 24 saat cache
+  ORCH_TEST: 'orchestration:test', // (targetId, model) -> OrchestrationTestResult; gecici depoda gercek gorev
+  ORCH_CONNECTIONS: 'orchestration:connections', // -> MemoryConnection[] (termflow-agents MCP kaydi)
+  ORCH_CONNECT: 'orchestration:connect', // (agent) -> MemoryConnection
+  ORCH_DISCONNECT: 'orchestration:disconnect', // (agent) -> MemoryConnection
   VOICE_TRANSCRIBE: 'voice:transcribe', // (wav Uint8Array, VoiceContext) -> VoiceResult
   VOICE_SYNTH: 'voice:synth', // (text) -> SpeakResult; WAV from the local tts-studyo server
   VOICE_TEST: 'voice:test', // (model) -> VoiceResult; a short tone with the stored key

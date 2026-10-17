@@ -64,7 +64,9 @@ export class ModelCatalog {
   constructor(
     private readonly file: string,
     private readonly fetchImpl: FetchLike = fetch,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    /** OpenRouter yerine baska kaynak (orn. ajan CLI'inin model listesi); cache davranisi ayni. */
+    private readonly load?: () => Promise<OpenRouterModel[]>
   ) {}
 
   /**
@@ -83,13 +85,8 @@ export class ModelCatalog {
 
   private async refresh(cached: CacheFile | null): Promise<OpenRouterModelList> {
     try {
-      const response = await this.fetchImpl(OPENROUTER_MODELS_URL, {
-        headers: { 'HTTP-Referer': 'https://www.termflowlite.lol', 'X-Title': 'TermFlow Lite' },
-        signal: AbortSignal.timeout(20_000)
-      })
-      if (!response.ok) throw new Error(`OpenRouter model list failed (${response.status}).`)
-      const models = parseModels(await response.json())
-      if (!models.length) throw new Error('OpenRouter returned no models.')
+      const models = this.load ? await this.load() : await this.fetchOpenRouter()
+      if (!models.length) throw new Error(this.load ? 'The CLI returned no models.' : 'OpenRouter returned no models.')
       const fetchedAt = this.now()
       this.writeCache({ fetchedAt, models })
       return { models, fetchedAt, source: 'network' }
@@ -100,6 +97,15 @@ export class ModelCatalog {
         ? { models: cached.models, fetchedAt: cached.fetchedAt, source: 'cache', error: detail }
         : { models: [], fetchedAt: 0, source: 'none', error: detail }
     }
+  }
+
+  private async fetchOpenRouter(): Promise<OpenRouterModel[]> {
+    const response = await this.fetchImpl(OPENROUTER_MODELS_URL, {
+      headers: { 'HTTP-Referer': 'https://www.termflowlite.lol', 'X-Title': 'TermFlow Lite' },
+      signal: AbortSignal.timeout(20_000)
+    })
+    if (!response.ok) throw new Error(`OpenRouter model list failed (${response.status}).`)
+    return parseModels(await response.json())
   }
 
   private readCache(): CacheFile | null {

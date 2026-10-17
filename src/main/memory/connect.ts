@@ -73,11 +73,11 @@ const errorText = (error: unknown): string => {
   return (stderr || (error instanceof Error ? error.message : String(error))).split('\n')[0].slice(0, 200)
 }
 
-export async function connectionStatus(agent: MemoryAgent, launch: ServerLaunch, deps: ConnectDeps = defaultDeps()): Promise<MemoryConnection> {
+export async function connectionStatus(agent: MemoryAgent, launch: ServerLaunch, deps: ConnectDeps = defaultDeps(), name = SERVER_NAME): Promise<MemoryConnection> {
   try {
     if (agent === 'claude') {
       if (!await installed(deps, 'claude')) return { agent, state: 'missing' }
-      const entry = readJsonFile(join(deps.home, '.claude.json'))?.mcpServers?.[SERVER_NAME]
+      const entry = readJsonFile(join(deps.home, '.claude.json'))?.mcpServers?.[name]
       if (!entry) return { agent, state: 'disconnected' }
       return { agent, state: matches(launch, entry.command, entry.args) ? 'connected' : 'outdated' }
     }
@@ -85,7 +85,7 @@ export async function connectionStatus(agent: MemoryAgent, launch: ServerLaunch,
       if (!await installed(deps, 'codex')) return { agent, state: 'missing' }
       let entry: Record<string, any>
       try {
-        entry = JSON.parse(await deps.run('codex', ['mcp', 'get', SERVER_NAME, '--json'])) as Record<string, any>
+        entry = JSON.parse(await deps.run('codex', ['mcp', 'get', name, '--json'])) as Record<string, any>
       } catch {
         return { agent, state: 'disconnected' }
       }
@@ -93,7 +93,7 @@ export async function connectionStatus(agent: MemoryAgent, launch: ServerLaunch,
       return { agent, state: matches(launch, transport.command, transport.args) ? 'connected' : 'outdated' }
     }
     if (!await installed(deps, 'opencode')) return { agent, state: 'missing' }
-    const entry = readJsonFile(join(deps.opencodeConfigDir, 'opencode.json'))?.mcp?.[SERVER_NAME]
+    const entry = readJsonFile(join(deps.opencodeConfigDir, 'opencode.json'))?.mcp?.[name]
     if (!entry) return { agent, state: 'disconnected' }
     const [command, ...args] = Array.isArray(entry.command) ? entry.command : []
     return { agent, state: matches(launch, command, args) ? 'connected' : 'outdated' }
@@ -102,42 +102,42 @@ export async function connectionStatus(agent: MemoryAgent, launch: ServerLaunch,
   }
 }
 
-export async function connect(agent: MemoryAgent, launch: ServerLaunch, deps: ConnectDeps = defaultDeps()): Promise<MemoryConnection> {
+export async function connect(agent: MemoryAgent, launch: ServerLaunch, deps: ConnectDeps = defaultDeps(), name = SERVER_NAME): Promise<MemoryConnection> {
   try {
     if (agent === 'opencode') {
       const file = join(deps.opencodeConfigDir, 'opencode.json')
       const config = readJsonFile(file) ?? { $schema: 'https://opencode.ai/config.json' }
       if (existsSync(file)) copyFileSync(file, `${file}.termflow-backup`)
-      config.mcp = { ...(config.mcp ?? {}), [SERVER_NAME]: { type: 'local', command: [launch.command, ...launch.args], environment: launch.env, enabled: true } }
+      config.mcp = { ...(config.mcp ?? {}), [name]: { type: 'local', command: [launch.command, ...launch.args], environment: launch.env, enabled: true } }
       writeJsonFile(file, config)
     } else {
-      await disconnect(agent, deps).catch(() => undefined)
+      await disconnect(agent, deps, name).catch(() => undefined)
       const env = Object.entries(launch.env).map(([key, value]) => `${key}=${value}`)
       const args = agent === 'claude'
-        ? ['mcp', 'add', '--scope', 'user', SERVER_NAME, ...env.flatMap((pair) => ['-e', pair]), '--', launch.command, ...launch.args]
-        : ['mcp', 'add', SERVER_NAME, ...env.flatMap((pair) => ['--env', pair]), '--', launch.command, ...launch.args]
+        ? ['mcp', 'add', '--scope', 'user', name, ...env.flatMap((pair) => ['-e', pair]), '--', launch.command, ...launch.args]
+        : ['mcp', 'add', name, ...env.flatMap((pair) => ['--env', pair]), '--', launch.command, ...launch.args]
       await deps.run(agent, args)
     }
   } catch (error) {
     return { agent, state: 'error', detail: errorText(error) }
   }
-  return connectionStatus(agent, launch, deps)
+  return connectionStatus(agent, launch, deps, name)
 }
 
-export async function disconnect(agent: MemoryAgent, deps: ConnectDeps = defaultDeps()): Promise<void> {
+export async function disconnect(agent: MemoryAgent, deps: ConnectDeps = defaultDeps(), name = SERVER_NAME): Promise<void> {
   if (agent === 'claude') {
-    await deps.run('claude', ['mcp', 'remove', '--scope', 'user', SERVER_NAME])
+    await deps.run('claude', ['mcp', 'remove', '--scope', 'user', name])
     return
   }
   if (agent === 'codex') {
-    await deps.run('codex', ['mcp', 'remove', SERVER_NAME])
+    await deps.run('codex', ['mcp', 'remove', name])
     return
   }
   const file = join(deps.opencodeConfigDir, 'opencode.json')
   const config = readJsonFile(file)
-  if (!config?.mcp?.[SERVER_NAME]) return
+  if (!config?.mcp?.[name]) return
   copyFileSync(file, `${file}.termflow-backup`)
-  delete config.mcp[SERVER_NAME]
+  delete config.mcp[name]
   writeJsonFile(file, config)
 }
 
@@ -145,8 +145,8 @@ export async function disconnect(agent: MemoryAgent, deps: ConnectDeps = default
  * Sunucu betiğini sabit bir yere (userData/mcp) kopyalar: asar içinden ve
  * AppImage'ın her açılışta değişen bağlama noktasından bağımsız bir yol.
  */
-export function installServerScript(source: string, targetDir: string): string {
-  const target = join(targetDir, 'memory-server.cjs')
+export function installServerScript(source: string, targetDir: string, fileName = 'memory-server.cjs'): string {
+  const target = join(targetDir, fileName)
   const content = readFileSync(source)
   let current: Buffer | null = null
   try { current = readFileSync(target) } catch { /* ilk kurulum */ }

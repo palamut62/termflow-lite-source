@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react'
-import { ArrowLeft, BarChart3, Bell, Bot, Brain, Info, Keyboard, Mic, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
+import { ArrowLeft, BarChart3, Bell, Bot, Brain, Info, Keyboard, Mic, Network, Palette, Server, ShieldCheck, Smartphone, SquareTerminal, UserRound, X } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { AppearanceSettings } from './AppearanceSettings'
 import { TerminalSettings } from './TerminalSettings'
@@ -18,10 +18,11 @@ import { MemorySettings } from './MemorySettings'
 import { RemoteSettings } from './RemoteSettings'
 import { VoiceSettings } from './VoiceSettings'
 import { StatsSettings } from './StatsSettings'
+import { OrchestrationSettings } from './OrchestrationSettings'
 
-type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice' | 'notifications' | 'stats'
+type SectionId = 'appearance' | 'terminal' | 'profiles' | 'providers' | 'agent-security' | 'ssh' | 'keyboard' | 'about' | 'health' | 'workspaces' | 'backup' | 'memory' | 'remote' | 'voice' | 'notifications' | 'stats' | 'orchestration'
 
-export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: string }[] = [
+export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords: string; ideOnly?: boolean }[] = [
   { id: 'appearance', label: 'Appearance', icon: <Palette size={14} />, keywords: 'theme font size family weight ligatures line height letter spacing cursor blink effect trail blaze glow gpu webgl rendering inline images opacity blur backdrop mica acrylic transparency tint window border corner radius tab height padding custom theme motion animation transition reduce motion retro crt scanlines confetti celebrate agent animation companion mascot face pixel scenes style character ember miso piko ascii weather rain snow sunny city background picture image photo wallpaper art density characters' },
   { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={14} />, keywords: 'shift enter newline osc 52 clipboard copy ssh tmux default profile startup directory scrollback shell integration osc 133 command blocks inline suggestions autosuggest media previews image video thumbnail exit code duration notifications bell sounds keyboard click copy on select right click clickable paths confirm before close restore session tray quake hotkey hide on blur' },
   { id: 'profiles', label: 'Profiles', icon: <UserRound size={14} />, keywords: 'custom command profiles arguments icon color startup command starting directory default model permissions environment variables' },
@@ -30,6 +31,7 @@ export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords
   { id: 'backup', label: 'Backup & Restore', icon: <Server size={14} />, keywords: 'backup restore import export json' },
   { id: 'providers', label: 'Providers', icon: <Bot size={14} />, keywords: 'ai providers api key base url model cli command permissions' },
   { id: 'memory', label: 'Memory', icon: <Brain size={14} />, keywords: 'agent memory session history summary openrouter model project unfinished mcp connect claude codex opencode exclude' },
+  { id: 'orchestration', label: 'Orchestration', icon: <Network size={14} />, keywords: 'orchestration delegate delegation sub agent subagent worker free model opencode glm deepseek grok codex claude provider limit usage threshold mcp termflow-agents worktree task queue', ideOnly: true },
   { id: 'voice', label: 'Voice Input', icon: <Mic size={14} />, keywords: 'voice input dictation microphone speech speak talk transcribe hold space push to talk openrouter audio model' },
   { id: 'remote', label: 'Remote Access', icon: <Smartphone size={14} />, keywords: 'remote access phone mobile tailscale qr pair pairing device disconnect web control' },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={14} />, keywords: 'notifications alerts agent needs you approval finished done error sound chime volume badge taskbar bell unread' },
@@ -47,7 +49,7 @@ export const SECTIONS: { id: SectionId; label: string; icon: ReactNode; keywords
  */
 /** Agent IDE tam sayfa ayarlarinda menu gruplari (Orca: AI Capabilities, Set Up, Workflows, Interface). */
 const GROUPS: { label: string; ids: SectionId[] }[] = [
-  { label: 'AI Capabilities', ids: ['providers', 'memory', 'voice', 'agent-security'] },
+  { label: 'AI Capabilities', ids: ['providers', 'orchestration', 'memory', 'voice', 'agent-security'] },
   { label: 'Set Up', ids: ['profiles', 'health', 'workspaces', 'remote', 'backup'] },
   { label: 'Workflows', ids: ['terminal', 'ssh'] },
   { label: 'Interface', ids: ['appearance', 'notifications', 'keyboard', 'stats'] },
@@ -66,7 +68,9 @@ export function Settings(): React.JSX.Element {
   const [query, setQuery] = useState('')
   // Every word must appear in the section label or its field keywords.
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
-  const visibleSections = SECTIONS.filter((s) => {
+  // Orchestration yalniz Agent IDE yerlesiminde (PRD: IDE ozellikleri Terminal modunda gorunmez).
+  const sections = SECTIONS.filter((s) => fullPage || !s.ideOnly)
+  const visibleSections = sections.filter((s) => {
     const haystack = `${s.label} ${s.keywords}`.toLowerCase()
     return words.every((word) => haystack.includes(word))
   })
@@ -118,7 +122,7 @@ export function Settings(): React.JSX.Element {
                 setQuery(next)
                 // Jump to the first match so the result is visible immediately.
                 const nextWords = next.trim().toLowerCase().split(/\s+/).filter(Boolean)
-                const first = SECTIONS.find((s) => nextWords.every((word) => `${s.label} ${s.keywords}`.toLowerCase().includes(word)))
+                const first = sections.find((s) => nextWords.every((word) => `${s.label} ${s.keywords}`.toLowerCase().includes(word)))
                 if (nextWords.length > 0 && first) setSection(first.id)
               }}
             />
@@ -157,6 +161,7 @@ export function Settings(): React.JSX.Element {
             {section === 'keyboard' && <KeyboardSettings />}
             {section === 'about' && <AboutSettings />}
             {section === 'stats' && <StatsSettings />}
+            {section === 'orchestration' && fullPage && <OrchestrationSettings />}
           </div>
         </div>
       </div>

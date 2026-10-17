@@ -5,7 +5,7 @@ import { execFileSync } from 'child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { discardTask, runDelegatedTask } from './agentRunner'
+import { discardTask, runDelegatedTask, taskDiff } from './agentRunner'
 
 function hasGit(): boolean {
   try {
@@ -27,7 +27,8 @@ const alive = (pid: number): boolean => {
   }
 }
 
-describeGit('runDelegatedTask', () => {
+// Gercek git + surec baslatma: tam paket yuku altinda 5 sn yetmiyor.
+describeGit('runDelegatedTask', { timeout: 30_000 }, () => {
   let sandbox = ''
   let repo = ''
   let n = 0
@@ -58,6 +59,10 @@ describeGit('runDelegatedTask', () => {
     expect(result.changedFiles).toEqual(['out.txt'])
     expect(result.diffStat).toContain('out.txt')
     expect(result.check?.code).toBe(0)
+    // Is gorev dalinda commit olarak durur; tam diff okunabilir.
+    expect(result.commit).toMatch(/^[0-9a-f]{40}$/)
+    expect(execFileSync('git', ['log', '-1', '--format=%s%n%an', result.branch], { cwd: repo, windowsHide: true }).toString().trim()).toBe('deleg(opencode): p\nTermFlow delegate')
+    expect(await taskDiff(result.worktreePath!, result.commit!)).toContain('+x')
     // Ana calisma agacina dokunulmaz.
     expect(existsSync(join(repo, 'out.txt'))).toBe(false)
     expect(await discardTask(repo, result)).toEqual({ ok: true })

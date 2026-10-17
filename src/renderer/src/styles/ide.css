@@ -573,3 +573,14 @@ button.ide-review-no:hover svg, button.ide-review-no:focus-visible svg { opacity
 .ide-notes-state { color: var(--ide-muted); font-size: 12px; }
 .ide-notes-error { color: #f85149; }
 .ide-notes-editor { flex: 1; min-height: 240px; resize: none; padding: 12px 14px; border: 1px solid var(--ide-card-border); border-radius: var(--ide-radius-sm); background: var(--ide-card, transparent); color: var(--ide-fg); font-family: var(--terminal-font-family, monospace); font-size: 13px; line-height: 1.5; }
+
+/* ---------- Delegated (orchestration): devredilen gorevler ---------- */
+.delegated-task { border-radius: var(--ide-radius-sm); }
+.delegated-detail { display: flex; flex-direction: column; gap: 6px; padding: 2px 8px 10px; }
+.delegated-pre {
+  margin: 0; max-height: 160px; overflow: auto; padding: 6px 8px; border: 1px solid var(--ide-card-border); border-radius: var(--ide-radius-sm);
+  font-family: var(--terminal-font-family, monospace); font-size: 11px; white-space: pre-wrap; word-break: break-word; scrollbar-width: thin;
+}
+.delegated-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.orchestration-target { margin-bottom: 6px; }
+.orchestration-model { padding: 0 0 4px 12px; }

@@ -54,6 +54,9 @@ import { EDITION, PRODUCT } from '../shared/edition'
 import { readClaudeUsage, readCodexUsage } from './usage/agentUsage'
 import { registerRemoteIpc } from './ipc/remote'
 import { registerVoiceIpc } from './ipc/voice'
+import { registerOrchestrationIpc, sendOrchestrationTasks, type OrchestrationController } from './ipc/orchestration'
+import { OrchestrationService } from './orchestration/service'
+import { detectInstalledAgents } from './agentDetect'
 import { stopStudio } from './voice/speak'
 import type { ShellInfo } from '../shared/types'
 import { appMemory, readResources } from './resources'
@@ -91,6 +94,7 @@ let stopMemoryScheduler: (() => void) | null = null
 let manager: TerminalManager | null = null
 let remoteController: RemoteController | null = null
 let agentHookServer: AgentHookServer | null = null
+let orchestration: OrchestrationController | null = null
 
 /** The live main window, or null while it is closed/destroyed. */
 function liveWindow(): BrowserWindow | null {
@@ -363,10 +367,11 @@ app.whenReady().then(() => {
   hookServer.start().catch((error) => console.warn('[agent-hooks] server failed to start:', error))
   // usage-meter: Codex yerel oturum dosyasindan, Claude status line'dan (bu oturum ya da son kayit).
   const claudeUsageFile = join(app.getPath('userData'), 'agent-hooks', 'usage', 'claude.json')
-  ipcMain.handle(IPC.USAGE_GET, async () => {
+  const readUsage = async () => {
     const [codex, claude] = await Promise.all([readCodexUsage(), hookServer.claudeUsage() ?? readClaudeUsage(claudeUsageFile)])
-    return [claude, codex].filter(Boolean)
-  })
+    return [claude, codex].filter((usage): usage is NonNullable<typeof usage> => Boolean(usage))
+  }
+  ipcMain.handle(IPC.USAGE_GET, readUsage)
   // WSL distro enumeration makes discovery async — the renderer re-queries
   // via SHELLS_DISCOVER anyway, so the warm value is only a fallback.
   let currentShells: Awaited<ReturnType<typeof discoverShells>> = []
@@ -423,6 +428,29 @@ app.whenReady().then(() => {
   })
   let memoryWasEnabled = settingsStore.get().memory.enabled
 
+  // Orchestration (docs/agent-ide/orchestration.md): yalniz Agent IDE; API ayarla acilir/kapanir.
+  const orchestrationDir = join(app.getPath('userData'), 'orchestration')
+  let agentsLaunch: ServerLaunch | null = null
+  if (EDITION === 'ide') {
+    try {
+      const script = installServerScript(join(app.getAppPath(), 'out', 'mcp', 'agents-server.cjs'), join(app.getPath('userData'), 'mcp'), 'agents-server.cjs')
+      agentsLaunch = { command: appExecutable(), args: [script, '--endpoint-file', join(orchestrationDir, 'endpoint.json')], env: { ELECTRON_RUN_AS_NODE: '1' } }
+    } catch (error) {
+      console.warn('[orchestration] MCP server script could not be installed:', error)
+    }
+  }
+  const orchestrationService = EDITION === 'ide'
+    ? new OrchestrationService({
+      dir: orchestrationDir,
+      getSettings: () => (settingsStore ? settingsStore.get() : DEFAULT_SETTINGS),
+      detectInstalled: detectInstalledAgents,
+      getSecret: (providerId) => providerSecrets.get(providerId),
+      readUsage,
+      onTasks: (tasks) => sendOrchestrationTasks(liveWindow(), tasks)
+    })
+    : null
+  orchestration = registerOrchestrationIpc({ service: orchestrationService, endpointFile: join(orchestrationDir, 'endpoint.json'), launch: agentsLaunch }, settingsStore.get())
+
   // Ayar değişince main tarafında uygulanacaklar: explorer menüsü + quake.
   const onSettingsChanged = (settings: AppSettings): void => {
     refreshContextMenu()
@@ -431,6 +459,7 @@ app.whenReady().then(() => {
     if (settings.memory.enabled && !memoryWasEnabled) void memoryEngine.run().catch(() => undefined)
     memoryWasEnabled = settings.memory.enabled
     remoteController?.settingsChanged(settings)
+    orchestration?.settingsChanged(settings)
   }
 
   registerTerminalIpc(manager)
@@ -615,6 +644,7 @@ app.on('before-quit', () => {
   stopStudio()
   void remoteController?.shutdown()
   agentHookServer?.stop()
+  orchestration?.shutdown()
 })
 
 app.on('will-quit', () => {

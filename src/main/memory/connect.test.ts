@@ -77,6 +77,20 @@ describe('agent connections', () => {
     expect(await connectionStatus('opencode', launch, d)).toEqual({ agent: 'opencode', state: 'disconnected' })
   })
 
+  it('registers another server name next to memory without touching it', async () => {
+    const d = deps()
+    const agents = { command: launch.command, args: ['C:\\data\\mcp\\agents-server.cjs', '--endpoint-file', 'C:\\data\\orchestration\\endpoint.json'], env: launch.env }
+    await connect('opencode', launch, d)
+    expect(await connect('opencode', agents, d, 'termflow-agents')).toEqual({ agent: 'opencode', state: 'connected' })
+    const config = JSON.parse(readFileSync(join(d.opencodeConfigDir, 'opencode.json'), 'utf8'))
+    expect(Object.keys(config.mcp)).toEqual(['termflow-memory', 'termflow-agents'])
+    await disconnect('opencode', d, 'termflow-agents')
+    expect(await connectionStatus('opencode', launch, d)).toEqual({ agent: 'opencode', state: 'connected' })
+    expect(await connectionStatus('opencode', agents, d, 'termflow-agents')).toEqual({ agent: 'opencode', state: 'disconnected' })
+    await connect('codex', agents, d, 'termflow-agents')
+    expect(d.run).toHaveBeenCalledWith('codex', ['mcp', 'add', 'termflow-agents', '--env', 'ELECTRON_RUN_AS_NODE=1', '--', agents.command, ...agents.args])
+  })
+
   it('creates opencode.json when missing and refuses to rewrite an unparsable one', async () => {
     const d = deps()
     expect(await connect('opencode', launch, d)).toEqual({ agent: 'opencode', state: 'connected' })

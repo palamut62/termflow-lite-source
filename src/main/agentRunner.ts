@@ -1,6 +1,6 @@
 // Orchestration dilim 1 (docs/agent-ide/orchestration.md): devredilen isi baska bir ajan CLI'inda,
 // tek kullanimlik worktree'de headless calistirir; sonucu diff + kontrol komutuyla olcer.
-// Kuyruk, MCP ve arayuz sonraki dilimlerde; burasi yalniz tek gorevi calistirir.
+// Kuyruk ve MCP `orchestration/`'da; burasi yalniz tek gorevi calistirir.
 
 import { execFile, spawn } from 'child_process'
 import { readFileSync, rmSync } from 'fs'
@@ -12,7 +12,7 @@ import { killProcessTree, runSetupCommand } from './worktreeSetup'
 
 const execFileAsync = promisify(execFile)
 
-export const DELEGATE_AGENTS = ['opencode', 'codex', 'grok'] as const
+export const DELEGATE_AGENTS = ['opencode', 'codex', 'grok', 'claude'] as const
 export type DelegateAgent = (typeof DELEGATE_AGENTS)[number]
 
 export const DEFAULT_TASK_TIMEOUT_MS = 10 * 60_000
@@ -46,6 +46,9 @@ export function headlessCommand(agent: DelegateAgent, prompt: string, cwd: strin
       }
     case 'grok':
       return { command: 'grok', args: ['-p', text, '--always-approve', '--output-format', 'json', '--cwd', cwd, ...(m ? ['-m', m] : [])] }
+    // Claude'un klasor bayragi yok: spawn cwd + PWD (runDelegatedTask) yeter. Saglayici profilleri model/anahtari env ile verir.
+    case 'claude':
+      return { command: 'claude', args: ['-p', text, '--dangerously-skip-permissions', '--output-format', 'json', ...(m ? ['--model', m] : [])] }
   }
 }
 
@@ -95,6 +98,21 @@ export function parseAgentOutput(agent: DelegateAgent, stdout: string, codexLast
     }
     return out
   }
+  if (agent === 'claude') {
+    try {
+      const result = JSON.parse(stdout.slice(stdout.indexOf('{'))) as {
+        result?: string; is_error?: boolean; subtype?: string; total_cost_usd?: number
+        usage?: { input_tokens?: number; output_tokens?: number; cache_creation_input_tokens?: number; cache_read_input_tokens?: number }
+      }
+      const usage = result.usage
+      const tokens = usage ? (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) : undefined
+      const out: AgentOutput = { lastMessage: result.result ?? '', ...(typeof result.total_cost_usd === 'number' ? { cost: result.total_cost_usd } : {}), ...(tokens !== undefined ? { tokens } : {}) }
+      if (result.is_error || (result.subtype && result.subtype !== 'success')) out.error = result.result || `Agent stopped: ${result.subtype ?? 'error'}`
+      return out
+    } catch {
+      return { lastMessage: '', error: 'Unreadable agent output' }
+    }
+  }
   // Grok: tek JSON nesnesi (girintili, cok satir).
   try {
     const result = JSON.parse(stdout.slice(stdout.indexOf('{'))) as { text?: string; stopReason?: string }
@@ -117,6 +135,8 @@ export interface DelegatedTaskInput {
   /** Kabul kriteri; worktree'de sistem kabugunda calisir, cikis 0 olmali. */
   checkCommand?: string
   timeoutMs?: number
+  /** Ajana eklenecek ortam (saglayici profilinin base URL / model / anahtari). Sonuca yazilmaz. */
+  env?: Record<string, string>
   /** Testler icin: ajan CLI'i yerine calisacak surec. */
   invocation?: { file: string; args: string[] }
 }
@@ -138,6 +158,8 @@ export interface DelegatedTaskResult {
   durationMs: number
   diffStat: string
   changedFiles: string[]
+  /** Gorev dalindaki commit (degisiklik varsa). */
+  commit?: string
   check?: { code: number | null; timedOut: boolean; output: string }
 }
 
@@ -153,11 +175,27 @@ async function git(cwd: string, args: string[]): Promise<string> {
   return stdout
 }
 
-/** Yeni dosyalar da sayilsin diye her sey index'e alinir (worktree tek kullanimlik). */
-async function collectDiff(cwd: string): Promise<{ diffStat: string; changedFiles: string[] }> {
+/**
+ * Yeni dosyalar da sayilsin diye her sey index'e alinir (worktree tek kullanimlik) ve degisiklik varsa
+ * gorev dalina commit edilir; koordinator `git cherry-pick <commit>` ile alir. Kullanicinin hook'lari calismaz.
+ */
+async function collectDiff(cwd: string, message: string): Promise<{ diffStat: string; changedFiles: string[]; commit?: string }> {
   await git(cwd, ['add', '-A'])
   const [stat, names] = await Promise.all([git(cwd, ['diff', '--cached', '--stat']), git(cwd, ['diff', '--cached', '--name-only'])])
-  return { diffStat: stat.trim(), changedFiles: names.split(/\r?\n/).filter(Boolean) }
+  const changedFiles = names.split(/\r?\n/).filter(Boolean)
+  if (!changedFiles.length) return { diffStat: '', changedFiles }
+  await git(cwd, ['-c', 'user.name=TermFlow delegate', '-c', 'user.email=delegate@termflow.local', 'commit', '--no-verify', '-q', '-m', message])
+  const commit = (await git(cwd, ['rev-parse', 'HEAD'])).trim()
+  return { diffStat: stat.trim(), changedFiles, commit }
+}
+
+export const commitMessage = (agent: DelegateAgent, prompt: string): string =>
+  `deleg(${agent}): ${prompt.trim().split(/\r?\n/)[0].slice(0, 72) || 'task'}`
+
+/** Gorev commit'inin tam diff'i; cok buyukse kesilir. */
+export async function taskDiff(worktreePath: string, commit: string, limit = 200_000): Promise<string> {
+  const diff = await git(worktreePath, ['show', '--format=', '--no-color', commit])
+  return diff.length > limit ? `${diff.slice(0, limit)}\n... (diff truncated at ${limit} characters)` : diff
 }
 
 const tailLines = (text: string, count: number): string => text.split(/\r?\n/).slice(-count).join('\n').trim()
@@ -188,7 +226,7 @@ export function runDelegatedTask(input: DelegatedTaskInput): DelegatedTaskRun {
     let stderr = ''
     let timedOut = false
     const exit = await new Promise<{ code: number | null; spawnError?: string }>((resolve) => {
-      const proc = spawn(invocation.file, invocation.args, { cwd, env: { ...process.env, PWD: cwd }, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] })
+      const proc = spawn(invocation.file, invocation.args, { cwd, env: { ...process.env, ...input.env, PWD: cwd }, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] })
       child = proc
       // Windows'ta yalniz sarmalayiciyi oldurmek yetim opencode.exe birakir ve sonraki calistirmalari kilitler (dilim 0).
       const timer = setTimeout(() => { timedOut = true; killProcessTree(proc) }, input.timeoutMs ?? DEFAULT_TASK_TIMEOUT_MS)
@@ -212,8 +250,8 @@ export function runDelegatedTask(input: DelegatedTaskInput): DelegatedTaskRun {
     if (timedOut) return { ...fail(`Timed out after ${Math.round((input.timeoutMs ?? DEFAULT_TASK_TIMEOUT_MS) / 1000)} s`, common), status: 'timeout' }
     if (exit.spawnError) return fail(exit.spawnError, common)
 
-    const diff = await collectDiff(cwd).catch((error: Error) => ({ diffStat: '', changedFiles: [] as string[], error: error.message }))
-    const withDiff = { ...common, diffStat: diff.diffStat, changedFiles: diff.changedFiles }
+    const diff = await collectDiff(cwd, commitMessage(input.agent, input.prompt)).catch((error: Error) => ({ diffStat: '', changedFiles: [] as string[], commit: undefined, error: error.message }))
+    const withDiff = { ...common, diffStat: diff.diffStat, changedFiles: diff.changedFiles, ...(diff.commit ? { commit: diff.commit } : {}) }
     if ('error' in diff) return fail(`git diff failed: ${diff.error}`, withDiff)
     if (parsed.error) return fail(parsed.error, withDiff)
     if (exit.code !== 0) return fail(tailLines(stderr, 5) || `Agent exited with code ${exit.code}`, withDiff)
@@ -240,8 +278,62 @@ export function runDelegatedTask(input: DelegatedTaskInput): DelegatedTaskRun {
   }
 }
 
-/** Gorevin worktree'sini ve dalini siler; ana calisma agacina removeWorktree zaten dokunmaz. */
-export function discardTask(repoRoot: string, result: Pick<DelegatedTaskResult, 'worktreePath' | 'branch'>): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!result.worktreePath) return Promise.resolve({ ok: true })
-  return removeWorktree({ repoRoot, path: result.worktreePath, force: true, deleteBranch: true, branch: result.branch })
+const LOCKED = /permission denied|ebusy|resource busy|being used by another process/i
+
+/**
+ * Kilitli silmenin yarim kaldigi durum: git kaydi gitti ama klasor ve dal duruyor. Yalniz TermFlow'un kendi
+ * alanina (`.termflow-worktrees` altindaki klasor, `deleg/` dali) dokunur.
+ */
+export async function finishRemoval(repoRoot: string, path: string, branch: string, waitMs = 2000, attempts = 8): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!/[\\/]\.termflow-worktrees[\\/]/.test(path) || !branch.startsWith('deleg/')) return { ok: false, error: 'Not a delegated task worktree.' }
+  try {
+    // Claude'un Bash araci kabugu (shell-snapshot) claude.exe'den ~4 sn sonra kapanir; ebeveyni oldugu icin agac oldurme ona ulasmaz.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        rmSync(path, { recursive: true, force: true })
+        break
+      } catch (error) {
+        if (attempt >= attempts || !LOCKED.test((error as Error).message)) throw error
+        await new Promise((resolve) => setTimeout(resolve, waitMs))
+      }
+    }
+    await git(repoRoot, ['worktree', 'prune'])
+    await git(repoRoot, ['branch', '-D', branch]).catch(() => undefined)
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: (error as Error).message }
+  }
+}
+
+export interface DiscardDeps {
+  remove: typeof removeWorktree
+  finish: typeof finishRemoval
+  delays: readonly number[]
+}
+
+/**
+ * Gorevin worktree'sini ve dalini siler; ana calisma agacina removeWorktree zaten dokunmaz. Windows'ta `claude -p`
+ * cikistan sonra birkac saniye klasoru tutan kisa omurlu bir alt surec birakiyor (canli deneme): kilit hatasinda
+ * artan beklemeyle yeniden denenir; ilk deneme git kaydini silip klasorde takildiysa is elle bitirilir.
+ */
+export async function discardTask(
+  repoRoot: string,
+  result: Pick<DelegatedTaskResult, 'worktreePath' | 'branch'>,
+  deps: Partial<DiscardDeps> = {}
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { remove = removeWorktree, finish = finishRemoval, delays = [1000, 2000, 4000, 8000] } = deps
+  if (!result.worktreePath) return { ok: true }
+  const input = { repoRoot, path: result.worktreePath, force: true, deleteBranch: true, branch: result.branch }
+  let outcome = await remove(input)
+  let locked = false
+  for (const delay of delays) {
+    if (outcome.ok) return outcome
+    if (locked && /is not a working tree/i.test(outcome.error)) return finish(repoRoot, result.worktreePath, result.branch)
+    if (!LOCKED.test(outcome.error)) return outcome
+    locked = true
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    outcome = await remove(input)
+  }
+  if (!outcome.ok && locked && /is not a working tree/i.test(outcome.error)) return finish(repoRoot, result.worktreePath, result.branch)
+  return outcome
 }

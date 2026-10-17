@@ -3,7 +3,7 @@ import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, ty
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentHookEvent } from '../shared/agentHooks'
 import type { AgentUsage } from '../shared/usage'
-import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, SpeakResult, UpdateStatus, VoiceResult } from '../shared/types'
+import type { AgentEvent, AgentPermissionMode, AgentSession, AgentSessionRef, AppSettings, BackgroundPick, DelegatedTask, OrchestrationStatus, OrchestrationTarget, OrchestrationTestResult, MemoryAgent, MemoryConnection, MemoryProject, MemoryStatus, OpenRouterModelList, OpenRouterModelTest, PersistedSession, RenderMode, ShellInfo, SpeakResult, UpdateStatus, VoiceResult } from '../shared/types'
 
 // Windows OS build number (e.g. 26200 for current Win11). xterm's windowsPty
 // option keys its reflow behaviour on this; fall back to a modern build when
@@ -224,6 +224,26 @@ const api = {
       const handler = (_event: unknown, status: MemoryStatus): void => callback(status)
       ipcRenderer.on(IPC.MEMORY_STATUS_EVENT, handler)
       return () => ipcRenderer.removeListener(IPC.MEMORY_STATUS_EVENT, handler)
+    }
+  },
+  /** Orchestration (Agent IDE): ajanlarin baska ajanlara devrettigi gorevler ve termflow-agents MCP kaydi. */
+  orchestration: {
+    status: (): Promise<OrchestrationStatus> => ipcRenderer.invoke(IPC.ORCH_STATUS),
+    targets: (): Promise<OrchestrationTarget[]> => ipcRenderer.invoke(IPC.ORCH_TARGETS),
+    tasks: (): Promise<DelegatedTask[]> => ipcRenderer.invoke(IPC.ORCH_TASKS),
+    cancel: (id: string): Promise<DelegatedTask | null> => ipcRenderer.invoke(IPC.ORCH_CANCEL, id),
+    discard: (id: string): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke(IPC.ORCH_DISCARD, id),
+    /** Hedefin CLI'indan model listesi; 24 saat cache'li, force ile yeniden. */
+    models: (targetId: string, force = false): Promise<OpenRouterModelList> => ipcRenderer.invoke(IPC.ORCH_MODELS, targetId, force),
+    /** Gecici depoda gercek kucuk bir gorev (dosya yaz), sure ve maliyetle. */
+    test: (targetId: string, model: string): Promise<OrchestrationTestResult> => ipcRenderer.invoke(IPC.ORCH_TEST, targetId, model),
+    connections: (): Promise<MemoryConnection[]> => ipcRenderer.invoke(IPC.ORCH_CONNECTIONS),
+    connect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.ORCH_CONNECT, agent),
+    disconnect: (agent: MemoryAgent): Promise<MemoryConnection | null> => ipcRenderer.invoke(IPC.ORCH_DISCONNECT, agent),
+    onTasks: (callback: (tasks: DelegatedTask[]) => void): (() => void) => {
+      const handler = (_event: unknown, tasks: DelegatedTask[]): void => callback(tasks)
+      ipcRenderer.on(IPC.ORCH_TASKS_EVENT, handler)
+      return () => ipcRenderer.removeListener(IPC.ORCH_TASKS_EVENT, handler)
     }
   },
   /** Voice input: hold Space and speak (docs/voice-input.md). */

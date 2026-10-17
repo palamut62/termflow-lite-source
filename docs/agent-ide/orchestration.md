@@ -1,96 +1,100 @@
 # Orchestration - Ajandan ajana is devri (Agent IDE)
 
-Durum: TASLAK 2026-10-17, dilim 0 (CLI dogrulamasi) ve dilim 1 (`src/main/agentRunner.ts`) TAMAM. Kapsam: yalniz Agent IDE modu (`uiMode: 'ide'`);
-Terminal (Lite) modunda ne ayar ne MCP kaydi gorunur. Bagimli: worktree.ts, agentHooks/hookServer.ts,
-usage/agentUsage.ts, memory/mcpServer.ts (ayni MCP deseni). PRD Faz 5 "orchestration" maddesinin ilk dilimi.
+Durum: UYGULANDI 2026-10-17 (dilim 0-5). Kapsam: yalniz Agent IDE surumu; ayar sayfasi ve Delegated paneli yalniz IDE
+yerlesiminde (`uiMode: 'ide'`) gorunur, Lite'ta servis hic kurulmaz. PRD Faz 5 "orchestration" maddesi.
 
 ## Amac
-Koordinator ajan (Claude Code, Codex...) mekanik ya da ucuz isleri baska bir ajana/modele (OpenCode + ucretsiz
-GLM/DeepSeek, Grok, Codex) devreder, sonucu diff + test ile kontrol eder. Amac: pahali ajanin limitini yalniz
-planlama/review/kritik isler icin harcamak. TermFlow iskeleti saglar: izolasyon (worktree), calistirma, limit gorunurlugu.
+Koordinator ajan (Claude Code, Codex, OpenCode) mekanik isleri baska bir ajana/modele (OpenCode + ucretsiz modeller,
+Grok, Codex, Claude Code ya da `claude` ile calisan saglayici profilleri) devreder ve sonucu diff + kontrol komutuyla
+denetler. Amac: pahali ajanin limitini planlama/review/kritik isler icin saklamak. TermFlow isi yapmaz; izolasyon,
+calistirma, kuyruk ve limit gorunurlugu saglar.
 
-## MCP: `termflow-agents`
-`termflow-memory` gibi bagimliliksiz stdio JSON-RPC, `ELECTRON_RUN_AS_NODE=1` ile uygulamanin exe'siyle; ana surece
-yerel HTTP + rastgele token ile baglanir (hookServer deseni). Surecleri ana uygulama baslatir; MCP yalniz istemcidir.
+## Akis
+1. Koordinator `list_agents` cagirir: kullanilabilir hedefler, model, ucretsiz mi, Claude/Codex limitleri, esik ipucu.
+2. `delegate_task(agent, prompt, cwd, model?, check_command?, timeout_s?)` -> gorev kuyruga girer, id hemen doner.
+3. TermFlow depo HEAD'inden `deleg/<id>` dalinda worktree acar (`../.termflow-worktrees/<depo>/deleg-<id>`), ajani
+   headless calistirir, degisiklikleri o dala commit eder ("TermFlow delegate", `--no-verify`), kontrol komutunu kosar.
+4. `get_task_result(task_id, wait_s<=55, full_diff?)` bitene kadar bekler; durum, dosyalar, diff ozeti, kontrol ciktisi,
+   son mesaj, maliyet. Koordinator inceler, uygunsa kendi checkout'unda `git cherry-pick <commit>`, sonra `discard_task`.
+5. Ayni gorev iki kez basarisiz olursa koordinator isi kendisi yapar (MCP talimatinda ve sonuc metninde yazili).
 
-| Arac | Girdi | Cikti |
-|---|---|---|
-| `list_agents` | - | ajan, kurulu mu, modeller, ucretsiz/ucretli, limit (Claude 5h/7d %, Codex), son hata |
-| `delegate_task` | `agent`, `model?`, `prompt`, `check_command?`, `timeout_s?` | `task_id` (hemen doner, is arka planda) |
-| `get_task_result` | `task_id` | `status` (running/done/failed/timeout), ajan son mesaji, `git diff --stat`, degisen dosyalar, `check_command` cikis kodu + son 40 satir |
-| `discard_task` | `task_id` | worktree + dal silinir |
+## Parcalar
+| Dosya | Gorev |
+|---|---|
+| `src/main/agentRunner.ts` | Komut tablosu, worktree'de calistirma, surec agaci oldurme, zaman asimi, iptal, diff + commit, kontrol, `discardTask`, `taskDiff` |
+| `src/main/orchestration/manager.ts` | Hedef listesi/cozme (saglayici env + anahtar), kuyruk (genel sinir + OpenCode tek), kalici kayit (`userData/orchestration/tasks.json`, son 50), `wait` |
+| `src/main/orchestration/models.ts` | CLI'dan model listesi (`opencode models --verbose`, `grok models`), memory `ModelCatalog` ile 24 saat cache |
+| `src/main/orchestration/service.ts` | Hepsini baglar: hedefler, `list_agents` raporu, esik ipucu, Test, API |
+| `src/main/orchestration/apiServer.ts` | Yerel HTTP API (127.0.0.1, Host + token kontrolu), `endpoint.json` |
+| `src/main/orchestration/mcpServer.ts`, `serverEntry.ts` | `termflow-agents` stdio MCP (`out/mcp/agents-server.cjs`) |
+| `src/main/ipc/orchestration.ts` | IPC, API'yi ayarla ac/kapa, MCP kaydi (memory `connect.ts`, ad parametreli) |
+| `src/renderer/src/settings/OrchestrationSettings.tsx` | Ayarlar > Orchestration |
+| `src/renderer/src/shells/ide/DelegatedPanel.tsx` | Sag panel "Delegated tasks" sekmesi |
 
-- Her gorev `.termflow-worktrees/deleg-<kisa-id>` worktree'sinde, dal `deleg/<kisa-id>`; ana dala TermFlow merge ETMEZ.
-- Gorev IDE'de session rail'de "Delegated by <ajan>" grubunda gorunur (canli cikti izlenebilir).
-- MCP `instructions` metni: neyi devret (test, dokuman, mekanik refactor, tek dosyalik ince is), neyi devretme
-  (guvenlik, mimari, geri alinmasi zor karar). Kabul kriterini `check_command` olarak ver.
-- **Geri donus kurali:** ayni gorev iki kez `failed` ya da `check_command` gecmezse koordinator isi kendisi yapar
-  (BRAIN-POLICY Sonnet kuralinin aynisi). Aracin aciklamasina yazilir.
+## Kararlar
+- **Endpoint dosyasi:** MCP sureci ajanin cocugu; hookServer gibi token env ile gelemez. Port + token
+  `userData/orchestration/endpoint.json`'a yazilir, MCP her cagrida okur (uygulama yeniden acilinca kendiliginden duzelir).
+  Dosya kapanista silinir. Ayni kullanicinin surecleri okuyabilir; hookServer env'i icin de ayni varsayim gecerli.
+- **Commit + cherry-pick:** yalniz index'e almak koordinatorun sonucu almasini zorlastiriyordu; gorev dalina commit edilir.
+  TermFlow ana dala merge ETMEZ.
+- **Session rail grubu yerine Delegated paneli:** headless gorevin PTY'si yok; panel durum, sure, maliyet, dosyalar,
+  kontrol ve cikti sonunu gosterir; Open (worktree'de kabuk), Copy apply command, Stop, Discard.
+- **Uzaktan Erisim:** orchestration IPC'leri telefon izin listesinde DEGIL (Test/gorev ajan calistirir).
+- **Model listesi:** CLI'in kendi komutundan; Codex'te liste komutu yok (serbest metin), Claude icin cevrimdisi yedek
+  (`haiku/sonnet/opus`), saglayici profilinde profilin modelleri. `structured` alani burada arac cagirma yetenegi.
+- **Varsayilan:** kapali; OpenCode modeli `opencode/deepseek-v4.1-flash-free` (olcumde en hizli gecen ucretsiz model),
+  ayni anda 2 gorev, 10 dk sinir, Claude 5h esigi %70.
 
-## Ayarlar (Ayarlar > Orchestration, yalniz IDE)
-- Ajan basina: etkin, varsayilan model, "ucretsiz" etiketi, kimlik/bakiye durumu.
-- Esik kurali: "Claude 5h kullanimi %X'i gecince list_agents ucretsiz modelleri onerir" (yalniz oneri; devri ajan yapar).
-- Ayni anda en fazla N is (varsayilan 2), is basina zaman asimi (varsayilan 10 dk).
-- "Register MCP" dugmesi: `termflow-agents`i Claude/Codex/OpenCode yapilandirmasina yazar (Memory > Connect'in aynisi).
-- Model listesi saglayici API'sinden (OpenCode icin `opencode models`), diske 24 saat cache, Refresh + Test (BRAIN-POLICY).
-
-## Dilim 0 sonucu: headless komutlar (2026-10-17, bu PC, Windows 11)
-Hepsi `a.txt` icerigini degistiren kucuk gorevle gercekten calistirildi.
-
-| Ajan | Surum | Komut (prompt argumandir, kabuga yazilmaz) | Sonuc |
+## Headless komutlar (2026-10-17, bu PC, Windows 11, hepsi gercek gorevle denendi)
+| Ajan | Surum | Komut (prompt argumandir, kabuk yok) | Sonuc |
 |---|---|---|---|
-| OpenCode | 1.18.34 | `opencode run --dir <wt> -m <saglayici/model> --auto --format json "<prompt>"` | GECTI (JSON olay satirlari; `--dir` ile klasor) |
-| Codex | 0.162.1 | `codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --json -C <wt> -o <wt>/<son-mesaj.txt> "<prompt>"` | GECTI 30 sn. `--sandbox workspace-write` Windows'ta "arac erisim hatasi" verip dosyayi degistirmedi |
-| Grok | 1.0.52 | `grok -p "<prompt>" --always-approve --output-format json --cwd <dir>` | GECTI 40 sn. `--permission-mode acceptEdits` ile `stopReason: cancelled`, dosya degismedi |
-| Gemini | 0.64.0 | `gemini -p "<prompt>" --approval-mode yolo -o json` | KULLANILAMAZ: `IneligibleTierError` (hesap katmani desteklenmiyor). Dogrulama gelene kadar listede "unavailable" |
-| Claude Code | - | `claude -p` | DOGRULANMADI: bu PC'de `claude --version` bos cikti verdi. Koordinator rolunde zaten, hedef olarak sonra |
+| OpenCode | 1.18.34 | `opencode run --dir <wt> -m <model> --auto --format json "<p>"` | GECTI |
+| Codex | 0.162.1 | `codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --json -C <wt> -o <wt>/.termflow-last-message.txt "<p>"` | GECTI 30 sn; `--sandbox workspace-write` Windows'ta dosya yazamadi |
+| Grok | 1.0.52 | `grok -p "<p>" --always-approve --output-format json --cwd <wt>` | GECTI 40 sn; `acceptEdits` gorevi iptal etti |
+| Claude Code | 2.1.289 | `claude -p "<p>" --dangerously-skip-permissions --output-format json [--model m]` | GECTI 45 sn ($0.04, haiku). Klasor bayragi yok: spawn cwd + `PWD` |
+| Gemini | 0.64.0 | `gemini -p "<p>" --approval-mode yolo -o json` | KULLANILAMAZ: `IneligibleTierError`; hedef listesinde yok |
 
-Not: tam izin bayraklari yalniz tek kullanimlik worktree icin kabul edilebilir; kullanici deposunun ana klasorunde asla.
+Saglayici profilleri (`providerProfiles`, komutu `claude`): `baseUrlEnv`/`apiKeyEnv`/`modelEnv` env ile verilir, anahtar
+yalniz o surecin env'ine girer, kayda/sonuca yazilmaz. `modelEnv` varsa `--model` gecilmez.
 
-### Ucretsiz / uygun fiyatli model olcumu (OpenCode, ayni gorev: Turkce slugify, 3 dogrulama vakasi)
+### Ucretsiz model olcumu (OpenCode, Turkce slugify, 3 vaka)
 | Model | Sure | Sonuc |
 |---|---|---|
-| `opencode/deepseek-v4.1-flash-free` | 18 sn | GECTI (en hizli) |
-| `opencode/glm-5.3-flash-free` | 30-83 sn | GECTI (sure degisken) |
+| `opencode/deepseek-v4.1-flash-free` | 18 sn | GECTI |
+| `opencode/glm-5.3-flash-free` | 30-83 sn | GECTI |
 | `opencode/mimo-v2.6-flash-free` | 56 sn | GECTI |
-| `opencode/big-pickle` | 115 sn | BASARISIZ (cikis 0 ama dosya yok) |
+| `opencode/big-pickle` | 115 sn | BASARISIZ (cikis 0, dosya yok) |
 | `opencode/nemotron-3.5-lightning-free` | >200 sn | ZAMAN ASIMI |
-| `deepseek/deepseek-flash`, `deepseek-v4-pro` | - | 402 Insufficient Balance (OpenCode'daki DeepSeek anahtarinin bakiyesi bos) |
+| `deepseek/deepseek-flash`, `deepseek-v4-pro` | - | 402 Insufficient Balance |
 
-Tek gorevlik kucuk ornek; model kalitesi hakkinda genel hukum degil. Bu yuzden "Test" dugmesi ve gorev bazli `check_command` sart.
+Kucuk ornek; genel kalite hukmu degil. Bu yuzden Test dugmesi ve gorev basina `check_command`.
 
-### Profil bulgusu
-Uygulamadaki sirket profilleri (`providerProfiles`: DeepSeek, OpenRouter) `claude` CLI'ini Anthropic uyumlu `baseUrl` ve
-model ile calistiriyor. Bu, Claude olmayan modeller icin ikinci devir yolu: `claude -p` + o profilin env'i. Anahtarlar
-`provider-secrets.json`'da; bu dilimde okunmadi/denenmedi, dilim 2'de profil env'i uygulama icinden cozulerek denenecek.
-
-## Zorunlu tasarim kurallari (denemelerden)
-1. **Surec agaci oldurulur.** Windows'ta `timeout`/`kill` yalniz sarmalayiciyi oldurur, `opencode.exe` yetim kalir ve sonraki
-   OpenCode calistirmalari 0 bayt cikti ile asili kalir. Zaman asiminda ve `discard_task`ta `taskkill /T /F` (agac) kullan.
-2. **OpenCode'u paralel baslatma.** 6 ayri `opencode run` ayni anda baslayinca hepsi asildi. Ya sirayla (varsayilan N=1 OpenCode icin)
-   ya da tek `opencode serve` + `run --attach`. Ikisi de dilim 2'de olculur.
-3. Cikis kodu 0 basari demek degildir (`big-pickle`); basari `check_command` ve diff ile olculur, bos diff = `failed`.
-4. Anahtar/bakiye hatalari (402, auth) `failed` + okunur mesaj olarak koordinatora doner; sessizce yutulmaz.
-5. Ajan ciktisi koordinatora gitmeden once boyut siniri (son mesaj + diff ozeti); tam diff ayrica `get_task_result` `full_diff: true` ile.
-6. **Klasor her ajana acikca verilir** (`--dir` / `-C` / `--cwd` + `PWD` env). OpenCode spawn cwd'sini yok sayip miras `PWD`'yi
-   kullandi ve dosyayi worktree yerine TermFlow'un kendi deposuna yazdi (dilim 1 canli denemesi). Regresyon: birim + entegrasyon testi.
-
-## Basari olcutleri
-- Claude Code `delegate_task` ile OpenCode + `opencode/deepseek-v4.1-flash-free`'e is verir, `get_task_result` diff + test sonucunu doner.
-- Zaman asimli gorev sonrasi yetim `opencode.exe` kalmaz; hemen ardindan yeni gorev baslar.
-- Terminal modunda Orchestration ayari ve MCP kaydi gorunmez.
+## Zorunlu kurallar (denemelerden)
+1. **Surec agaci oldurulur** (`worktreeSetup.killProcessTree`): Windows'ta yalniz sarmalayiciyi oldurmek yetim `opencode.exe`
+   birakir ve sonraki OpenCode calistirmalari 0 bayt ciktiyla asili kalir.
+2. **OpenCode tek tek:** 6 paralel `opencode run` hepsi asildi; kuyruk OpenCode'u seri calistirir.
+3. **Cikis 0 basari degil:** bos diff = `failed`; kontrol komutu gecmezse `failed`.
+4. **Saglayici hatalari** (402, auth, `is_error`) okunur mesajla `failed` doner.
+5. **Cikti siniri:** son mesaj 4000, cikti sonu 8000 karakter; tam diff yalniz `full_diff` ile (200 KB'de kesilir).
+6. **Klasor acikca verilir** (`--dir` / `-C` / `--cwd` + `PWD`): OpenCode spawn cwd'sini yok sayip miras `PWD`'ye,
+   TermFlow'un kendi deposuna yazdi.
 
 ## Test
-- Birim: komut uretimi (ajan basina, tirnak/yeni satir), JSON olay ayristirma, kuyruk/esik mantigi, MCP `handle`.
-- Entegrasyon: gecici depoda sahte ajan betigi worktree'de dosya degistirir, sonra `discard_task`.
-- E2E (IDE): sahte ajanla gorev -> rail grubu -> sonuc.
+- Birim: `agentRunner.test.ts`, `orchestration/{models,manager,api}.test.ts`, `SettingsStore`, `connect` (ad parametresi).
+- Entegrasyon: `agentRunner.integration.test.ts` (gercek git, sahte ajan, agac oldurme, iptal, PWD, commit).
+- E2E (IDE): `e2e/ide-orchestration.spec.ts` - PATH'te sahte `opencode`; API -> worktree -> kontrol -> Delegated paneli ->
+  Discard; kotu istekler; Terminal yerlesiminde ayar gizli.
+- Canli: OpenCode (deepseek-v4.1-flash-free, glm-5.3-flash-free), Grok, Codex gercek gorevle 4/4 (dilim 1).
 
 ## Dilimler
-0. [x] Headless bayrak ve model dogrulamasi (bu belge).
-1. [x] `agentRunner.ts`: komut tablosu, worktree'de calistirma, surec agaci oldurme (`worktreeSetup.killProcessTree`), zaman asimi,
-   iptal, diff (yeni dosyalar dahil), kontrol komutu, `discardTask`. Birim 11 + entegrasyon 8 test. Canli: OpenCode
-   (deepseek-v4.1-flash-free, glm-5.3-flash-free), Grok, Codex ayni slugify gorevini worktree'de yapti, kontrol gecti (4/4).
-2. Gorev kuyrugu, hookServer'a yerel API, OpenCode seri/serve karari, provider profil env'iyle `claude -p`.
-3. `termflow-agents` MCP + `list_agents` (agentUsage limit verisi) + Register MCP.
-4. Ayarlar > Orchestration, rail grubu, model listesi cache + Test.
-5. Esik onerisi, E2E, dokuman/site.
+0. [x] Headless bayrak ve model dogrulamasi.
+1. [x] `agentRunner.ts`.
+2. [x] Kuyruk, yerel API, saglayici profil env'iyle `claude -p`.
+3. [x] `termflow-agents` MCP, `list_agents` limit raporu, Connect.
+4. [x] Ayarlar > Orchestration (model listesi + Yenile + Test), Delegated paneli.
+5. [x] Esik ipucu, E2E, dokuman. Site bolumu yok (karar bekliyor).
+
+## Acik
+- Gercek koordinatorden (Claude Code MCP uzerinden) uctan uca deneme: kullanici Ayarlar > Orchestration > Connect yapinca.
+- Linux'ta elle denenmedi (surec grubu oldurme kodu var, test Windows'ta kostu).
+- `opencode serve` + `--attach` ile OpenCode paralelligi olculmedi; simdilik seri.
