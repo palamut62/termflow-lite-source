@@ -34,6 +34,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - [x] 1.24.0 Orca paritesi (8 modul + agent-detect): yayinda, Release + verify-release yesil, bu PC'ye kuruldu, site `#agents` bolumu (EN/TR, `assets/agents.webp`) Vercel prod. Kalan Orca modulleri: worktree-note, agent-hibernate, agent-race, scheduled-prompts, remote-attention (`docs/orca-parity/`)
 
 ## Ek (2026-10-17)
+- **1.26.0 yayinda (2026-10-17):** Lite + Agent IDE Release ve verify yesil (run 39047141362, GitHub odeme sorunu cozuldu), site Vercel prod (indirme linkleri v1.26.0). Kural: her degisiklikte iki surum derlenir, yalniz Agent IDE sessiz kurulur
+- Orchestration iscileri: + agy, gemini, qwen, copilot, kimi, droid (duz metin cikti). Canli: agy gecti; gemini bu PC'de hesap/proje hatasi
 - Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
@@ -47,10 +49,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - **Orchestration (IDE):** kod tamam, kurulu; varsayilan KAPALI. Gercek koordinatorden deneme kullanicida: Ayarlar > Orchestration > Enable + Connect (Claude/Codex/OpenCode MCP kaydi). Linux elle denenmedi; `opencode serve --attach` paralelligi olculmedi. Site bolumu yok
-- **1.25.0 yayini YARIM (2026-10-15):** main'e merge + `v1.25.0` tag'i itildi, ama Release run 38692776220'nin isleri hic baslamadi: GitHub "recent account payments have failed or your spending limit needs to be increased" (Billing & plans). Kullanici odemeyi duzeltince: `gh run rerun 38692776220 --repo palamut62/termflow-lite-source`
 - IDE yayin reposu acildi: PUBLIC `palamut62/termflow-agent-ide` (README + LICENSE). CI'da `release-ide-*` isleri ona yukler; `RELEASES_TOKEN` (fine-grained) bu repoya da Contents: write almali, kullanici token'a repoyu eklemeli, yoksa IDE isleri 403. IDE updater acildi, `.deb`/updater adi `termflow-agent-ide` (extraMetadata). IDE notlari `CHANGELOG-IDE.md`
-- Site: `#agent-ide` bolumu (EN/TR, `assets/agent-ide.webp`) hazir, Vercel'e DEPLOY EDILMEDI: IDE release'i cikinca `vercel --prod`
-- Yerel: Agent IDE 1.25.0 bu PC'ye kuruldu; Lite 1.25.0 exe hazir (`dist/`), Lite acik oldugu icin kurulmadi (kullanici onayi)
 - **Agent IDE:** Faz 0-4 + orchestration tamam (PRD 4.10/12b). Karar bekleyen: Faz 5 kalan (tarayici/design mode, CLI) ve Create worktree 'Run on WSL/SSH' (uzak calisma alani modeli gerekir). IDE Explorer sag tik menusu hala kapali
 - E2E IDE review testi yuk altinda bir kez kirildi (worktree listesi yuklenmedi), tekrarda 3/3 gecti
 - Memory guncelleme sikligi (Ayarlar > Memory > Update: saatlik/gunluk/haftalik, varsayilan saatlik; zamani gelince yalniz yeni/degisen session analiz edilir, yoksa model cagrilmaz, onceki kullanim bilgisi korunur). Surum 1.24.0 kaldi, yerel kurulum
