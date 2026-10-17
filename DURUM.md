@@ -43,7 +43,6 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 
 ## Yarim kalan / siradaki adim
 - **Orchestration (IDE):** kod tamam, kurulu; varsayilan KAPALI. Gercek koordinatorden deneme kullanicida: Ayarlar > Orchestration > Enable + Connect (Claude/Codex/OpenCode MCP kaydi). Linux elle denenmedi; `opencode serve --attach` paralelligi olculmedi. Site bolumu yok
-- **Kirik E2E (onceden):** `e2e/usage-meter.spec.ts` hala '% left' bekliyor (62bb2de % kullanilan'a gecti); `e2e/remote-scroll.spec.ts` telefon Home ekranindan (9b3e651) once yazilmis
 - **1.25.0 yayini YARIM (2026-10-15):** main'e merge + `v1.25.0` tag'i itildi, ama Release run 38692776220'nin isleri hic baslamadi: GitHub "recent account payments have failed or your spending limit needs to be increased" (Billing & plans). Kullanici odemeyi duzeltince: `gh run rerun 38692776220 --repo palamut62/termflow-lite-source`
 - IDE yayin reposu acildi: PUBLIC `palamut62/termflow-agent-ide` (README + LICENSE). CI'da `release-ide-*` isleri ona yukler; `RELEASES_TOKEN` (fine-grained) bu repoya da Contents: write almali, kullanici token'a repoyu eklemeli, yoksa IDE isleri 403. IDE updater acildi, `.deb`/updater adi `termflow-agent-ide` (extraMetadata). IDE notlari `CHANGELOG-IDE.md`
 - Site: `#agent-ide` bolumu (EN/TR, `assets/agent-ide.webp`) hazir, Vercel'e DEPLOY EDILMEDI: IDE release'i cikinca `vercel --prod`
