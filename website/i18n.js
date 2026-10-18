@@ -89,6 +89,7 @@
     'f10.li3': 'Hangi sekmenin seni beklediğini bil: renkli nokta, sayılı zil, görev çubuğu rozeti, bildirim ve ses; hepsi ajanın kendi hook\'larından. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>J</kbd> ile oraya atla',
     'f10.li4': 'Uygulamayı yeniden açınca her sekme çıktısı ve Claude ya da Codex konuşmasıyla geri gelir. Claude ve Codex limitleri durum çubuğunda görünür',
     'f10.li5': "npm ile kurulu ajan CLI'ları açılışta ve günde bir kez arka planda kendini günceller; her profil sürümünü gösterir",
+    'f10.li6': "Claude Code'un arka plan kabuk görevlerini ve alt ajanlarını canlı izle, her biri kendi sekmesinde: sekmedeki sayıya tıkla",
     'f10.alt': 'Kurulu ajan CLI\'larını tam yetki bayraklarıyla listeleyen Ayarlar > Profiles ve yeni bir ajan bulunduğunu söyleyen bildirim',
 
     'f9.title': 'Yazmak yerine konuş',
@@ -207,6 +208,7 @@
     'ide.li3': "Diff'i incele, satırlara yorum yaz ve tüm yorumları ajana tek mesaj olarak gönder",
     'ide.li4': 'Kaynak kontrolü, pull request kontrolleri, GitHub görevleri, worktree başına notlar ve yüzen terminal. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>I</kbd> düz terminale geçer',
     'ide.li5': "Orchestration: ajanın mekanik işleri kurulu başka bir ajana devreder (OpenCode, Codex, Grok, Claude Code, Antigravity, Gemini CLI, Qwen Code, Copilot CLI, Kimi, Droid); her biri kendi worktree'sinde çalışır, sonucu inceleyip uygular",
+    'ide.li6': "Sidebar'daki proje menüsü her ajan profilini (Claude Code, Codex...) doğrudan o klasörde açar",
     'ide.dlWin': "Agent IDE'yi Windows için indir",
     'ide.dlLinux': 'Linux AppImage',
     'ide.note': "Ücretsiz; TermFlow Lite'ın yanına kurulur ve kendi ayarlarını tutar.",
