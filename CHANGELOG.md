@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.27.0 - 2026-10-18
+
+- Background tasks: a Claude Code tab shows a small count when its background shell tasks have written output in the last 10 minutes. Click it to watch each task live in its own tab. In the Agent IDE the tab's right-click menu lists the session's background tasks.
+
 ## 1.26.0 - 2026-10-17
 
 - Launch at startup: Settings > Terminal (and the phone's settings) can start TermFlow when you sign in to Windows.

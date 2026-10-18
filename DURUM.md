@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-17
+guncel: 2026-10-18
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -39,13 +39,13 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
-## Son oturum (2026-10-17, Orchestration tamam)
-- Dilim 2-5: `orchestration/` (manager kuyrugu + OpenCode seri, yerel API + endpoint.json, termflow-agents MCP 6 arac, service: model listesi/limit raporu/Test), Ayarlar > Orchestration ve sag panel Delegated (yalniz IDE yerlesimi). Gorev dalina commit + cherry-pick; saglayici profilleri `claude -p` + env
-- Canli: MCP -> API -> OpenCode deepseek-v4.1-flash-free 44 sn $0, kontrol gecti, cherry-pick + discard; Claude (haiku) $0.04. Hata: Claude'un Bash kabugu claude.exe'den ~4 sn sonra kapanip worktree'yi kilitliyordu; Discard bekleyip elle bitirir. Birim 845, IDE E2E 20/20, Lite E2E 105/107 (2 kirik onceden: usage-meter, remote-scroll). IDE bu PC'ye kuruldu
+## Ek (2026-10-17, son arac: Claude Code)
+- IDE: sidebar'da projeye/worktree'ye tiklayinca (oturumu yoksa) ve Jump Palette worktree girisi artik Claude Code ile acilir (`ProjectTree.openProjectAt`; Claude kurulu degilse varsayilan kabuk). 'New Terminal Here' hala varsayilan kabuk. Birim 296/296 + tsc temiz; paketlenip kurulmadi, elle denenmedi
 
-## Onceki oturum (2026-10-17, Claude hesaplari + New project)
-- Claude hesap gecisi: Ayarlar > Profiles > "Add Claude account" (`CLAUDE_CONFIG_DIR` env'li profil; `src/main/claudeAccount.ts` projects/skills'i varsayilan hesaba junction'lar, dolu klasoru ezmez). Sekme sag tik > "Continue session with <hesap>": hook'tan gelen sessionId ile `--resume`, eski sekme kapanir. Giris her hesapta bir kez `/login`. Girisli hesaplar `.claude*/.claude.json` oauthAccount.emailAddress ile otomatik bulunur ve profil olarak eklenir (acilista, odakta, Ayarlar > Profiles > Claude accounts). Limit dolunca otomatik gecis: StopFailure hook (rate_limit/limit metni) -> `claudeFailover.ts onClaudeLimit`, ayar `autoSwitchClaudeAccount`; limitli hesap 5 saat atlanir. Gercek limit olayi dogrulanmadi. Elle denenmedi (gercek ikinci hesap yok); sessionId yoksa menu 'no session yet' der. Surum 1.26.0'da kaldi (yayinlanmadi)
-- Yeni sekme menusu > "New project...": ust klasor + proje adi + ajan/shell secilir, `src/main/projectCreate.ts` klasoru olusturur (bos mevcut klasor kullanilir, dolu reddedilir), sekme o klasorde acilir. `tabs/NewProjectModal.tsx`, IPC `project:create`. Birim test var, E2E ve elle deneme YOK, yayin/kurulum yapilmadi
+## Son oturum (2026-10-18, son arac: Claude Code, dal feature/agent-ide)
+- 1.27.0 (yayinlanmadi): Claude arka plan gorevleri canli sekmede. Main `agentTasks.ts` (<tmp>/claude/*/<oturum>/tasks/*.output, IPC `agent-sessions:tasks`), renderer `tabs/agentTasks.ts` (5 sn yoklama, son 10 dk yazan = aktif; sekme rozeti tiklayinca her gorev ayri sekme, PowerShell `Get-Content -Wait` / `tail -F`), IDE sekme sag tik "Background tasks". Cikti dosyasi gorev bitince kalir; "calisiyor" bilgisi yok, tazelik sezgisi. Alt ajanlar (JSONL ozet) sonraki adim
+- IDE sidebar proje/worktree '...' menusu: 'New Terminal Here' altinda ajan profilleri (`ProjectTree.ProfileItems`)
+- Birim 853 (gh entegrasyon testi ara sira; tek basina gecti), typecheck + build temiz; gercek gorev dosyasi ve PowerShell komutu elle dogrulandi. Lite + IDE 1.27.0 derlendi; IDE KURULMADI (calisan oturum vardi), uygulamada tiklanmadi
 
 ## Yarim kalan / siradaki adim
 - **Orchestration (IDE):** kod tamam, kurulu; varsayilan KAPALI. Gercek koordinatorden deneme kullanicida: Ayarlar > Orchestration > Enable + Connect (Claude/Codex/OpenCode MCP kaydi). Linux elle denenmedi; `opencode serve --attach` paralelligi olculmedi. Site bolumu yok

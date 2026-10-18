@@ -97,6 +97,7 @@ export const IPC = {
   AGENT_SESSIONS_LIST: 'agent-sessions:list',
   AGENT_SESSION_WARNINGS: 'agent-sessions:warnings',
   AGENT_SESSION_HANDOVER: 'agent-sessions:handover',
+  AGENT_TASKS_LIST: 'agent-sessions:tasks',
   MEMORY_STATUS: 'memory:status', // -> MemoryStatus
   MEMORY_STATUS_EVENT: 'memory:status-event', // main -> renderer MemoryStatus
   MEMORY_RUN: 'memory:run', // () -> MemoryStatus; elle "Update now"
@@ -176,6 +177,14 @@ export interface PtyCreatePayload {
   profileId: string
   cols: number
   rows: number
+}
+
+/** Claude Code arka plan gorevinin cikti dosyasi (Bash run_in_background). */
+export interface AgentTask {
+  id: string
+  path: string
+  size: number
+  mtimeMs: number
 }
 
 export interface AgentSessionsQuery {

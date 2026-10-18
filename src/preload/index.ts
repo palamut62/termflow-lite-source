@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { ClaudeLogin } from '../shared/claudeAccounts'
-import { IPC, type AgentSessionsQuery, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitHubTask, type GitHubTaskFilter, type GitHubTaskKind, type GitRepoInfo, type GitStatus, type ScmAction, type ScmChecks, type ScmDiff, type ScmState, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WorktreeSetupOutcome, type WorktreeSetupRequest, type WeatherPlace, type WeatherReading, type DirListing, type ResourceSnapshot, type FileSearchQuery, type FileSearchResult, type ProjectCreateResult, type AttentionBadge } from '../shared/ipc'
+import { IPC, type AgentSessionsQuery, type AgentTask, type AppLaunchRequest, type GhOutcome, type GitHubPullRequest, type GitHubRepo, type GitHubStatus, type GitHubTask, type GitHubTaskFilter, type GitHubTaskKind, type GitRepoInfo, type GitStatus, type ScmAction, type ScmChecks, type ScmDiff, type ScmState, type ProjectInfo, type ProjectTask, type ResolvedPath,  type TitleBarOverlayPayload, type WidgetAction, type WidgetState, type CommandNotification, type CaptureRect, type MediaInfo, type WorktreeCreateRequest, type WorktreeEntry, type WorktreeOutcome, type WorktreeRemoveOutcome, type WorktreeRemoveRequest, type WorktreeSetupOutcome, type WorktreeSetupRequest, type WeatherPlace, type WeatherReading, type DirListing, type ResourceSnapshot, type FileSearchQuery, type FileSearchResult, type ProjectCreateResult, type AttentionBadge } from '../shared/ipc'
 import type { RemoteCommandReply, RemoteCommandRequest, RemoteDeviceInfo, RemotePairing, RemoteStatus, RemoteTabsState } from '../shared/remote'
 import type { AgentHookEvent } from '../shared/agentHooks'
 import type { AgentUsage } from '../shared/usage'
@@ -221,7 +221,8 @@ const api = {
   agentSessions: {
     warnings: (): Promise<string[]> => ipcRenderer.invoke(IPC.AGENT_SESSION_WARNINGS),
     list: (query: AgentSessionsQuery = {}): Promise<AgentSession[]> => ipcRenderer.invoke(IPC.AGENT_SESSIONS_LIST, query),
-    handover: (session: AgentSessionRef): Promise<string> => ipcRenderer.invoke(IPC.AGENT_SESSION_HANDOVER, session)
+    handover: (session: AgentSessionRef): Promise<string> => ipcRenderer.invoke(IPC.AGENT_SESSION_HANDOVER, session),
+    tasks: (sessionId: string): Promise<AgentTask[]> => ipcRenderer.invoke(IPC.AGENT_TASKS_LIST, sessionId)
   },
   /** Agent Memory: 30-day per-project memory and the agent MCP connections. */
   memory: {

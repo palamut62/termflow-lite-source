@@ -10,6 +10,8 @@ import { NewProjectModal } from './NewProjectModal'
 import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
+import { openTaskTab, useAgentTasks } from './agentTasks'
+import { formatAge } from '../shells/ide/ideTreeModel'
 import { useTaskPaletteStore } from '../store/taskPaletteStore'
 import { useSavedCommandStore } from '../store/savedCommandStore'
 import { useToastStore } from '../store/toastStore'
@@ -101,11 +103,13 @@ const TAB_COLORS = ['#3b82f6', '#a855f7', '#ec4899', '#ef4444', '#f97316', '#eab
 function TabContextMenu({ tabs, tabId, anchor, onClose }: { tabs: TerminalTabModel[]; tabId: string; anchor: MenuAnchor; onClose: () => void }): React.JSX.Element {
   const index = tabs.findIndex((t) => t.id === tabId)
   const tab = tabs[index]
+  const tasks = useAgentTasks(tab?.agentHook?.sessionId)
   const store = useTerminalStore.getState()
   const pick = (fn: () => void) => (): void => { onClose(); fn() }
   const settings = useSettingsStore.getState().settings
   if (!tab) return <></>
   const sessionId = tab.agentHook?.sessionId
+  const now = Date.now()
   const accounts = claudeAccounts(settings.profiles)
   const isClaude = accounts.some((a) => a.id === tab.profileId)
   const continueWith = (target: TerminalProfile): Promise<boolean> => continueWithAccount(tabId, target)
@@ -124,6 +128,10 @@ function TabContextMenu({ tabs, tabId, anchor, onClose }: { tabs: TerminalTabMod
       <MenuItem onSelect={pick(() => split('horizontal'))}>Split Down</MenuItem>
       {isClaude && accounts.filter((a) => a.id !== tab.profileId).map((a) => (
         <MenuItem key={a.id} onSelect={pick(() => void continueWith(a))}>{sessionId ? `Continue session with ${a.name}` : `Continue with ${a.name} (no session yet)`}</MenuItem>
+      ))}
+      {tasks.length > 0 && <div className="ctx-menu-section" role="presentation">Background tasks</div>}
+      {tasks.slice(0, 10).map((task) => (
+        <MenuItem key={task.path} onSelect={pick(() => openTaskTab(task, tab.cwd || tab.launchCwd))} hint={formatAge(task.mtimeMs, now)}>{`Watch ${task.id}`}</MenuItem>
       ))}
       <div className="ctx-menu-divider" />
       <MenuItem onSelect={pick(() => window.dispatchEvent(new CustomEvent('termflow:rename-tab', { detail: tabId })))}>Change Title</MenuItem>
