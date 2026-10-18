@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, CircleDot, Ellipsis, GitBranch, Link2, LoaderCircle, Moon, Pin, Plus } from 'lucide-react'
 import type { WorktreeEntry } from '../../../../shared/ipc'
 import { worktreeKey, type IdeSettings } from '../../../../shared/types'
-import { agentForProfile } from '../../../../shared/profiles'
+import { agentForProfile, availableProfiles } from '../../../../shared/profiles'
 import { resolveDefaultProfileId, useSettingsStore } from '../../store/settingsStore'
 import { useTerminalStore } from '../../store/terminalStore'
 import { useToastStore } from '../../store/toastStore'
@@ -48,6 +48,29 @@ export function saveIde(patch: Partial<IdeSettings>): void {
 function openTerminalAt(path: string): void {
   const { settings, shells } = useSettingsStore.getState()
   useTerminalStore.getState().addTab(resolveDefaultProfileId(settings, shells), true, path)
+}
+
+/** Proje/worktree menusu: kurulu ajan ve ozel profiller (Claude Code, Codex...) o klasorde acilir. */
+function ProfileItems({ path, act }: { path: string; act: (fn: () => void) => (e: React.MouseEvent) => void }): React.JSX.Element {
+  const settings = useSettingsStore((s) => s.settings)
+  return (
+    <>
+      {availableProfiles(settings.profiles, settings.installedAgents).map((p) => (
+        <button key={p.id} className="ctx-menu-item ide-menu-item" role="menuitem" title={p.command || p.startupCommand} onClick={act(() => useTerminalStore.getState().addTab(p.id, true, path))}>
+          <TabIcon shellId={p.id} />
+          <span className="ide-menu-text">{p.name}</span>
+        </button>
+      ))}
+    </>
+  )
+}
+
+/** Proje/worktree acilisi: Claude Code kuruluysa onunla, degilse varsayilan kabukla baslar. */
+export function openProjectAt(path: string): void {
+  const { settings } = useSettingsStore.getState()
+  if (availableProfiles(settings.profiles, settings.installedAgents).some((p) => p.id === 'claude')) {
+    useTerminalStore.getState().addTab('claude', true, path)
+  } else openTerminalAt(path)
 }
 
 function folderName(path: string): string {
@@ -172,7 +195,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
     // Orca: worktree'nin kendi sekmelerine don (en son bakilan); terminali hic yoksa bir tane ac.
     const last = lastUsedTab(worktree.sessions.map((s) => s.tabId), lastSeen)
     if (last) useTerminalStore.getState().setActiveTab(last)
-    else openTerminalAt(worktree.path)
+    else openProjectAt(worktree.path)
   }
 
   // Sekme -> worktree eslemesi: IDE sekme seridi yalniz etkin worktree'nin sekmelerini gosterir.
@@ -409,6 +432,7 @@ function TreeContextMenu({ menu, onClose, onShowHidden, onDetails, onOpen }: {
     return (
       <div className="ctx-menu ide-menu" role="menu" style={style} onMouseDown={(e) => e.stopPropagation()}>
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => openTerminalAt(project.root))}>New Terminal Here</button>
+        <ProfileItems path={project.root} act={act} />
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => void window.termflow.system.openInEditor(project.root, 1))}>Open in VS Code</button>
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => void window.termflow.system.openPath(project.root))}>Open in File Explorer</button>
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => onShowHidden(project.root))}>
@@ -449,6 +473,7 @@ function TreeContextMenu({ menu, onClose, onShowHidden, onDetails, onOpen }: {
       ))}
       <div className="ctx-menu-divider" />
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => openTerminalAt(worktree.path))}>New Terminal Here</button>
+      <ProfileItems path={worktree.path} act={act} />
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => useIdePageStore.getState().open('review', { cwd: worktree.path }))}>Review Changes</button>
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => useIdePageStore.getState().open('notes', { cwd: worktree.path }))}>Open Notes</button>
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => void window.termflow.system.openInEditor(worktree.path, 1))}>Open in VS Code</button>
