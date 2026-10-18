@@ -2,7 +2,7 @@
 
 ## 1.27.0 - 2026-10-18
 
-- Everything in TermFlow Lite 1.27.0: watch Claude Code background tasks live, each in its own tab (tab count badge, or the tab's right-click menu).
+- Everything in TermFlow Lite 1.27.0: watch Claude Code background tasks and subagents live, each in its own tab (tab count badge, or the tab's right-click menu).
 - The project and worktree menus in the sidebar list your agent profiles (Claude Code, Codex...) under New Terminal Here; each opens in that folder.
 
 ## 1.26.0 - 2026-10-17

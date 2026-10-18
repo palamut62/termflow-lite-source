@@ -179,12 +179,16 @@ export interface PtyCreatePayload {
   rows: number
 }
 
-/** Claude Code arka plan gorevinin cikti dosyasi (Bash run_in_background). */
+/** Claude Code arka plan isi: shell gorevinin cikti dosyasi (Bash run_in_background) ya da alt ajan dokumu (JSONL). */
 export interface AgentTask {
   id: string
   path: string
   size: number
   mtimeMs: number
+  /** Yalniz alt ajan: gorunen ad (aciklama, ajan turu ya da id). */
+  label?: string
+  /** Yalniz alt ajan: JSONL'i okunur akitan hazir izleme komutu; shell gorevinde renderer `tail`/`Get-Content` kurar. */
+  command?: string
 }
 
 export interface AgentSessionsQuery {

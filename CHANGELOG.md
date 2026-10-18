@@ -2,7 +2,8 @@
 
 ## 1.27.0 - 2026-10-18
 
-- Background tasks: a Claude Code tab shows a small count when its background shell tasks have written output in the last 10 minutes. Click it to watch each task live in its own tab. In the Agent IDE the tab's right-click menu lists the session's background tasks.
+- Background tasks: a Claude Code tab shows a small count when its background shell tasks or subagents have written output in the last 10 minutes. Click it to watch each one live in its own tab. In the Agent IDE the tab's right-click menu lists them too.
+- Subagents (the Task/Agent tool) are watched as readable lines: the prompt, what the agent said, each tool call with a short input, and each result.
 
 ## 1.26.0 - 2026-10-17
 

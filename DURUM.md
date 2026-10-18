@@ -39,13 +39,11 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
-## Ek (2026-10-17, son arac: Claude Code)
-- IDE: sidebar'da projeye/worktree'ye tiklayinca (oturumu yoksa) ve Jump Palette worktree girisi artik Claude Code ile acilir (`ProjectTree.openProjectAt`; Claude kurulu degilse varsayilan kabuk). 'New Terminal Here' hala varsayilan kabuk. Birim 296/296 + tsc temiz; paketlenip kurulmadi, elle denenmedi
-
 ## Son oturum (2026-10-18, son arac: Claude Code, dal feature/agent-ide)
-- 1.27.0 (yayinlanmadi): Claude arka plan gorevleri canli sekmede. Main `agentTasks.ts` (<tmp>/claude/*/<oturum>/tasks/*.output, IPC `agent-sessions:tasks`), renderer `tabs/agentTasks.ts` (5 sn yoklama, son 10 dk yazan = aktif; sekme rozeti tiklayinca her gorev ayri sekme, PowerShell `Get-Content -Wait` / `tail -F`), IDE sekme sag tik "Background tasks". Cikti dosyasi gorev bitince kalir; "calisiyor" bilgisi yok, tazelik sezgisi. Alt ajanlar (JSONL ozet) sonraki adim
+- 1.27.0 (yayinlanmadi): Claude arka plan isleri canli sekmede. Main `agentTasks.ts` (shell: <tmp>/claude/*/<oturum>/tasks/*.output; alt ajan: <claude config>/projects/*/<oturum>/subagents/agent-*.jsonl + .meta.json etiketi; IPC `agent-sessions:tasks` ikisini birlestirir), renderer `tabs/agentTasks.ts` (5 sn yoklama, son 10 dk yazan = aktif; rozet tiklayinca her is ayri sekme; IDE sag tik 'Background tasks'). Cikti dosyasi is bitince kalir: 'calisiyor' bilgisi yok, tazelik sezgisi
 - IDE sidebar proje/worktree '...' menusu: 'New Terminal Here' altinda ajan profilleri (`ProjectTree.ProfileItems`)
-- Birim 853 (gh entegrasyon testi ara sira; tek basina gecti), typecheck + build temiz; gercek gorev dosyasi ve PowerShell komutu elle dogrulandi. Lite + IDE 1.27.0 derlendi; IDE KURULMADI (calisan oturum vardi), uygulamada tiklanmadi
+- Alt ajan JSONL'i `tail` ile okunmaz: `transcriptFollow.ts` satir basina PROMPT/SAID/CALL/DONE/FAIL yazar; `build:mcp` ile `out/mcp/follow-transcript.cjs` olur, `installServerScript` ile userData/mcp'ye kopyalanir, sekme `ELECTRON_RUN_AS_NODE=1 <exe> <betik> <jsonl>` calistirir. Windows'ta Electron exe GUI alt sistemi: PowerShell `| Out-Host` olmadan beklemez; sekme kapaninca konsolla olmez, betik 2 sn'de bir ust kabuk (ppid) var mi bakip cikar. Sinir: yalniz varsayilan Claude config dizini (ek hesaplarin alt ajanlari listelenmez)
+- Birim 861 + typecheck + build temiz (verify); gercek JSONL ve conpty (node-pty) icinde canli akis + yetim surec denendi. Lite + IDE 1.27.0 derlendi; IDE KURULMADI (onay bekliyor), uygulamada tiklanmadi. Eski bug duzeltildi: sh tirnaklamasi `'''` (tek tirnakli yolda `tail -F`)
 
 ## Yarim kalan / siradaki adim
 - **Orchestration (IDE):** kod tamam, kurulu; varsayilan KAPALI. Gercek koordinatorden deneme kullanicida: Ayarlar > Orchestration > Enable + Connect (Claude/Codex/OpenCode MCP kaydi). Linux elle denenmedi; `opencode serve --attach` paralelligi olculmedi. Site bolumu yok
@@ -55,8 +53,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Memory guncelleme sikligi (Ayarlar > Memory > Update: saatlik/gunluk/haftalik, varsayilan saatlik; zamani gelince yalniz yeni/degisen session analiz edilir, yoksa model cagrilmaz, onceki kullanim bilgisi korunur). Surum 1.24.0 kaldi, yerel kurulum
 - Elle dogrulanmadi: Windows gorev cubugu rozeti/flashFrame, gercek sistem bildirimi; Cursor Agent/Amp/Aider/Crush bayraklari (kurulu degil)
 - Remote Access gercek telefonla (iOS Safari + Android Chrome) denenmeli: Windows Guvenlik Duvari izni, yazilim klavyesi/visualViewport, iOS'ta localStorage silinmesi (ana ekrana ekleyince kalici)
-- 1.22.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye yerel derleme sessiz kuruldu. iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect gercek telefonla denenmeli
-- 1.23.0 yayinda (2026-10-09): Release + verify-release yesil, bu PC'ye kuruldu. Voice Input gercek sesle denenmedi: OpenRouter'a kredi eklenince Ayarlar > Voice > Test ve Space basili tut ile denenmeli
+- 1.22.0 / 1.23.0 yayinda (2026-10-09), bu PC'ye kuruldu. Elle denenmeli: iPhone ana ekran uygulamasinda 'Scan QR code' / Reconnect (gercek telefon); Voice Input gercek sesle (OpenRouter'a kredi eklenince Ayarlar > Voice > Test + Space basili tut)
 - Gercek ajan kaydi (Memory Connect) yalniz testlerde mock'landi; kurulu surumle Claude/Codex/OpenCode'da elle denenmeli
 
 ## Acik sorunlar / bilinen sinirlar

@@ -18,7 +18,12 @@ export function watchTaskCommand(path: string, platform: NodeJS.Platform): strin
     const p = path.replace(/'/g, "''")
     return `[Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-Content -LiteralPath '${p}' -Encoding UTF8 -Tail 1000 -Wait`
   }
-  return `tail -n 1000 -F '${path.replace(/'/g, `'\''`)}'`
+  return `tail -n 1000 -F '${path.replace(/'/g, "'\\''")}'`
+}
+
+/** Sekme ve menu adi: alt ajan `agent <ad>`, shell gorevi `task <id>`. */
+export function taskName(task: AgentTask): string {
+  return task.label ? `agent ${task.label}` : `task ${task.id}`
 }
 
 /** Claude oturumunun arka plan gorevleri; oturum varken birkac saniyede bir yenilenir. */
@@ -45,7 +50,7 @@ export function openTaskTab(task: AgentTask, cwd?: string): void {
   const platform = window.termflow.system.platform
   const { settings, shells } = useSettingsStore.getState()
   const shell = platform === 'win32' ? 'powershell' : resolveDefaultProfileId(settings, shells)
-  const id = store.addTab(shell, true, cwd, watchTaskCommand(task.path, platform))
-  store.renameTab(id, `task ${task.id}`)
+  const id = store.addTab(shell, true, cwd, task.command ?? watchTaskCommand(task.path, platform))
+  store.renameTab(id, taskName(task))
   watchTabs.set(task.path, id)
 }

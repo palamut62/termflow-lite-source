@@ -25,6 +25,7 @@ import { registerFilesIpc } from './ipc/files'
 import { registerTasksIpc } from './ipc/tasks'
 import { registerProjectIpc } from './ipc/project'
 import { registerAgentSessionsIpc } from './ipc/agentSessions'
+import type { TranscriptFollower } from './agentTasks'
 import { registerSessionIpc } from './ipc/session'
 import { registerUpdaterIpc } from './ipc/updater'
 import { registerAgentEventsIpc } from './ipc/agentEvents'
@@ -512,7 +513,14 @@ app.whenReady().then(() => {
   registerFilesIpc()
   registerTasksIpc()
   registerProjectIpc()
-  registerAgentSessionsIpc(agentSessionOwnership)
+  let follower: TranscriptFollower | null = null
+  try {
+    const script = installServerScript(join(app.getAppPath(), 'out', 'mcp', 'follow-transcript.cjs'), join(app.getPath('userData'), 'mcp'), 'follow-transcript.cjs')
+    follower = { exe: appExecutable(), script }
+  } catch (error) {
+    console.warn('[agent-tasks] transcript follower could not be installed:', error)
+  }
+  registerAgentSessionsIpc(agentSessionOwnership, follower)
   registerSessionIpc(sessionStore)
   registerUpdaterIpc()
   registerAgentEventsIpc(new AgentEventStore(app.getPath('userData')))

@@ -145,8 +145,8 @@ export function TerminalTab({
           className="tab-tasks"
           onClick={(e) => { e.stopPropagation(); for (const task of live) openTaskTab(task, tab.cwd || tab.launchCwd) }}
           onDoubleClick={(e) => e.stopPropagation()}
-          title={`${live.length} background task${live.length === 1 ? '' : 's'} with recent output - click to watch each in its own tab`}
-          aria-label={`Watch ${live.length} background task${live.length === 1 ? '' : 's'}`}
+          title={`${live.length} background task${live.length === 1 ? '' : 's'} or subagent${live.length === 1 ? '' : 's'} with recent output - click to watch each in its own tab`}
+          aria-label={`Watch ${live.length} background task${live.length === 1 ? '' : 's'} or subagent${live.length === 1 ? '' : 's'}`}
         >
           {live.length}
         </button>

@@ -11,6 +11,6 @@ describe('agent tasks', () => {
 
   it('builds a quoted live-follow command per platform', () => {
     expect(watchTaskCommand("C:\Temp\it's\b1.output", 'win32')).toContain("-LiteralPath 'C:\Temp\it''s\b1.output' -Encoding UTF8 -Tail 1000 -Wait")
-    expect(watchTaskCommand("/tmp/it's/b1.output", 'linux')).toBe("tail -n 1000 -F '/tmp/it'\''s/b1.output'")
+    expect(watchTaskCommand("/tmp/it's/b1.output", 'linux')).toBe("tail -n 1000 -F '/tmp/it'\\''s/b1.output'")
   })
 })

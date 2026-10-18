@@ -10,7 +10,7 @@ import { NewProjectModal } from './NewProjectModal'
 import { WorktreeLauncherModal } from './WorktreeLauncherModal'
 import { GitHubPanel } from '../components/GitHubPanel'
 import { TerminalTab } from './TerminalTab'
-import { openTaskTab, useAgentTasks } from './agentTasks'
+import { openTaskTab, taskName, useAgentTasks } from './agentTasks'
 import { formatAge } from '../shells/ide/ideTreeModel'
 import { useTaskPaletteStore } from '../store/taskPaletteStore'
 import { useSavedCommandStore } from '../store/savedCommandStore'
@@ -131,7 +131,7 @@ function TabContextMenu({ tabs, tabId, anchor, onClose }: { tabs: TerminalTabMod
       ))}
       {tasks.length > 0 && <div className="ctx-menu-section" role="presentation">Background tasks</div>}
       {tasks.slice(0, 10).map((task) => (
-        <MenuItem key={task.path} onSelect={pick(() => openTaskTab(task, tab.cwd || tab.launchCwd))} hint={formatAge(task.mtimeMs, now)}>{`Watch ${task.id}`}</MenuItem>
+        <MenuItem key={task.path} onSelect={pick(() => openTaskTab(task, tab.cwd || tab.launchCwd))} hint={formatAge(task.mtimeMs, now)}>{`Watch ${taskName(task)}`}</MenuItem>
       ))}
       <div className="ctx-menu-divider" />
       <MenuItem onSelect={pick(() => window.dispatchEvent(new CustomEvent('termflow:rename-tab', { detail: tabId })))}>Change Title</MenuItem>
