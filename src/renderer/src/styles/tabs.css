@@ -618,17 +618,19 @@
 /* Claude arka plan gorevleri: son ciktisi olan gorev sayisi; tiklayinca her biri kendi sekmesinde canli acilir. */
 .tab-tasks {
   flex: 0 0 auto;
-  min-width: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   height: 16px;
-  padding: 0 4px;
-  border: 1px solid var(--widget-border);
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
+  padding: 0 6px 0 5px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--term-blue, #4f8cff) 22%, transparent);
+  color: color-mix(in srgb, var(--term-blue, #4f8cff) 70%, var(--app-foreground, #fff));
   font-size: 10px;
-  font-weight: 600;
-  line-height: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
   cursor: pointer;
-  opacity: 0.85;
 }
-.tab-tasks:hover, .tab-tasks:focus-visible { opacity: 1; border-color: currentColor; }
+.tab-tasks:hover, .tab-tasks:focus-visible { outline: none; background: color-mix(in srgb, var(--term-blue, #4f8cff) 36%, transparent); }

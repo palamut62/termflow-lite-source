@@ -166,12 +166,17 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
     }
   }, [menu])
 
-  // "Reveal active workspace" (alt cubuk): aktif oturuma kaydir.
+  // "Reveal active workspace" (alt cubuk): aktif oturumun projesini acip ona kaydir; projede degilse soyle.
   useEffect(() => {
     const reveal = (): void => {
-      const active = document.querySelector<HTMLElement>('.ide-tree .ide-tree-active')
-      active?.scrollIntoView({ block: 'center' })
-      active?.focus()
+      const owner = tree.find((p) => p.worktrees.some((w) => w.sessions.some((s) => s.active)))
+      if (!owner) { useToastStore.getState().show('The active terminal is not in any project.', 'info'); return }
+      setCollapsed((prev) => { if (!prev.has(owner.root)) return prev; const next = new Set(prev); next.delete(owner.root); return next })
+      requestAnimationFrame(() => {
+        const active = document.querySelector<HTMLElement>('.ide-tree .ide-tree-active')
+        active?.scrollIntoView({ block: 'center' })
+        active?.focus()
+      })
     }
     const board = (): void => setBoardOpen(true)
     window.addEventListener('termflow:ide-reveal', reveal)
@@ -180,7 +185,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
       window.removeEventListener('termflow:ide-reveal', reveal)
       window.removeEventListener('termflow:ide-board', board)
     }
-  }, [])
+  }, [tree])
 
   const toggle = (key: string): void => setCollapsed((prev) => {
     const next = new Set(prev)

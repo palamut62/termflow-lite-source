@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { Layers, X } from 'lucide-react'
 import type { TerminalTab as TerminalTabModel } from '../../../shared/types'
 import { TabIcon } from './TabIcon'
 import { ATTENTION_LABELS } from '../attention/AttentionBell'
@@ -148,7 +148,7 @@ export function TerminalTab({
           title={`${live.length} background task${live.length === 1 ? '' : 's'} or subagent${live.length === 1 ? '' : 's'} with recent output - click to watch each in its own tab`}
           aria-label={`Watch ${live.length} background task${live.length === 1 ? '' : 's'} or subagent${live.length === 1 ? '' : 's'}`}
         >
-          {live.length}
+          <Layers size={10} aria-hidden="true" />{live.length}
         </button>
       )}
       {tab.attention && <span className={`tab-attention tab-attention-${tab.attention}`} role="status" aria-label={ATTENTION_LABELS[tab.attention]} title={ATTENTION_LABELS[tab.attention]} />}

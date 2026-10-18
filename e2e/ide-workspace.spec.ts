@@ -176,7 +176,7 @@ test('status bar: keep awake, resource manager and a terminal port', async () =>
   await win.keyboard.press('Escape')
 
   await win.getByRole('button', { name: /Keep computer awake/ }).click()
-  await win.getByRole('menuitemcheckbox', { name: /^On/ }).click()
+  await win.getByRole('menuitemradio', { name: /^On/ }).click()
   await expect(win.getByRole('button', { name: 'Keep computer awake: on' })).toHaveClass(/ide-awake-on/)
 })
 
