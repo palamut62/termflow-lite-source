@@ -522,24 +522,6 @@ button.ide-link-chip:hover, button.ide-link-chip:focus-visible { color: var(--id
 .ide-artifact figcaption span { color: var(--ide-muted); font-size: 11px; }
 .ide-artifact > .ide-icon-btn { position: absolute; top: 6px; right: 6px; background: var(--ide-sidebar); }
 
-/* ---------- Floating Workspace ---------- */
-.ide-floating-btn {
-  position: fixed; right: 18px; bottom: 64px; z-index: 50; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid var(--ide-card-border); background: var(--ide-sidebar); color: var(--ide-fg); cursor: pointer; opacity: 0.85;
-}
-.ide-floating-btn:hover, .ide-floating-btn:focus-visible { opacity: 1; outline: none; border-color: var(--ide-fg); }
-.ide-floating {
-  position: fixed; z-index: 60; width: 360px; height: 280px; min-width: 240px; min-height: 160px; resize: both; overflow: hidden;
-  display: flex; flex-direction: column; background: var(--menu-background); color: var(--ide-fg);
-  border: 1px solid var(--widget-border); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-}
-.ide-floating header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 12px; border-bottom: 1px solid var(--widget-border); cursor: move; user-select: none; }
-.ide-floating header .ide-segment button[role='radio'] { flex: 0 0 auto; padding: 0 10px; }
-.ide-floating-spacer { flex: 1; }
-.ide-floating-terminal { width: 560px; height: 340px; }
-.ide-floating-term { position: relative; flex: 1; min-height: 0; background: var(--terminal-background); }
-.ide-floating textarea { flex: 1; resize: none; border: 0; padding: 10px 12px; background: transparent; color: inherit; font-family: var(--terminal-font-family, monospace); font-size: 12.5px; outline: none; }
-
 /* Review (F4.1-F4.2): file list + diff, line comments, Send to agent */
 .ide-review { gap: 10px; padding-bottom: 12px; }
 .ide-review-base { display: inline-flex; align-items: center; gap: 6px; color: var(--ide-muted); font-size: 12px; }

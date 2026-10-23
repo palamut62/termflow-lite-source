@@ -105,6 +105,13 @@ function updateLabel(item: AgentUpdateItem | undefined, id: string): string {
   return ` ·${version}${target} ${UPDATE_TEXT[item.state]}${item.state === 'failed' && item.error ? ` (${item.error})` : ''}`
 }
 
+function lastCheckText(s: AgentUpdateSnapshot, enabled: boolean): string {
+  if (s.running) return 'Checking now...'
+  if (!s.lastRunAt) return enabled ? 'Not checked yet since launch (first check runs shortly after startup).' : 'Auto-update is off; not checked.'
+  const when = new Date(s.lastRunAt).toLocaleString()
+  return s.lastError ? `Last check: ${when} - failed (${s.lastError})` : `Last check: ${when}`
+}
+
 export function ProfileSettings(): React.JSX.Element {
   const settings = useSettingsStore((s) => s.settings)
   const update = useSettingsStore((s) => s.update)
@@ -206,6 +213,7 @@ export function ProfileSettings(): React.JSX.Element {
         <button className="settings-btn settings-btn-small" disabled={updates.running} onClick={() => void window.termflow.agentUpdates.run()}>
           {updates.running ? 'Checking...' : 'Check for CLI updates now'}
         </button>
+        <span className="settings-note">{lastCheckText(updates, settings.autoUpdateAgents)}</span>
       </div>
       {effectiveBuiltins.map((p) => {
         const isOverridden = settings.profiles.some((candidate) => candidate.id === p.id)

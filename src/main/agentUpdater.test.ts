@@ -30,5 +30,12 @@ describe('AgentUpdater', () => {
     expect(by.claude).toBeUndefined()
     expect(calls.filter((c) => c[0] === 'install').map((c) => c[2])).toEqual(['@openai/codex@0.2.0', '@google/gemini-cli@1.1.0'])
     expect(result.running).toBe(false)
+    expect(result.lastRunAt).toBe(42)
+  })
+
+  it('records the time and error when the whole run fails', async () => {
+    const npm: NpmRunner = async () => { throw new Error('npm bulunamadi.') }
+    const result = await new AgentUpdater(() => undefined, npm, () => 7).run()
+    expect(result).toMatchObject({ lastRunAt: 7, lastError: expect.any(String) })
   })
 })

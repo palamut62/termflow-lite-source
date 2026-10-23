@@ -44,6 +44,9 @@ export function resolvePathCandidate(candidate: string, cwd: string): ResolvedPa
   if (value === '~') target = homedir()
   else if (value.startsWith('~/') || value.startsWith('~\\')) target = join(homedir(), value.slice(2))
   else target = value
+  // Git Bash / MSYS yolu ("/c/Users/x"): Claude Code gibi araçlar bu biçimi yazdırır.
+  const msys = process.platform === 'win32' ? /^\/([a-zA-Z])\/(.*)$/.exec(target) : null
+  if (msys) target = `${msys[1].toUpperCase()}:\\${msys[2].replace(/\//g, '\\')}`
 
   try {
     const full = normalize(isAbsolute(target) ? target : join(cwd, target))

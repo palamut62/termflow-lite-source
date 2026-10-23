@@ -1,13 +1,13 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-18
+guncel: 2026-10-23
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
 
 ## Ne bu proje
 Minimal, hizli, cok ozellestirilebilir capraz platform (Windows/Linux) terminal; gelistiriciler ve CLI ajan kullanicilari icin.
-Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.24.2 (freeware, kapali kaynak).
+Stack: Electron (electron-vite), React, TypeScript, xterm.js, node-pty. Surum 1.27.0 (freeware, kapali kaynak).
 Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamut62/termflow-lite`. Site: termflowlite.lol (Vercel, `website/`).
 
 ## Calistir / test et
@@ -39,14 +39,14 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
-## Son oturum (2026-10-18, son arac: Claude Code, dal feature/agent-ide)
-- 1.27.0 (etiket v1.27.0 push edildi, Release + verify yesil, run 39130024185; site f10.li6 + ide.li6 Vercel prod): Claude arka plan isleri canli sekmede. Main `agentTasks.ts` (shell: <tmp>/claude/*/<oturum>/tasks/*.output; alt ajan: <claude config>/projects/*/<oturum>/subagents/agent-*.jsonl + .meta.json etiketi; IPC `agent-sessions:tasks` ikisini birlestirir), renderer `tabs/agentTasks.ts` (5 sn yoklama, son 10 dk yazan = aktif; rozet tiklayinca her is ayri sekme; IDE sag tik 'Background tasks'). Cikti dosyasi is bitince kalir: 'calisiyor' bilgisi yok, tazelik sezgisi
-- Tasarim: durum cubugu keep-awake Orca'dan ayrildi (mod ikonu Sun/Bot/Moon + Awake/Sleep hap + nabiz noktasi; menu 3'lu segment, `menuitemradio`); sekme arka plan is rozeti `tab-tasks` kenarliksiz mavi hap + Layers ikonu. E2E kosturulmadi. Ayrica: 'Reveal active workspace' (hedef ikonu) daraltilmis projeyi acar, aktif terminal projede degilse toast; sidebar alt cubugu ile terminal is seridi ortak `--ide-foot-h` (26px) ile hizali
-- IDE sidebar proje/worktree '...' menusu: 'New Terminal Here' altinda ajan profilleri (`ProjectTree.ProfileItems`)
-- Alt ajan JSONL'i `tail` ile okunmaz: `transcriptFollow.ts` satir basina PROMPT/SAID/CALL/DONE/FAIL yazar; `build:mcp` ile `out/mcp/follow-transcript.cjs` olur, `installServerScript` ile userData/mcp'ye kopyalanir, sekme `ELECTRON_RUN_AS_NODE=1 <exe> <betik> <jsonl>` calistirir. Windows'ta Electron exe GUI alt sistemi: PowerShell `| Out-Host` olmadan beklemez; sekme kapaninca konsolla olmez, betik 2 sn'de bir ust kabuk (ppid) var mi bakip cikar. Sinir: yalniz varsayilan Claude config dizini (ek hesaplarin alt ajanlari listelenmez)
-- Birim 861 + typecheck + build temiz (verify); gercek JSONL ve conpty (node-pty) icinde canli akis + yetim surec denendi. Lite + IDE 1.27.0 derlendi; IDE bu PC'ye kuruldu, uygulamada tiklanmadi. Eski bug duzeltildi: sh tirnaklamasi `'''` (tek tirnakli yolda `tail -F`)
+## Son oturum (2026-10-23, son arac: Claude Code, dal feature/agent-ide)
+- Sekme seridindeki yatay scrollbar gizlendi (`.tab-list`, kaydirma tekerlek/surukleme ile surer).
+- Ajan CLI oto-guncellemesi gorunur oldu: snapshot'a `lastRunAt`/`lastError`, Ayarlar > Profiller'de "Last check: <tarih saat>"; npm hic calismazsa artik sessizce "guncel" sayilmiyor.
+- Terminalde bosluklu/parantezli dosya adlari ("Rapor (13) (1).docx") ve Git Bash `/c/...` yollari tiklanabilir oldu (pathLinks coklu kelime adayi + pathResolver MSYS cevirisi).
+- Bekleyen onceki is de bu commit'e girdi: telefondan dosya yukleme, shell gorev takibi, Floating Workspace kaldirilmasi. Dogrulama: `npm run verify` yesil.
 
 ## Yarim kalan / siradaki adim
+- **Telefondan dosya yukleme (2026-10-23, commitlendi, yayinlanmadi):** kod + birim test tamam (`remote/uploads.ts`, `POST /api/upload`, key bar ataç butonu; `docs/remote-access.md`). Gercek telefonla denenmedi; paketlenip kurulmadi (yeni ozellik: surum artar, CI yayinlar)
 - **Orchestration (IDE):** kod tamam, kurulu; varsayilan KAPALI. Gercek koordinatorden deneme kullanicida: Ayarlar > Orchestration > Enable + Connect (Claude/Codex/OpenCode MCP kaydi). Linux elle denenmedi; `opencode serve --attach` paralelligi olculmedi. Site bolumu yok
 - IDE yayin reposu acildi: PUBLIC `palamut62/termflow-agent-ide` (README + LICENSE). CI'da `release-ide-*` isleri ona yukler; `RELEASES_TOKEN` (fine-grained) bu repoya da Contents: write almali, kullanici token'a repoyu eklemeli, yoksa IDE isleri 403. IDE updater acildi, `.deb`/updater adi `termflow-agent-ide` (extraMetadata). IDE notlari `CHANGELOG-IDE.md`
 - **Agent IDE:** Faz 0-4 + orchestration tamam (PRD 4.10/12b). Karar bekleyen: Faz 5 kalan (tarayici/design mode, CLI) ve Create worktree 'Run on WSL/SSH' (uzak calisma alani modeli gerekir). IDE Explorer sag tik menusu hala kapali

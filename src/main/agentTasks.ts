@@ -32,13 +32,15 @@ export async function listAgentTasks(sessionId: string, root = claudeTasksRoot()
 export interface TranscriptFollower { exe: string; script: string }
 
 /** Izleme sekmesinde calisan komut. Electron exe'si GUI alt sistemi: PowerShell `| Out-Host` olmadan beklemez, sekme hemen kapanir. */
-export function followCommand(f: TranscriptFollower, file: string, platform: NodeJS.Platform = process.platform): string {
+export function followCommand(f: TranscriptFollower, file: string, platform: NodeJS.Platform = process.platform, shell = false): string {
   if (platform === 'win32') {
     const q = (v: string): string => `'${v.replace(/'/g, "''")}'`
-    return `[Console]::OutputEncoding = [Text.Encoding]::UTF8; $env:ELECTRON_RUN_AS_NODE = '1'; & ${q(f.exe)} ${q(f.script)} ${q(file)} | Out-Host`
+    // Inherit console handles directly: PowerShell pipelines buffer partial lines.
+    if (shell) return `$env:ELECTRON_RUN_AS_NODE = '1'; Start-Process -Wait -NoNewWindow -FilePath ${q(f.exe)} -ArgumentList ${q(`"${f.script}" "${file}" --shell`)}`
+    return `[Console]::OutputEncoding = [Text.Encoding]::UTF8; $env:ELECTRON_RUN_AS_NODE = '1'; & ${q(f.exe)} ${q(f.script)} ${q(file)}${shell ? ' --shell' : ''} | Out-Host`
   }
   const q = (v: string): string => `'${v.replace(/'/g, "'\\''")}'`
-  return `ELECTRON_RUN_AS_NODE=1 ${q(f.exe)} ${q(f.script)} ${q(file)}`
+  return `ELECTRON_RUN_AS_NODE=1 ${q(f.exe)} ${q(f.script)} ${q(file)}${shell ? ' --shell' : ''}`
 }
 
 /** Etiket: .meta.json'daki aciklama, yoksa ajan turu, yoksa dosya adi. */

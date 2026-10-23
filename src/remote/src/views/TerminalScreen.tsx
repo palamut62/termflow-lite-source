@@ -3,10 +3,11 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
-import { ArrowDown, ArrowLeft, ChevronLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Plus, Send, Smartphone, SquareTerminal } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ChevronLeft, ArrowRight, ArrowUp, CornerDownLeft, Keyboard, Minus, Paperclip, Plus, Send, Smartphone, SquareTerminal } from 'lucide-react'
 import { resolveTheme } from '../../../renderer/src/themes/themes'
 import type { RemoteTab, ServerMessage } from '../../../shared/remote'
 import { client, errorText, useRemote } from '../store'
+import { uploadFile } from '../client'
 import { profileColor } from '../profiles'
 import { Confirm, Empty, Sheet, TextField } from '../ui'
 import { NewTabSheet } from './NewTabSheet'
@@ -102,6 +103,26 @@ export function TerminalScreen(): React.JSX.Element {
     }
     if (!useRemote.getState().client?.send({ t: 'input', tabId, data: out })) toast('Not connected to the desktop.', 'error')
   }, [toast])
+
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  /** Files go to the computer; their paths are typed into the terminal so an agent can read them. */
+  const upload = useCallback(async (files: File[]): Promise<void> => {
+    setUploading(true)
+    const paths: string[] = []
+    for (const file of files) {
+      try {
+        paths.push(await uploadFile(file))
+      } catch (error) {
+        toast(`${file.name}: ${errorText(error)}`, 'error')
+      }
+    }
+    setUploading(false)
+    if (paths.length === 0) return
+    sendInput(paths.map((p) => (/\s/.test(p) ? `"${p}"` : p)).join(' ') + ' ', true)
+    toast(paths.length === 1 ? 'File sent to the computer.' : `${paths.length} files sent to the computer.`)
+  }, [sendInput, toast])
 
   // ---- One xterm for the whole session; tabs swap their content into it ----
   useEffect(() => {
@@ -400,6 +421,18 @@ export function TerminalScreen(): React.JSX.Element {
       {/* Pressing a key must not take focus from the live field, or the keyboard would close. */}
       <div className="keybar" role="toolbar" aria-label="Special keys" onPointerDown={(e) => e.preventDefault()}>
         <button className={keyboardOpen ? 'key on' : 'key'} onClick={toggleKeyboard} aria-label={keyboardOpen ? 'Hide keyboard' : 'Show keyboard'} aria-pressed={keyboardOpen}><Keyboard size={16} /></button>
+        <button className="key" onClick={() => fileRef.current?.click()} disabled={!current || uploading} aria-label="Upload files" title="Send files from this phone to the computer"><Paperclip size={16} /></button>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          hidden
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? [])
+            e.target.value = ''
+            if (files.length) void upload(files)
+          }}
+        />
         <button className={fitPhone ? 'key on' : 'key'} onClick={toggleFit} aria-label="Fit to phone" aria-pressed={fitPhone} title="Fit to phone: resize the terminal to this screen while you watch it"><Smartphone size={16} /> Fit</button>
         <button className="key" onClick={() => sendInput('\x1b', true)}>Esc</button>
         <button className="key" onClick={() => sendInput('\t', true)}>Tab</button>

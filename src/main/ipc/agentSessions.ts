@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { IPC, type AgentSessionsQuery } from '../../shared/ipc'
 import type { AgentKind } from '../../shared/types'
 import { buildAgentHandoverPrompt, listAgentSessions, getSessionWarnings } from '../agentSessions'
-import { listAgentTasks, listSubagents, type TranscriptFollower } from '../agentTasks'
+import { followCommand, listAgentTasks, listSubagents, type TranscriptFollower } from '../agentTasks'
 import type { AgentSessionOwnershipStore } from '../storage/AgentSessionOwnershipStore'
 
 const AGENTS: AgentKind[] = ['claude', 'codex', 'opencode']
@@ -19,6 +19,7 @@ export function registerAgentSessionsIpc(ownership: AgentSessionOwnershipStore, 
   ipcMain.handle(IPC.AGENT_TASKS_LIST, async (_event, sessionId: unknown) => {
     if (typeof sessionId !== 'string') throw new Error('invalid session id')
     const [shell, agents] = await Promise.all([listAgentTasks(sessionId), follower ? listSubagents(sessionId, follower) : []])
+    if (follower) for (const task of shell) task.command = followCommand(follower, task.path, process.platform, true)
     return [...shell, ...agents].sort((a, b) => b.mtimeMs - a.mtimeMs).slice(0, 50)
   })
   ipcMain.handle(IPC.AGENT_SESSION_HANDOVER, (_event, value: unknown) => {

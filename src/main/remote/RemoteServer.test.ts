@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -39,7 +39,7 @@ beforeAll(async () => {
     home: '/home/me'
   })
   hub.setTabs({ tabs: [{ id: 'tab1', title: 'pwsh', profileId: 'pwsh', running: true, activity: 'running', visible: true }], activeTabId: 'tab1' })
-  server = new RemoteServer({ staticDir: web, hub, devices, onPaired: () => undefined })
+  server = new RemoteServer({ staticDir: web, uploadDir: join(dir, 'uploads'), hub, devices, onPaired: () => undefined })
   port = 40000 + Math.floor(Math.random() * 20000)
   await server.start(HOST, port)
   base = `http://${HOST}:${port}`
@@ -105,6 +105,20 @@ describe('RemoteServer', () => {
     await new Promise((r) => setTimeout(r, 50))
     expect(writes).toContain('echo hi\r')
     ws.close()
+  })
+
+  it('saves uploads from a paired phone only, never overwriting', async () => {
+    const send = (token: string, name: string, body: string, origin = base): Promise<Response> =>
+      fetch(`${base}/api/upload`, { method: 'POST', headers: { Origin: origin, Authorization: `Bearer ${token}`, 'X-File-Name': encodeURIComponent(name) }, body })
+    const { code } = devices.startPairing()
+    const { token } = await (await pair(code)).json() as { token: string }
+    expect((await send('x'.repeat(40), 'a.txt', 'hi')).status).toBe(401)
+    expect((await send(token, 'a.txt', 'hi', 'http://evil.example')).status).toBe(403)
+    const first = await (await send(token, '..\\..\\note one.txt', 'hello')).json() as { path: string }
+    const second = await (await send(token, 'note one.txt', 'again')).json() as { path: string }
+    expect(first.path).toBe(join(dir, 'uploads', 'note one.txt'))
+    expect(second.path).toBe(join(dir, 'uploads', 'note one (1).txt'))
+    expect(readFileSync(first.path, 'utf-8')).toBe('hello')
   })
 
   it('refuses sockets from a foreign origin', async () => {

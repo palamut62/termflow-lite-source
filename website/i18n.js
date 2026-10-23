@@ -206,7 +206,7 @@
     'ide.li1': "Projeler, git worktree'leri ve ajan oturumları canlı durumlarıyla: çalışıyor, seni bekliyor, bitti. Duruma ya da pull request'e göre grupla veya panoyu aç",
     'ide.li2': 'Bir daldan, <code>#123</code> ya da pull request linkinden worktree aç ve içinde çalışacak ajanı seç',
     'ide.li3': "Diff'i incele, satırlara yorum yaz ve tüm yorumları ajana tek mesaj olarak gönder",
-    'ide.li4': 'Kaynak kontrolü, pull request kontrolleri, GitHub görevleri, worktree başına notlar ve yüzen terminal. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>I</kbd> düz terminale geçer',
+    'ide.li4': 'Kaynak kontrolü, pull request kontrolleri, GitHub görevleri ve worktree başına notlar. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>I</kbd> düz terminale geçer',
     'ide.li5': "Orchestration: ajanın mekanik işleri kurulu başka bir ajana devreder (OpenCode, Codex, Grok, Claude Code, Antigravity, Gemini CLI, Qwen Code, Copilot CLI, Kimi, Droid); her biri kendi worktree'sinde çalışır, sonucu inceleyip uygular",
     'ide.li6': "Sidebar'daki proje menüsü her ajan profilini (Claude Code, Codex...) doğrudan o klasörde açar",
     'ide.dlWin': "Agent IDE'yi Windows için indir",

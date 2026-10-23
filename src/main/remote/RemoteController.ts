@@ -15,6 +15,7 @@ const ADDRESS_POLL_MS = 15_000
 export interface RemoteControllerDeps {
   devicesFile: string
   staticDir: string
+  uploadDir: string
   terminals: RemoteTerminals
   invokeIpc(channel: string, args: unknown[]): Promise<unknown>
   getSettings(): AppSettings
@@ -66,6 +67,7 @@ export class RemoteController {
     })
     this.server = new RemoteServer({
       staticDir: deps.staticDir,
+      uploadDir: deps.uploadDir,
       hub: this.hub,
       devices: this.devices,
       onPaired: (deviceId, renewed) => {

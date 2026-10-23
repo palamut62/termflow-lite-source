@@ -83,3 +83,12 @@ Metotlar: `ipc` (izin listeli kanal), `tab.open|close|rename|focus|restart`,
 - DURUM (2026-10-15): YAYINLANMADI. Kullanici basina kurulumda uygulama dosyalari kullanici yazilabilir klasorde;
   PIN kontrolu bu dosyalarin icinde oldugu icin tasarim su haliyle UAC'yi zayiflatir. Yayin oncesi yukseltilmis
   hostun korumali bir konumdan calismasi (ya da imzali servis) gerekir; karar bekliyor.
+
+## Telefondan dosya yukleme (2026-10-22)
+- Terminal ekranindaki key bar'da ataç (Paperclip) butonu: telefon dosya secici (galeri/kamera/dosyalar, coklu secim).
+- `POST /api/upload`: ham govde, `Authorization: Bearer <cihaz anahtari>`, `X-File-Name` (URI-encoded), Origin = Host.
+  Yalniz eslesmis cihaz; govde diske akar (bellege alinmaz), sinir 200 MB (413). Ayni ad varsa `ad (1).uzanti`, uzerine yazilmaz.
+- Kayit yeri: `<Downloads>/TermFlow Uploads/` (`uploadDir`). Ad guvenli hale getirilir (`uploads.ts safeUploadName`: yol, kontrol
+  karakteri, Windows ozel adlari).
+- Basarili yuklemede dosya yolu (bosluk varsa tirnakli) aktif sekmeye yazilir; ajan dosyayi bu yoldan okur. Enter gonderilmez.
+- Kapsam disi: yuklemeden ilerleme cubugu, kesilen yuklemeyi surdurme, PC'den telefona indirme.

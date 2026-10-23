@@ -28,6 +28,9 @@ export interface AgentUpdateItem {
 export interface AgentUpdateSnapshot {
   running: boolean
   items: AgentUpdateItem[]
+  /** Son tur bittiginde (ms); hic calismadiysa yok. Tur basarisiz olduysa `lastError` dolu. */
+  lastRunAt?: number
+  lastError?: string
 }
 
 /** true: `latest`, `current`'tan yeni. Surum bicimi bozuksa (dist-tag, link) false: dokunulmaz. */

@@ -28,6 +28,8 @@ export const runNpm: NpmRunner = async (args, timeout) => {
 export class AgentUpdater {
   private items = new Map<string, AgentUpdateItem>()
   private running = false
+  private lastRunAt: number | undefined
+  private lastError: string | undefined
   private timer: NodeJS.Timeout | null = null
 
   constructor(
@@ -37,7 +39,7 @@ export class AgentUpdater {
   ) {}
 
   snapshot(): AgentUpdateSnapshot {
-    return { running: this.running, items: [...this.items.values()] }
+    return { running: this.running, items: [...this.items.values()], lastRunAt: this.lastRunAt, lastError: this.lastError }
   }
 
   /** Acilistan kisa sure sonra bir kez, sonra gunde bir; `enabled` her turda okunur. */
@@ -56,6 +58,7 @@ export class AgentUpdater {
   async run(): Promise<AgentUpdateSnapshot> {
     if (this.running) return this.snapshot()
     this.running = true
+    this.lastError = undefined
     this.emit()
     try {
       const installed = await this.installedVersions()
@@ -65,9 +68,11 @@ export class AgentUpdater {
         await this.updateOne(id, pkg, version)
       }
     } catch (error) {
-      console.warn('[agent-update] failed:', (error as Error).message)
+      this.lastError = ((error as Error).message.split('\n')[0] ?? '').slice(0, 200)
+      console.warn('[agent-update] failed:', this.lastError)
     } finally {
       this.running = false
+      this.lastRunAt = this.now()
       this.emit()
     }
     return this.snapshot()
@@ -75,7 +80,10 @@ export class AgentUpdater {
 
   private async installedVersions(): Promise<Record<string, string>> {
     // npm ls bagimlilik uyarisinda sifir olmayan kodla cikar ama stdout gecerlidir.
-    const out = await this.npm(['ls', '-g', '--depth=0', '--json'], 30_000).catch((e: { stdout?: string }) => e.stdout ?? '{}')
+    const out = await this.npm(['ls', '-g', '--depth=0', '--json'], 30_000).catch((e: { stdout?: string }) => {
+      if (e.stdout === undefined) throw e // npm hic calismadi (bulunamadi/zaman asimi): sessizce "guncel" sayma
+      return e.stdout
+    })
     const json = JSON.parse(out || '{}') as { dependencies?: Record<string, { version?: string }> }
     return Object.fromEntries(Object.entries(json.dependencies ?? {}).flatMap(([name, d]) => (d.version ? [[name, d.version]] : [])))
   }

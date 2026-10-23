@@ -6,6 +6,7 @@ import { WebSocketServer, type WebSocket } from 'ws'
 import { MAX_CLIENT_MESSAGE_BYTES } from '../../shared/remote'
 import type { DeviceStore } from './devices'
 import type { RemoteConnection, RemoteHub } from './RemoteHub'
+import { MAX_UPLOAD_BYTES, saveUpload } from './uploads'
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -109,7 +110,9 @@ export interface RemoteServerOptions {
   /** Built phone client (out/remote). */
   staticDir: string
   hub: RemoteHub
-  devices: Pick<DeviceStore, 'pair'>
+  devices: Pick<DeviceStore, 'pair' | 'authenticate'>
+  /** Where files uploaded from a phone are saved. */
+  uploadDir: string
   /** A device paired; the desktop closes its QR. renewed: an existing device got a new key. */
   onPaired(deviceId: string, renewed: boolean): void
 }
@@ -219,6 +222,10 @@ export class RemoteServer {
       await this.handlePair(req, res, host!)
       return
     }
+    if (url.pathname === '/api/upload') {
+      await this.handleUpload(req, res, host!)
+      return
+    }
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.writeHead(405).end()
       return
@@ -244,6 +251,30 @@ export class RemoteServer {
     if (!paired) return json(401, { error: 'This QR code has expired or was already used. Show a new one on the desktop.' })
     this.options.onPaired(paired.device.id, paired.renewed)
     json(200, { token: paired.token, device: paired.device })
+  }
+
+  /** Raw file body, device token in `Authorization`, name in `X-File-Name` (URI-encoded). Answers `{ path }`. */
+  private async handleUpload(req: IncomingMessage, res: ServerResponse, host: string): Promise<void> {
+    const json = (status: number, body: object): void => {
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', Connection: 'close' })
+      res.end(JSON.stringify(body))
+    }
+    if (req.method !== 'POST') return json(405, { error: 'Method not allowed' })
+    if (!sameOrigin(req.headers.origin, host)) return json(403, { error: 'Forbidden' })
+    const token = /^Bearer (.+)$/.exec(String(req.headers.authorization ?? ''))?.[1]
+    if (!this.options.devices.authenticate(token)) return json(401, { error: 'This phone is not paired.' })
+    if (Number(req.headers['content-length'] ?? 0) > MAX_UPLOAD_BYTES) return json(413, { error: 'File too large (200 MB max).' })
+    let name = ''
+    try {
+      name = decodeURIComponent(String(req.headers['x-file-name'] ?? ''))
+    } catch {
+      return json(400, { error: 'Invalid file name' })
+    }
+    try {
+      json(200, { path: await saveUpload(req, this.options.uploadDir, name) })
+    } catch (error) {
+      json(error instanceof Error && error.message === 'File too large' ? 413 : 500, { error: error instanceof Error && error.message === 'File too large' ? 'File too large (200 MB max).' : 'Upload failed.' })
+    }
   }
 
   private async serveStatic(pathname: string, req: IncomingMessage, res: ServerResponse): Promise<void> {

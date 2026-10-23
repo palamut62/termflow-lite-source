@@ -45,6 +45,18 @@ export async function pairWithCode(code: string): Promise<string> {
   return body.token
 }
 
+/** Send one file to the computer; resolves with its path there. */
+export async function uploadFile(file: File): Promise<string> {
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${loadToken() ?? ''}`, 'X-File-Name': encodeURIComponent(file.name) },
+    body: file
+  })
+  const body = await res.json().catch(() => ({})) as { path?: string; error?: string }
+  if (!res.ok || !body.path) throw new Error(body.error || 'Upload failed.')
+  return body.path
+}
+
 type Listener = (message: ServerMessage) => void
 
 /**

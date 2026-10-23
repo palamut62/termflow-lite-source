@@ -187,7 +187,7 @@ export interface AgentTask {
   mtimeMs: number
   /** Yalniz alt ajan: gorunen ad (aciklama, ajan turu ya da id). */
   label?: string
-  /** Yalniz alt ajan: JSONL'i okunur akitan hazir izleme komutu; shell gorevinde renderer `tail`/`Get-Content` kurar. */
+  /** Shell ciktisini veya alt ajan JSONL'ini canli akitan izleme komutu. */
   command?: string
 }
 

@@ -614,6 +614,7 @@ app.whenReady().then(() => {
   remoteController = new RemoteController({
     devicesFile: join(app.getPath('userData'), 'remote-devices.json'),
     staticDir: join(__dirname, '../remote'),
+    uploadDir: join(app.getPath('downloads'), 'TermFlow Uploads'),
     terminals: mgr,
     invokeIpc: invokeRecorded,
     getSettings: () => store.get(),

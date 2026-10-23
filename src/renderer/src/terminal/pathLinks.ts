@@ -65,6 +65,11 @@ const SENTENCE_DOT = /([A-Za-z0-9])\.+$/
 const SEPARATOR = /[\\/]/
 const EXTENSION = /\.[A-Za-z0-9]{1,10}$/
 const BAD_PREFIX = /^[-#=+]/
+/** Çok kelimeli adaylarda uzantı harf içermeli ("v1.2", "3.14" dosya değildir). */
+const FILE_EXTENSION = /\.[A-Za-z0-9]*[A-Za-z][A-Za-z0-9]*$/
+const MULTI_WORD_LIMIT = 8
+/** Çok kelimeli adayın başı harf/rakam/parantez/yol ayracı olmalı ("✓", "-", tırnak değil). */
+const NAME_START = /^[\p{L}\p{N}(\[_.~/\\]/u
 
 function isPathLike(value: string): boolean {
   if (!value) return false
@@ -163,6 +168,21 @@ export function extractPathCandidates(text: string): PathCandidate[] {
     const matchEnd = matchIndex + match[0].length - 1
     if (quotedRanges.some((range) => matchIndex >= range.start && matchEnd <= range.end)) continue
     addCandidate(match[0], matchIndex)
+  }
+
+  // Boşluklu / parantezli dosya adları ("Rapor (1).docx", "Ovacık sulaması.xlsx"):
+  // uzantılı her kelimeden geriye doğru kelime kelime uzatılır. Yalnızca diskte var
+  // olan aday link olur (main doğrular), cümle içinde ilk 3-4 deneme boşa gider.
+  const words = [...text.matchAll(/\S+/g)]
+  for (let i = 1; i < words.length; i += 1) {
+    const word = words[i][0].replace(/[).\]},;:!?'"]+$/, '')
+    if (!FILE_EXTENSION.test(word)) continue
+    const endIndex = words[i].index + word.length
+    for (let back = 1; back < MULTI_WORD_LIMIT && i - back >= 0; back += 1) {
+      const startIndex = words[i - back].index
+      const raw = text.slice(startIndex, endIndex)
+      if (NAME_START.test(raw)) addCandidate(raw, startIndex)
+    }
   }
   return results.sort((left, right) => (right.end - right.start) - (left.end - left.start) || left.start - right.start)
 }

@@ -41,6 +41,15 @@ describe('resolvePathCandidate', () => {
     expect(resolvePathCandidate(`${sub}${sep}`, dir)).toEqual({ path: sub, isDirectory: true, canOpen: true })
   })
 
+  it.runIf(process.platform === 'win32')('resolves a Git Bash style /c/... path', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'termflow-path-'))
+    cleanup.push(dir)
+    const file = join(dir, 'a b.txt')
+    await writeFile(file, 'x')
+    const msys = `/${file[0].toLowerCase()}${file.slice(2).replaceAll('\\', '/')}`
+    expect(resolvePathCandidate(msys, 'C:\\')).toEqual({ path: file, isDirectory: false, canOpen: true })
+  })
+
   it('expands ~ to the home directory', () => {
     const result = resolvePathCandidate('~', tmpdir())
     expect(result).not.toBeNull()

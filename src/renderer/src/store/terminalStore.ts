@@ -92,12 +92,6 @@ interface TerminalState {
   resumeAgentSession(profileId: string, session: AgentSessionRef, cwd?: string, permissionMode?: AgentPermissionMode): string
   /** Onay bekleyen sekme (uygulama içi modal); null = onay istenmiyor. */
   pendingCloseTabId: string | null
-  /**
-   * Agent IDE Floating Workspace'te gosterilen sekme (PRD F3.3). Ana alanda cizilmez; sekme seridinden
-   * secilince ana alana doner (PTY yasar, TerminalView buffer'dan yeniden baglanir).
-   */
-  floatingTabId: string | null
-  setFloatingTab(id: string | null): void
   /** UI girişi: settings.confirmBeforeClose ise onay modalını açar, değilse direkt kapatır. */
   requestCloseTab(id: string): void
   /** Modaldaki "Close": bekleyen sekmeyi kapatır. */
@@ -233,12 +227,6 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   },
 
   pendingCloseTabId: null,
-  floatingTabId: null,
-
-  setFloatingTab(id) {
-    if (id !== null && !get().tabs.some((t) => t.id === id)) return
-    set({ floatingTabId: id })
-  },
 
   requestCloseTab(id) {
     if (!get().tabs.some((t) => t.id === id)) return
@@ -271,7 +259,6 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     const { tabs, activeTabId, splitTabIds } = get()
     const idx = tabs.findIndex((t) => t.id === id)
     if (idx < 0) return
-    if (get().floatingTabId === id) set({ floatingTabId: null })
 
     // Offer to clean up an isolated checkout we created — but only once the
     // last tab using it is gone, otherwise a sibling pane would lose its cwd.
@@ -316,7 +303,6 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   setActiveTab(id) {
     const state = get()
     if (!state.tabs.some((t) => t.id === id)) return
-    if (state.floatingTabId === id) set({ floatingTabId: null })
     // Split düzeninde ağaç dışı (arka plan) sekmesi seçilirse aktif yaprakla
     // yer değiştirir; aksi halde sekme yalnızca vurgulanır ama terminali hiç
     // gösterilemezdi. Yer değişen önceki sekme arka plana düşer, PTY'si yaşar.

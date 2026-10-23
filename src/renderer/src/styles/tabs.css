@@ -15,7 +15,12 @@
   flex: 1;
   min-width: 0;
   overflow-x: auto;
-  scrollbar-width: thin;
+  /* Sekme şeridinde scrollbar görünmez; kaydırma tekerlek/sürükleme ile çalışır. */
+  scrollbar-width: none;
+}
+
+.tab-list::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {

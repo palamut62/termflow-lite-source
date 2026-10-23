@@ -58,6 +58,12 @@ describe('listSubagents', () => {
 })
 
 describe('followCommand', () => {
+  it('bypasses PowerShell line buffering for shell output', () => {
+    const command = followCommand(follower, "C:\\it's\\task.output", 'win32', true)
+    expect(command).toContain('Start-Process -Wait -NoNewWindow')
+    expect(command).toContain('"C:\\it\'\'s\\task.output" --shell')
+    expect(command).not.toContain('| Out-Host')
+  })
   it('waits for the GUI-subsystem exe on Windows and quotes every path', () => {
     expect(followCommand(follower, "C:\\Users\\it's\\a.jsonl", 'win32')).toBe(
       "[Console]::OutputEncoding = [Text.Encoding]::UTF8; $env:ELECTRON_RUN_AS_NODE = '1'; & 'C:\\App\\TermFlow.exe' 'C:\\Data\\follow-transcript.cjs' 'C:\\Users\\it''s\\a.jsonl' | Out-Host"
