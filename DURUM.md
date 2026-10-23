@@ -43,6 +43,7 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Sekme seridindeki yatay scrollbar gizlendi (`.tab-list`, kaydirma tekerlek/surukleme ile surer).
 - Ajan CLI oto-guncellemesi gorunur oldu: snapshot'a `lastRunAt`/`lastError`, Ayarlar > Profiller'de "Last check: <tarih saat>"; npm hic calismazsa artik sessizce "guncel" sayilmiyor.
 - Terminalde bosluklu/parantezli dosya adlari ("Rapor (13) (1).docx") ve Git Bash `/c/...` yollari tiklanabilir oldu (pathLinks coklu kelime adayi + pathResolver MSYS cevirisi).
+- Durum cubugundaki kalkan artik izin seviyesi menusu aciyor (Ayarlar yerine): secim aktif ajan oturumunu ayni profille yeni seviyede surduruyor (`switchActivePermissionMode`), ajan sekmesi yoksa varsayilani degistiriyor.
 - Bekleyen onceki is de bu commit'e girdi: telefondan dosya yukleme, shell gorev takibi, Floating Workspace kaldirilmasi. Dogrulama: `npm run verify` yesil.
 
 ## Yarim kalan / siradaki adim
