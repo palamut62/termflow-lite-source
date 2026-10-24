@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, CircleDot, Ellipsis, GitBranch, Link2, LoaderCircle, Moon, Pin, Plus } from 'lucide-react'
 import type { WorktreeEntry } from '../../../../shared/ipc'
 import { worktreeKey, type IdeSettings } from '../../../../shared/types'
@@ -100,7 +100,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
   const settings = useSettingsStore((s) => s.settings)
   const repoRoots = useRepoRoots(tabs)
   const [worktrees, setWorktrees] = useState<Map<string, WorktreeEntry[]>>(new Map())
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [menu, setMenu] = useState<TreeMenu | null>(null)
   const [hiddenFor, setHiddenFor] = useState<string | null>(null)
   const [details, setDetails] = useState<{ project: IdeProject; worktree: IdeWorktree } | null>(null)
@@ -171,7 +171,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
     const reveal = (): void => {
       const owner = tree.find((p) => p.worktrees.some((w) => w.sessions.some((s) => s.active)))
       if (!owner) { useToastStore.getState().show('The active terminal is not in any project.', 'info'); return }
-      setCollapsed((prev) => { if (!prev.has(owner.root)) return prev; const next = new Set(prev); next.delete(owner.root); return next })
+      setExpanded((prev) => (prev.has(owner.root) ? prev : new Set(prev).add(owner.root)))
       requestAnimationFrame(() => {
         const active = document.querySelector<HTMLElement>('.ide-tree .ide-tree-active')
         active?.scrollIntoView({ block: 'center' })
@@ -187,7 +187,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
     }
   }, [tree])
 
-  const toggle = (key: string): void => setCollapsed((prev) => {
+  const toggle = (key: string): void => setExpanded((prev) => {
     const next = new Set(prev)
     if (next.has(key)) next.delete(key)
     else next.add(key)
@@ -264,7 +264,7 @@ export function ProjectTree({ onNewWorktree }: { onNewWorktree: () => void }): R
   return (
     <div className={`ide-tree${compact ? ' ide-tree-compact' : ''}`} role="tree" aria-label="Projects" onKeyDown={onKeyDown}>
       {tree.map((project) => {
-        const isCollapsed = collapsed.has(project.root)
+        const isCollapsed = !expanded.has(project.root)
         const urgent = mostUrgent(project.worktrees.flatMap((w) => w.sessions))
         return (
           <div key={project.root} role="treeitem" aria-expanded={!isCollapsed} aria-label={project.label} className="ide-tree-project-wrap">
@@ -431,11 +431,23 @@ function TreeContextMenu({ menu, onClose, onShowHidden, onDetails, onOpen }: {
   const copy = (text: string, what: string): void => {
     void navigator.clipboard.writeText(text).then(() => useToastStore.getState().show(`${what} copied`, 'success')).catch(() => undefined)
   }
-  const style = { left: Math.min(menu.x, window.innerWidth - 240), top: Math.min(menu.y, window.innerHeight - 320) }
+  // Menu yuksekligi olculur; ekran disina tasarsa tetikleyicinin ustune/yukari kaydirilir, hep gorunur kalir.
+  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ left: menu.x, top: menu.y })
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const { width, height } = el.getBoundingClientRect()
+    setPos({
+      left: Math.max(8, Math.min(menu.x, window.innerWidth - width - 8)),
+      top: Math.max(8, Math.min(menu.y, window.innerHeight - height - 8))
+    })
+  }, [menu])
+  const style = pos
   if (menu.kind === 'project') {
     const { project } = menu
     return (
-      <div className="ctx-menu ide-menu" role="menu" style={style} onMouseDown={(e) => e.stopPropagation()}>
+      <div ref={ref} className="ctx-menu ide-menu" role="menu" style={style} onMouseDown={(e) => e.stopPropagation()}>
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => openTerminalAt(project.root))}>New Terminal Here</button>
         <ProfileItems path={project.root} act={act} />
         <button className="ctx-menu-item" role="menuitem" onClick={act(() => void window.termflow.system.openInEditor(project.root, 1))}>Open in VS Code</button>
@@ -460,7 +472,7 @@ function TreeContextMenu({ menu, onClose, onShowHidden, onDetails, onOpen }: {
     saveWorktreeMeta(worktree.path, { sleeping: true })
   }
   return (
-    <div className="ctx-menu ide-menu" role="menu" style={{ ...style, top: Math.max(8, Math.min(menu.y, window.innerHeight - 560)) }} onMouseDown={(e) => e.stopPropagation()}>
+    <div ref={ref} className="ctx-menu ide-menu" role="menu" style={style} onMouseDown={(e) => e.stopPropagation()}>
       <div className="ctx-menu-section" role="presentation">Workspace</div>
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => onDetails(project, worktree))}>Update...</button>
       <button className="ctx-menu-item" role="menuitem" onClick={act(() => saveWorktreeMeta(worktree.path, { pinned: !worktree.meta.pinned || undefined }))}>{worktree.meta.pinned ? 'Unpin' : 'Pin'}</button>

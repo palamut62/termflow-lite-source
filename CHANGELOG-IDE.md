@@ -1,5 +1,11 @@
 # TermFlow Agent IDE - Changelog
 
+## 1.27.1 - 2026-10-24
+
+- Everything in TermFlow Lite 1.27.1: phone reconnect heartbeat, easier phone settings, permission level menu on the status bar shield.
+- Sidebar: projects start collapsed, and the project "..." menu always stays inside the window (it moves up when it would run off the bottom).
+- Redesigned keep-awake pill and tab work badge; Reveal icon and bottom bar alignment fixed.
+
 ## 1.27.0 - 2026-10-18
 
 - Everything in TermFlow Lite 1.27.0: watch Claude Code background tasks and subagents live, each in its own tab (tab count badge, or the tab's right-click menu).

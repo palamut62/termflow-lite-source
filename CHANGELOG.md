@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.1 - 2026-10-24
+
+- Phone: a dropped connection is detected by a heartbeat and reconnects by itself; the settings sheets are easier to use on a phone, and the tab strip shows only the selected workspace's terminals.
+- Permission level menu on the status bar shield; tab scrollbar hidden; file paths with spaces are clickable; the Claude CLI update time is shown.
+
 ## 1.27.0 - 2026-10-18
 
 - Background tasks: a Claude Code tab shows a small count when its background shell tasks or subagents have written output in the last 10 minutes. Click it to watch each one live in its own tab. In the Agent IDE the tab's right-click menu lists them too.
