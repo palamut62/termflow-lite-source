@@ -108,13 +108,18 @@ function useViewportHeight(): void {
   useEffect(() => {
     const vv = window.visualViewport
     const apply = (): void => {
-      document.documentElement.style.setProperty('--app-height', `${Math.round(vv?.height ?? window.innerHeight)}px`)
+      const style = document.documentElement.style
+      style.setProperty('--app-height', `${Math.round(vv?.height ?? window.innerHeight)}px`)
+      // iOS scrolls the visual viewport over the page when the keyboard opens; sheets follow it.
+      style.setProperty('--vv-top', `${Math.round(vv?.offsetTop ?? 0)}px`)
     }
     apply()
     vv?.addEventListener('resize', apply)
+    vv?.addEventListener('scroll', apply)
     window.addEventListener('resize', apply)
     return () => {
       vv?.removeEventListener('resize', apply)
+      vv?.removeEventListener('scroll', apply)
       window.removeEventListener('resize', apply)
     }
   }, [])

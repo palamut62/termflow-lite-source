@@ -1,6 +1,6 @@
 # TermFlow Lite - Durum
 
-guncel: 2026-10-23
+guncel: 2026-10-24
 
 > Bu dosya projeye giren her yapay zeka aracinin ilk okudugu yerdir. Kisa tutulur (en fazla ~80 satir).
 > Kalici bilgi (mimari, kararlar, ayrintili gecmis) `PROJE-REHBER.md`'de (varsa) / README'de.
@@ -39,12 +39,10 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ayarlar > Terminal > "Launch at Startup" (`launchAtLogin`, main `applyLoginItem`, yalniz paketli uygulamada). Test edilmedi: kurulu surumde elle dene.
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
-## Son oturum (2026-10-23, son arac: Claude Code, dal feature/agent-ide)
-- Sekme seridindeki yatay scrollbar gizlendi (`.tab-list`, kaydirma tekerlek/surukleme ile surer).
-- Ajan CLI oto-guncellemesi gorunur oldu: snapshot'a `lastRunAt`/`lastError`, Ayarlar > Profiller'de "Last check: <tarih saat>"; npm hic calismazsa artik sessizce "guncel" sayilmiyor.
-- Terminalde bosluklu/parantezli dosya adlari ("Rapor (13) (1).docx") ve Git Bash `/c/...` yollari tiklanabilir oldu (pathLinks coklu kelime adayi + pathResolver MSYS cevirisi).
-- Durum cubugundaki kalkan artik izin seviyesi menusu aciyor (Ayarlar yerine): secim aktif ajan oturumunu ayni profille yeni seviyede surduruyor (`switchActivePermissionMode`), ajan sekmesi yoksa varsayilani degistiriyor.
-- Bekleyen onceki is de bu commit'e girdi: telefondan dosya yukleme, shell gorev takibi, Floating Workspace kaldirilmasi. Dogrulama: `npm run verify` yesil.
+## Son oturum (2026-10-24, son arac: Claude Code, dal feature/agent-ide)
+- Telefon yeniden baglanmiyordu (PC kapaninca/internet gidince soket yari acik kaliyordu): istemciye uygulama seviyesi heartbeat (10 sn `ping` call, 25 sn sessizlikte dusur), 10 sn baglanti zaman asimi, uygulamaya donuste canlilik kontrolu; hub'a `ping` metodu. Test: `src/remote/src/client.test.ts`.
+- Telefonda Ayarlar duzenleme (Profiles/Providers/SSH sheet'leri): inputlar 16px (iOS zoom), sheet visualViewport'a sabit (`--vv-top`), odaklanan alan klavye acilinca ortalanir, arka plana yanlis dokunus sheet'i kapatmaz.
+- Gercek telefonla denenmedi. Sessiz kurulum oturumu oldurdu (exit 137, kurulum calisan TermFlow'u kapatiyor); kurulum elle yapilmali.
 
 ## Yarim kalan / siradaki adim
 - **Telefondan dosya yukleme (2026-10-23, commitlendi, yayinlanmadi):** kod + birim test tamam (`remote/uploads.ts`, `POST /api/upload`, key bar ataç butonu; `docs/remote-access.md`). Gercek telefonla denenmedi; paketlenip kurulmadi (yeni ozellik: surum artar, CI yayinlar)

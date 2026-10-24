@@ -329,6 +329,8 @@ export class RemoteHub {
           ...(elevated ? { elevated } : {})
         }))
       }
+      case 'ping':
+        return true
       case 'elevation.status':
         return this.deps.elevation ? await this.deps.elevation.status() : 'unsupported'
       case 'tab.close':
