@@ -11,6 +11,7 @@ import { uploadFile } from '../client'
 import { profileColor } from '../profiles'
 import { Confirm, Empty, Sheet, TextField } from '../ui'
 import { NewTabSheet } from './NewTabSheet'
+import { workspaceKey } from './WorkspacesScreen'
 import { attachPhoneInput } from '../phoneInput'
 
 const FONT_KEY = 'termflow.remote.fontSize'
@@ -50,6 +51,8 @@ export function TerminalScreen(): React.JSX.Element {
   const connection = useRemote((s) => s.connection)
   const settings = useRemote((s) => s.settings)
   const currentTab = tabs.find((t) => t.id === currentTabId)
+  // Only the selected workspace's tabs are listed, so input cannot land in another project's terminal.
+  const workspaceTabs = currentTab ? tabs.filter((t) => workspaceKey(t) === workspaceKey(currentTab)) : tabs
   const workspaceName = currentTab?.worktree?.branch || (currentTab?.cwd ?? '').split(/[\\/]/).filter(Boolean).pop() || 'Terminal'
   const shells = useRemote((s) => s.shells)
   const toast = useRemote((s) => s.toast)
@@ -359,11 +362,11 @@ export function TerminalScreen(): React.JSX.Element {
         <button className="ws-back" onClick={() => useRemote.getState().setScreen('workspaces')} aria-label="Back to workspaces"><ChevronLeft size={22} /></button>
         <span className="ws-title">
           <strong>{workspaceName}</strong>
-          <span><i className={`home-dot ${connection}`} />{tabs.length} tab{tabs.length === 1 ? '' : 's'}</span>
+          <span><i className={`home-dot ${connection}`} />{workspaceTabs.length} tab{workspaceTabs.length === 1 ? '' : 's'}</span>
         </span>
       </div>
       <div className="tab-strip" role="tablist" aria-label="Desktop tabs">
-        {tabs.map((tab) => (
+        {workspaceTabs.map((tab) => (
           <button
             key={tab.id}
             role="tab"
