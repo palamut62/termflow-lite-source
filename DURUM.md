@@ -40,6 +40,8 @@ Kaynak repo PRIVATE `palamut62/termflow-lite-source`; release'ler PUBLIC `palamu
 - Ajan CLI oto-guncelleme: `main/agentUpdater.ts` (acilis +20 sn, sonra 24 saatte bir; yalniz npm global: claude/codex/opencode/gemini/qwen/copilot/pi/codebuff), ayar `autoUpdateAgents`, durum Ayarlar > Profiller satirlarinda + "Check now". Native kurulumlar (grok/droid/kimi...) dokunulmaz. Paketlenip kurulmadi.
 
 ## Son oturum (2026-10-24, son arac: Claude Code, dal feature/agent-ide)
+- 1.27.1 etiketlendi (v1.27.1, CI yayinliyor; verify-release sonucu kontrol edilmeli). Sidebar: projeler kapali baslar, proje/worktree `...` menusu olculup ekran icinde tutulur (`ProjectTree.tsx`). Agent IDE yerelde derlendi + sessiz kuruldu.
+- Acik: kullanici 'Agent IDE'de yalniz secili projenin terminalleri gorunsun' istedi; sekme seridi + Agents paneli zaten worktree kapsamli, hangi yerde hepsi gorunuyor belirsiz (ekran goruntusu bekleniyor).
 - Telefon yeniden baglanmiyordu (PC kapaninca/internet gidince soket yari acik kaliyordu): istemciye uygulama seviyesi heartbeat (10 sn `ping` call, 25 sn sessizlikte dusur), 10 sn baglanti zaman asimi, uygulamaya donuste canlilik kontrolu; hub'a `ping` metodu. Test: `src/remote/src/client.test.ts`.
 - Telefonda Ayarlar duzenleme (Profiles/Providers/SSH sheet'leri): inputlar 16px (iOS zoom), sheet visualViewport'a sabit (`--vv-top`), odaklanan alan klavye acilinca ortalanir, arka plana yanlis dokunus sheet'i kapatmaz.
 - Gercek telefonla denenmedi. Sessiz kurulum oturumu oldurdu (exit 137, kurulum calisan TermFlow'u kapatiyor); kurulum elle yapilmali.
